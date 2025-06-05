@@ -1,0 +1,19 @@
+.form-field {
+  position: relative;
+  margin-bottom: 1.25rem;
+}
+
+.form-field__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.form-field__error {
+  position: absolute;
+  top: 100%;
+  margin-top: 0.125rem;
+  padding-left: 0.125rem;
+  color: var(--color-danger);
+  font-size: 0.75rem;
+}

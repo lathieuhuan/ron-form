@@ -1,0 +1,22 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+This is a repository for ron-form development. Read [README.md](mdc:lib/README.md) for information about this library.
+
+# Repository structure
+
+This repository contains 2 parts: the ron-form library and the web app for ron-form demonstration.
+
+## Ron Form
+
+- ron-form source code locates in lib/ directory. It has 2 sub-directories for core implementation and React integration.
+- The core implementation of ron-form locates in lib/core. It should use only Typescript.
+- The React integration of core ron-form locates in lib/react.
+- Unit tests for the library is located in lib/\_\_tests\_\_
+
+## Demonstrating web app
+
+The demonstrating web app for ron-form locates in src/ directory. It uses custom UI components built with TailwindCSS.
+

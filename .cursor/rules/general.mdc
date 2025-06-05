@@ -1,0 +1,140 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+You're a Senior Software Engineer and an expert in Javascript, Typescript, ReactJS, CSS,TailwindCSS, Vite, Vitest.
+
+Your coding style:
+
+- Follow the requirements carefully & to the letter. Implement all requested functionality.
+- Always write correct, best practice, fully functional and working code. Follow DRY principle and SOLID principle.
+- Focus on readability over performance.
+- Use early returns whenever possible.
+- Avoid type any.
+
+- If you think your answer might not be correct, or you do not know the answer, you say so instead of guessing.
+
+//
+I'm making a form management library in Typescript. It is built based on control classes. The foundation is abstract class BaseControl. Other control classes are ItemControl, GroupControl, ListControl all extends BaseControl.
+
+```
+abstract class BaseControl {
+    abstract clone(): this;
+}
+
+class ItemControl<TValue = unknown> extends BaseControl {
+  value: TValue;
+
+  constructor(public readonly defaultValue: TValue) {
+    super();
+    this.value = defaultValue;
+  }
+}
+
+class GroupControl<TValue = unknown> extends ParentControl<TValue> {
+    constructor(public readonly controls: Record<string, BaseControl<unknown>>) {}
+}
+
+class ListControl<TControl extends BaseControl> extends BaseControl {
+    private items: TControl[] = []; // Internal array to store controls
+
+    constructor(public readonly templateControl: TControl) {
+        super();
+    }
+
+    add() {
+        const newItem = this.cloneControl.clone();
+        this.items.push(newItem);
+        return newItem;
+    }
+}
+```
+
+Help me finish them and add proper types so that the below test cases is all passed in type and in functionality.
+
+const info = new GroupControl({
+  general: new GroupControl({
+    name: new ItemControl("John Doe"),
+    age: new ItemControl(30),
+  }),
+  profession: new ItemControl("Software Engineer"),
+  contact: new GroupControl({
+    email: new ItemControl("john.doe@example.com"),
+    phone: new ItemControl("123-456-7890"),
+  }),
+  readBooks: new ListControl(new ItemControl("")), // List of strings (book titles)
+  experiences: new ListControl(
+    new GroupControl({
+      // List of experience objects
+      company: new ItemControl(""),
+      numOfYears: new ItemControl(2),
+    }),
+  ),
+});
+
+// Valid paths
+const generalGroup = info.getControl(["general"]);
+console.log("General Group Name:", generalGroup.controls.name.value); // John Doe
+
+const nameControl = info.getControl(["general", "name"]);
+console.log("Name Control Value:", nameControl.value); // John Doe
+
+const professionControl = info.getControl(["profession"]);
+console.log("Profession Control Value:", professionControl.value); // Software Engineer
+
+const emailControl = info.getControl(["contact", "email"]);
+console.log("Email Control Value:", emailControl.value); // john.doe@example.com
+
+const readBooks = info.getControl(["readBooks"]); // ListControl<ItemControl<string>>
+console.log("Read Books Length:", readBooks.length); // 2
+console.log("Read Book 0 (Control):", readBooks.getItem(0)); // ItemControl<string>
+console.log("Read Book 0 Value:", readBooks.getItem(0)!.value); // The Lord of the Rings
+
+const readBook1 = info.getControl(["readBooks", 1]); // ItemControl<string> | undefined
+if (readBook1) {
+  console.log("Read Book 1 Value:", readBook1.value); // Dune
+}
+
+const experiences = info.getControl(["experiences"]); // ListControl<GroupControl<{ company: ItemControl<string>, numOfYears: ItemControl<number> }>>
+console.log("Experiences Length:", experiences.length); // 2
+
+const experience0Company = info.getControl(["experiences", 0, "company"]); // ItemControl<string> | undefined
+if (experience0Company) {
+  console.log("Experience 0 Company:", experience0Company.value); // Tech Solutions Inc.
+}
+
+const numOfYearsAtExperience1 = info.getControl(["experiences", 1, "numOfYears"]); // ItemControl<number> | undefined
+if (numOfYearsAtExperience1) {
+  console.log("Num of Years at Experience 1:", numOfYearsAtExperience1.value); // 3
+}
+
+// Accessing an out-of-bounds item
+const nonExistentBook = info.getControl(["readBooks", 99]); // ItemControl<string> | undefined
+console.log("Non-existent Book:", nonExistentBook); // undefined
+
+// --- Expected Type Errors (uncomment to test) ---
+
+// @ts-expect-error: Test invalid top-level path
+// info.getControl(["address"]);
+
+// @ts-expect-error: Test invalid nested path within GroupControl
+// info.getControl(["general", "address"]);
+
+// @ts-expect-error: Test path attempting to go into an ItemControl (should not allow further drilling)
+// info.getControl(["profession", "invalid"]);
+
+// @ts-expect-error: Test invalid string key after ListControl
+// info.getControl(["readBooks", "title"]);
+
+// @ts-expect-error: Test invalid string key after ListControl (even if subsequent key exists)
+// info.getControl(["experiences", "company", "invalid"]);
+
+// @ts-expect-error: Test attempting to access a non-existent property on an ItemControl from a list
+// info.getControl(["readBooks", 0, "title"]);
+
+// @ts-expect-error: Test attempting to use a string key on a ListControl itself
+// info.getControl(["readBooks", "length"]);
+
+// @ts-expect-error: Test attempting to use a numeric key on a GroupControl
+// info.getControl(["general", 0]);
