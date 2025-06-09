@@ -1,6 +1,11 @@
 import { ValidateOptions } from "@lib/core/types";
 import { describe, expect, it, test, vi } from "vitest";
-import { ASYNC_ERROR, asyncValidator, REQUIRED_ERROR, requiredValidator } from "../../test_utils";
+import {
+  ASYNC_ERROR,
+  asyncValidator,
+  REQUIRED_ERROR,
+  requiredValidator,
+} from "@lib/__tests__/test_utils";
 import { TestBaseControl } from "./test_base_control";
 
 describe("BaseControl", () => {

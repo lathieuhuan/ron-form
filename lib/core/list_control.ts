@@ -17,7 +17,7 @@ export type ListItemControl<TControl extends BaseControl<any> = BaseControl<any>
 };
 
 export class ListControl<
-  TChildControl extends BaseControl<any>,
+  TChildControl extends BaseControl<any> = BaseControl<any>,
   TValue extends ListValue<TChildControl> = ListValue<TChildControl>,
 > extends ParentControl<TValue[]> {
   //
@@ -37,9 +37,9 @@ export class ListControl<
 
   clone(): this {
     const control = new ListControl<TChildControl>(this.sampleControl);
-    control.validator.set(this.validator.validators);
-    control.asyncValidator.set(this.asyncValidator.validators);
-    return control as this;
+    control.validator.set(this.validator.validators as any);
+    control.asyncValidator.set(this.asyncValidator.validators as any);
+    return control as unknown as this;
   }
 
   getControl<TPath extends ListPath<TChildControl>>(

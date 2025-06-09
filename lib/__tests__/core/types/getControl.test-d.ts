@@ -1,29 +1,16 @@
 import { describe } from "node:test";
 import { expectTypeOf, test } from "vitest";
 
+import {
+  setupMatrix2dComplex,
+  setupMatrix2dSimple,
+  setupMatrix3dComplex,
+  setupMatrix3dSimple,
+  setupResume,
+} from "@lib/__tests__/test_utils";
 import { GroupControl } from "@lib/core/group_control";
 import { ItemControl } from "@lib/core/item_control";
 import { ListControl } from "@lib/core/list_control";
-
-const resume = new GroupControl({
-  role: new ItemControl("Software Engineer"),
-  general: new GroupControl({
-    name: new ItemControl("John Doe"),
-    age: new ItemControl(30),
-  }),
-  contact: new GroupControl({
-    email: new ItemControl("john.doe@example.com"),
-    phone: new ItemControl("123-456-7890"),
-  }),
-  skills: new ListControl(new ItemControl("")),
-  experiences: new ListControl(
-    new GroupControl({
-      company: new ItemControl(""),
-      yearCount: new ItemControl(0),
-    }),
-  ),
-  matrix: new ListControl(new ListControl(new ItemControl(0))),
-});
 
 type ExperienceControl = GroupControl<{
   company: ItemControl<string>;
@@ -31,17 +18,20 @@ type ExperienceControl = GroupControl<{
 }>;
 
 describe("getControl", () => {
-  //
+  const { resume } = setupResume();
+
   test("simple paths", () => {
     expectTypeOf(resume.getControl(["role"])).toEqualTypeOf<ItemControl<string>>();
-    // IN_PROGRESS
-    // expectTypeOf(resume.getControl(["general"])).toEqualTypeOf<
-    //   GroupControl<{
-    //     name: ItemControl<string>;
-    //     age: ItemControl<number>;
-    //   }>
-    // >();
+    expectTypeOf(resume.getControl(["general"])).toEqualTypeOf<
+      GroupControl<{
+        name: ItemControl<string>;
+        age: ItemControl<number>;
+      }>
+    >();
     expectTypeOf(resume.getControl(["skills"])).toEqualTypeOf<ListControl<ItemControl<string>>>();
+    expectTypeOf(resume.getControl(["experiences"])).toEqualTypeOf<
+      ListControl<ExperienceControl>
+    >();
     // @ts-expect-error invalid: key not match
     resume.getControl(["abc"]);
     // @ts-expect-error invalid: redundant key string
@@ -66,9 +56,6 @@ describe("getControl", () => {
   });
 
   test("nested complex paths", () => {
-    expectTypeOf(resume.getControl(["experiences"])).toEqualTypeOf<
-      ListControl<ExperienceControl>
-    >();
     expectTypeOf(resume.getControl(["experiences", 0])).toEqualTypeOf<
       ExperienceControl | undefined
     >();
@@ -103,7 +90,7 @@ describe("getControl", () => {
   });
 
   test("simple 2d matrix paths", () => {
-    const matrix2d = new ListControl(new ListControl(new ItemControl(0)));
+    const matrix2d = setupMatrix2dSimple();
 
     expectTypeOf(matrix2d).toEqualTypeOf<ListControl<ListControl<ItemControl<number>>>>();
     expectTypeOf(matrix2d.getControl([0])).toEqualTypeOf<
@@ -130,15 +117,18 @@ describe("getControl", () => {
   });
 
   test("complex 2d matrix paths", () => {
-    const matrixPoint = new ListControl(
-      new ListControl(
-        new GroupControl({
-          x: new ItemControl(0),
-          y: new ItemControl(0),
-        }),
-      ),
-    );
+    const matrixPoint = setupMatrix2dComplex();
 
+    expectTypeOf(matrixPoint).toEqualTypeOf<
+      ListControl<
+        ListControl<
+          GroupControl<{
+            x: ItemControl<number>;
+            y: ItemControl<number>;
+          }>
+        >
+      >
+    >();
     expectTypeOf(matrixPoint.getControl([0, 0, "x"])).toEqualTypeOf<
       ItemControl<number> | undefined
     >();
@@ -157,7 +147,7 @@ describe("getControl", () => {
   });
 
   test("simple 3d matrix paths", () => {
-    const matrix3d = new ListControl(new ListControl(new ListControl(new ItemControl(0))));
+    const matrix3d = setupMatrix3dSimple();
 
     expectTypeOf(matrix3d).toEqualTypeOf<
       ListControl<ListControl<ListControl<ItemControl<number>>>>
@@ -182,17 +172,20 @@ describe("getControl", () => {
   });
 
   test("complex 3d matrix paths", () => {
-    const matrixPoint = new ListControl(
-      new ListControl(
-        new ListControl(
-          new GroupControl({
-            x: new ItemControl(0),
-            y: new ItemControl(0),
-          }),
-        ),
-      ),
-    );
+    const matrixPoint = setupMatrix3dComplex();
 
+    expectTypeOf(matrixPoint).toEqualTypeOf<
+      ListControl<
+        ListControl<
+          ListControl<
+            GroupControl<{
+              x: ItemControl<number>;
+              y: ItemControl<number>;
+            }>
+          >
+        >
+      >
+    >();
     expectTypeOf(matrixPoint.getControl([0, 0, 0, "x"])).toEqualTypeOf<
       ItemControl<number> | undefined
     >();

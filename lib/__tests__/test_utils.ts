@@ -1,5 +1,7 @@
-import { ValidatorFn } from "@lib/core/types";
-import { AsyncValidatorFn } from "@lib/core/types";
+import { GroupControl } from "@lib/core/group_control";
+import { ItemControl } from "@lib/core/item_control";
+import { ListControl } from "@lib/core/list_control";
+import { AsyncValidatorFn, ValidatorFn } from "@lib/core/types";
 
 export const REQUIRED_ERROR = { required: "required" };
 export const ASYNC_ERROR = { asyncError: "asyncError" };
@@ -14,4 +16,84 @@ export const asyncValidator: AsyncValidatorFn<string | null> = async (control) =
   return new Promise((resolve) => {
     setTimeout(() => resolve(value ? null : ASYNC_ERROR), 100);
   });
+};
+
+export const setupResume = () => {
+  const resume = new GroupControl({
+    role: new ItemControl("Software Engineer"),
+    general: new GroupControl({
+      name: new ItemControl("John Doe"),
+      age: new ItemControl(30),
+    }),
+    contact: new GroupControl({
+      email: new ItemControl("john.doe@example.com"),
+      phone: new ItemControl("123-456-7890"),
+    }),
+    skills: new ListControl(new ItemControl("")),
+    experiences: new ListControl(
+      new GroupControl({
+        company: new ItemControl(""),
+        yearCount: new ItemControl(0),
+      }),
+    ),
+  });
+
+  const role = resume.getControl(["role"]);
+  const general = resume.getControl(["general"]);
+  const skills = resume.getControl(["skills"]);
+  const experiences = resume.getControl(["experiences"]);
+
+  return {
+    resume,
+    /** Simple Item */
+    role,
+    /** Group nested 1 level */
+    general,
+    /** Simple List */
+    skills,
+    /** List of Group */
+    experiences,
+  };
+};
+
+export const setupNestedGroup = () => {
+  return new GroupControl({
+    lv1: new GroupControl({
+      lv2: new GroupControl({
+        lv3: new ItemControl(""),
+      }),
+    }),
+  });
+};
+
+export const setupMatrix2dSimple = () => {
+  return new ListControl(new ListControl(new ItemControl(0)));
+};
+
+export const setupMatrix2dComplex = () => {
+  return new ListControl(
+    new ListControl(
+      new GroupControl({
+        x: new ItemControl(0),
+        y: new ItemControl(0),
+      }),
+    ),
+  );
+};
+
+export const setupMatrix3dSimple = () => {
+  return new ListControl(new ListControl(new ListControl(new ItemControl(0))));
+};
+
+export const setupMatrix3dComplex = () => {
+  return new ListControl(
+    new ListControl(
+      new ListControl(
+        new GroupControl({
+          x: new ItemControl(0),
+          y: new ItemControl(0),
+        }),
+      ),
+    ),
+  );
 };
