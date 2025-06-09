@@ -38,22 +38,7 @@ export const setupResume = () => {
     ),
   });
 
-  const role = resume.getControl(["role"]);
-  const general = resume.getControl(["general"]);
-  const skills = resume.getControl(["skills"]);
-  const experiences = resume.getControl(["experiences"]);
-
-  return {
-    resume,
-    /** Simple Item */
-    role,
-    /** Group nested 1 level */
-    general,
-    /** Simple List */
-    skills,
-    /** List of Group */
-    experiences,
-  };
+  return resume;
 };
 
 export const setupNestedGroup = () => {
@@ -64,7 +49,7 @@ export const setupNestedGroup = () => {
   return new GroupControl({
     lv1: group1,
   });
-  
+
   // If we declare the nested group inline like below,
   // typescript will stop inferring the type further
   // to avoid potential type recursion issues.

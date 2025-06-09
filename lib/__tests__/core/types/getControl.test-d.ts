@@ -12,7 +12,6 @@ import {
 import { GroupControl } from "@lib/core/group_control";
 import { ItemControl } from "@lib/core/item_control";
 import { ListControl } from "@lib/core/list_control";
-import { GroupValue } from "@lib/core/types";
 
 type ExperienceControl = GroupControl<{
   company: ItemControl<string>;
@@ -20,9 +19,9 @@ type ExperienceControl = GroupControl<{
 }>;
 
 describe("getControl", () => {
-  const { resume } = setupResume();
+  const resume = setupResume();
 
-  test("simple paths", () => {
+  test("single paths on GroupControl", () => {
     expectTypeOf(resume.getControl(["role"])).toEqualTypeOf<ItemControl<string>>();
     expectTypeOf(resume.getControl(["general"])).toEqualTypeOf<
       GroupControl<{
@@ -42,11 +41,10 @@ describe("getControl", () => {
     resume.getControl(["role", 0]);
   });
 
-  test("nested simple paths", () => {
+  test("complex paths on GroupControl", () => {
     expectTypeOf(resume.getControl(["general", "name"])).toEqualTypeOf<ItemControl<string>>();
     expectTypeOf(resume.getControl(["general", "age"])).toEqualTypeOf<ItemControl<number>>();
     expectTypeOf(resume.getControl(["contact", "email"])).toEqualTypeOf<ItemControl<string>>();
-    expectTypeOf(resume.getControl(["skills", 0])).toEqualTypeOf<ItemControl<string> | undefined>();
     // @ts-expect-error invalid: key not match
     resume.getControl(["general", "email"]);
     // @ts-expect-error invalid: key not match
@@ -55,9 +53,8 @@ describe("getControl", () => {
     resume.getControl(["general", "name", "abc"]);
     // @ts-expect-error invalid: redundant key number
     resume.getControl(["general", "name", 0]);
-  });
 
-  test("nested complex paths", () => {
+    expectTypeOf(resume.getControl(["skills", 0])).toEqualTypeOf<ItemControl<string> | undefined>();
     expectTypeOf(resume.getControl(["experiences", 0])).toEqualTypeOf<
       ExperienceControl | undefined
     >();
@@ -74,7 +71,7 @@ describe("getControl", () => {
     resume.getControl(["experiences", 0, "company", 0]);
   });
 
-  test("list paths", () => {
+  test("paths on ListControl", () => {
     const experiences = resume.getControl(["experiences"]);
 
     expectTypeOf(experiences.getControl([0])).toEqualTypeOf<ExperienceControl | undefined>();
@@ -96,14 +93,9 @@ describe("getControl", () => {
 
     expectTypeOf(deepGroup).toEqualTypeOf<
       GroupControl<{
-        lv1: GroupControl<
-          {
-            lv2: ItemControl<string>;
-          },
-          GroupValue<{
-            lv2: ItemControl<string>;
-          }>
-        >;
+        lv1: GroupControl<{
+          lv2: ItemControl<string>;
+        }>;
       }>
     >();
     expectTypeOf(deepGroup.getControl(["lv1"])).toEqualTypeOf<

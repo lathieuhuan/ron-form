@@ -15,7 +15,8 @@ export type GroupValue<T extends Record<string, BaseControl<any>>> = {
 
 export type ListItemValue<T extends BaseControl<any>> = ReturnType<T["getValue"]>;
 
-// export type ListValue<T extends BaseControl<any>> = T extends ItemControl<infer TValue>
+// This will cause: Type instantiation is excessively deep and possibly infinite.ts(2589)
+// export type ListItemValue<T extends BaseControl<any>> = T extends ItemControl<infer TValue>
 //   ? TValue
 //   : T extends GroupControl<infer GChild>
 //   ? GroupValue<GChild>

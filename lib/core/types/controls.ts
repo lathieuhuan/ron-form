@@ -19,21 +19,6 @@ export type ControlAtGroupPath<
     : never
   : never;
 
-// export type ControlAtGroupPath<
-//   TControls extends Record<string, BaseControl<any>>,
-//   TPath extends NamePath,
-// > = TPath extends [infer Key extends keyof TControls, ...infer TRest extends NamePath]
-//   ? TRest extends []
-//     ? TControls[Key] extends GroupControl<infer GChild>
-//       ? GroupControl<GChild, GroupValue<GChild>>
-//       : TControls[Key]
-//     : TControls[Key] extends GroupControl<infer GChild>
-//     ? ControlAtGroupPath<GChild, TRest>
-//     : TControls[Key] extends ListControl<infer LChild>
-//     ? ControlAtListPath<LChild, TRest>
-//     : never
-//   : never;
-
 export type ControlAtListPath<TControl, TPath extends NamePath> = TPath extends [
   number,
   ...infer TRest extends NamePath,
