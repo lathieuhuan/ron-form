@@ -6,72 +6,53 @@ import {
   setupMatrix2dSimple,
   setupMatrix3dComplex,
   setupMatrix3dSimple,
-  setupNestedGroup,
   setupResume,
 } from "@lib/__tests__/test_utils";
 import { GroupControl } from "@lib/core/group_control";
 import { ItemControl } from "@lib/core/item_control";
 import { ListControl } from "@lib/core/list_control";
-import { GroupValue } from "@lib/core/types";
 
 type ExperienceControl = GroupControl<{
   company: ItemControl<string>;
   yearCount: ItemControl<number>;
 }>;
 
-describe("getControl", () => {
-  const { resume } = setupResume();
+type ExperienceValue = {
+  company: string;
+  yearCount: number;
+};
+
+describe("getValue", () => {
+  const { resume, role, general, skills, experiences } = setupResume();
 
   test("simple paths", () => {
-    expectTypeOf(resume.getControl(["role"])).toEqualTypeOf<ItemControl<string>>();
-    expectTypeOf(resume.getControl(["general"])).toEqualTypeOf<
-      GroupControl<{
-        name: ItemControl<string>;
-        age: ItemControl<number>;
-      }>
-    >();
-    expectTypeOf(resume.getControl(["skills"])).toEqualTypeOf<ListControl<ItemControl<string>>>();
-    expectTypeOf(resume.getControl(["experiences"])).toEqualTypeOf<
-      ListControl<ExperienceControl>
-    >();
-    // @ts-expect-error invalid: key not match
-    resume.getControl(["abc"]);
-    // @ts-expect-error invalid: redundant key string
-    resume.getControl(["role", "xyz"]);
-    // @ts-expect-error invalid: redundant key number
-    resume.getControl(["role", 0]);
+    expectTypeOf(role.getValue()).toEqualTypeOf<string>();
+    expectTypeOf(general.getValue()).toEqualTypeOf<{
+      name: string;
+      age: number;
+    }>();
+    expectTypeOf(skills.getValue()).toEqualTypeOf<string[]>();
+    expectTypeOf(experiences.getValue()).toEqualTypeOf<ExperienceValue[]>();
   });
 
   test("nested simple paths", () => {
-    expectTypeOf(resume.getControl(["general", "name"])).toEqualTypeOf<ItemControl<string>>();
-    expectTypeOf(resume.getControl(["general", "age"])).toEqualTypeOf<ItemControl<number>>();
-    expectTypeOf(resume.getControl(["contact", "email"])).toEqualTypeOf<ItemControl<string>>();
-    expectTypeOf(resume.getControl(["skills", 0])).toEqualTypeOf<ItemControl<string> | undefined>();
-    // @ts-expect-error invalid: key not match
-    resume.getControl(["general", "email"]);
-    // @ts-expect-error invalid: key not match
-    resume.getControl(["general", 0]);
-    // @ts-expect-error invalid: redundant key string
-    resume.getControl(["general", "name", "abc"]);
-    // @ts-expect-error invalid: redundant key number
-    resume.getControl(["general", "name", 0]);
+    const nameCtrl = general.getControl(["name"]);
+    const ageCtrl = general.getControl(["age"]);
+    const skill0Ctrl = skills.getControl([0]);
+    const experience0Ctrl = experiences.getControl([0]);
+
+    expectTypeOf(nameCtrl.getValue()).toEqualTypeOf<string>();
+    expectTypeOf(ageCtrl.getValue()).toEqualTypeOf<number>();
+    expectTypeOf(skill0Ctrl?.getValue()).toEqualTypeOf<string | undefined>();
+    expectTypeOf(experience0Ctrl?.getValue()).toEqualTypeOf<ExperienceValue | undefined>();
   });
 
   test("nested complex paths", () => {
-    expectTypeOf(resume.getControl(["experiences", 0])).toEqualTypeOf<
-      ExperienceControl | undefined
-    >();
-    expectTypeOf(resume.getControl(["experiences", 0, "company"])).toEqualTypeOf<
-      ItemControl<string> | undefined
-    >();
-    // @ts-expect-error invalid: key not match
-    resume.getControl(["experiences", "abc"]);
-    // @ts-expect-error invalid: key not match
-    resume.getControl(["experiences", 0, 1]);
-    // @ts-expect-error invalid: redundant key string
-    resume.getControl(["experiences", 0, "company", "abc"]);
-    // @ts-expect-error invalid: redundant key number
-    resume.getControl(["experiences", 0, "company", 0]);
+    const experience0Ctrl = resume.getControl(["experiences", 0]);
+    const companyCtrl = resume.getControl(["experiences", 0, "company"]);
+
+    expectTypeOf(experience0Ctrl?.getValue()).toEqualTypeOf<ExperienceValue | undefined>();
+    expectTypeOf(companyCtrl?.getValue()).toEqualTypeOf<string | undefined>();
   });
 
   test("list paths", () => {
@@ -89,29 +70,6 @@ describe("getControl", () => {
     experiences.getControl([0, "company", "abc"]);
     // @ts-expect-error invalid: redundant key number
     experiences.getControl([0, "company", 0]);
-  });
-
-  test("deep nested paths", () => {
-    const deepGroup = setupNestedGroup();
-
-    expectTypeOf(deepGroup).toEqualTypeOf<
-      GroupControl<{
-        lv1: GroupControl<
-          {
-            lv2: ItemControl<string>;
-          },
-          GroupValue<{
-            lv2: ItemControl<string>;
-          }>
-        >;
-      }>
-    >();
-    expectTypeOf(deepGroup.getControl(["lv1"])).toEqualTypeOf<
-      GroupControl<{
-        lv2: ItemControl<string>;
-      }>
-    >();
-    expectTypeOf(deepGroup.getControl(["lv1", "lv2"])).toEqualTypeOf<ItemControl<string>>();
   });
 
   test("simple 2d matrix paths", () => {

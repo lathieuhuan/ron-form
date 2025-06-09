@@ -57,13 +57,23 @@ export const setupResume = () => {
 };
 
 export const setupNestedGroup = () => {
-  return new GroupControl({
-    lv1: new GroupControl({
-      lv2: new GroupControl({
-        lv3: new ItemControl(""),
-      }),
-    }),
+  const group1 = new GroupControl({
+    lv2: new ItemControl(""),
   });
+
+  return new GroupControl({
+    lv1: group1,
+  });
+  
+  // If we declare the nested group inline like below,
+  // typescript will stop inferring the type further
+  // to avoid potential type recursion issues.
+
+  // return new GroupControl({
+  //   lv1: new GroupControl({
+  //     lv2: new ItemControl(""),
+  //   }),
+  // });
 };
 
 export const setupMatrix2dSimple = () => {

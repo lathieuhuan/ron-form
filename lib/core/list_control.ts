@@ -5,40 +5,40 @@ import {
   ComposableValidators,
   ListPath,
   ControlAtListPath,
-  ListValue,
+  ListItemValue,
 } from "./types";
 import { createSubject } from "./utils/create_subject";
 import { getControl } from "./utils/get_control";
 import { toArray } from "./utils/to_array";
 
-export type ListItemControl<TControl extends BaseControl<any> = BaseControl<any>> = {
+export type ListItemControl<TValue, TControl = BaseControl<TValue>> = {
   id: number;
   control: TControl;
 };
 
 export class ListControl<
   TChildControl extends BaseControl<any> = BaseControl<any>,
-  TValue extends ListValue<TChildControl> = ListValue<TChildControl>,
-> extends ParentControl<TValue[]> {
+  TItemValue extends ListItemValue<TChildControl> = ListItemValue<TChildControl>,
+> extends ParentControl<TItemValue[]> {
   //
-  items: ListItemControl<TChildControl>[] = [];
+  items: ListItemControl<TItemValue>[] = [];
   private nextId = 1;
-  private listSubject = createSubject<ListItemControl<TChildControl>[]>();
+  private listSubject = createSubject<ListItemControl<TItemValue>[]>();
   private isTouchedList = false;
 
   constructor(
     private sampleControl: TChildControl,
-    validators: ComposableValidators<TValue[]> | null = null,
-    asyncValidators: ComposableAsyncValidators<TValue[]> | null = null,
+    validators: ComposableValidators<TItemValue[]> | null = null,
+    asyncValidators: ComposableAsyncValidators<TItemValue[]> | null = null,
     options: ParentControlOptions = {},
   ) {
     super(validators, asyncValidators, options);
   }
 
   clone(): this {
-    const control = new ListControl<TChildControl>(this.sampleControl);
-    control.validator.set(this.validator.validators as any);
-    control.asyncValidator.set(this.asyncValidator.validators as any);
+    const control = new ListControl<TChildControl, TItemValue>(this.sampleControl);
+    control.validator.set(this.validator.validators);
+    control.asyncValidator.set(this.asyncValidator.validators);
     return control as unknown as this;
   }
 
@@ -55,17 +55,17 @@ export class ListControl<
     return this.isTouchedList || super.getIsTouched();
   }
 
-  getValue(): TValue[] {
+  getValue(): TItemValue[] {
     return this.items.map((item) => item.control.getValue());
   }
 
-  setValue(value: TValue[]): void {
+  setValue(value: TItemValue[]): void {
     this.items.forEach((item, index) => item.control.setValue(value[index]));
   }
 
   // LIST ONLY
 
-  subscribeList(callback: (items: ListItemControl<TChildControl>[]) => void) {
+  subscribeList(callback: (items: ListItemControl<TItemValue>[]) => void) {
     return this.listSubject.subscribe(callback);
   }
 
