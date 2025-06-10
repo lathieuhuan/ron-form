@@ -4,15 +4,11 @@ import {
   ComposableValidators,
   ControlState,
   NamePath,
+  ParentControlOptions,
   ValidateAllOptions,
   ValidateOptions,
   ValidationErrors,
 } from "./types";
-
-export type ParentControlOptions = {
-  /** Whether to listen to the state of the children. Default to true. */
-  isAttentive?: boolean;
-};
 
 /**
  * ParentControl has its own validators and errors,
@@ -24,18 +20,11 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   isAttentive: boolean;
   controlSet: Set<BaseControl<any>> = new Set();
 
-  constructor(
-    validators: ComposableValidators<TValue> | null = null,
-    asyncValidators: ComposableAsyncValidators<TValue> | null = null,
-    options: ParentControlOptions = {},
-  ) {
-    super(validators, asyncValidators);
+  constructor(options: ParentControlOptions<TValue> = {}) {
+    super(options);
     this.isAttentive = options.isAttentive ?? true;
     this.validateSync({ isBubbling: false });
   }
-
-  // patchValue(value: TValue, options?: object): void {
-  // }
 
   abstract getControl(path: NamePath): BaseControl<any> | undefined;
 

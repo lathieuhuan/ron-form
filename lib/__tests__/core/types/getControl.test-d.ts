@@ -19,7 +19,7 @@ type ExperienceControl = GroupControl<{
 }>;
 
 describe("getControl", () => {
-  const resume = setupResume();
+  const { resume } = setupResume();
 
   test("single paths on GroupControl", () => {
     expectTypeOf(resume.getControl(["role"])).toEqualTypeOf<ItemControl<string>>();

@@ -1,12 +1,13 @@
 import type {
   ComposableAsyncValidators,
   ComposableValidators,
+  ControlOptions,
   ControlState,
   NotifyStateOptions,
   ValidateOptions,
   ValidationErrors,
 } from "../types";
-import { createSubject, type Observer, type Subject } from "../utils/create_subject";
+import { createSubject, type Observer } from "../utils/create_subject";
 import { mergeErrors } from "../utils/merge_errors";
 import { createAsyncValidator, type AsyncValidator } from "./create_async_validator";
 import { createValidator, type Validator } from "./create_validator";
@@ -19,13 +20,13 @@ export abstract class BaseControl<TValue = unknown> {
   protected isPending = false;
   protected validator: Validator<TValue> = createValidator();
   protected asyncValidator: AsyncValidator<TValue> = createAsyncValidator();
-  protected valueSubject: Subject<TValue> = createSubject<TValue>();
-  protected stateSubject: Subject<ControlState> = createSubject<ControlState>();
+  protected valueSubject = createSubject<TValue | undefined>();
+  protected stateSubject = createSubject<ControlState>();
   protected shouldTouchOnValidate = false;
 
-  abstract getValue(): TValue;
-  abstract setValue(value: TValue): void;
-  // abstract patchValue(value: Partial<TValue>): void;
+  abstract getValue(): TValue | undefined;
+  abstract setValue(value: TValue | undefined): void;
+  abstract patchValue(value: unknown): void;
   abstract getIsValid(): boolean;
   abstract getIsPending(): boolean;
   abstract getIsTouched(): boolean;
@@ -44,15 +45,12 @@ export abstract class BaseControl<TValue = unknown> {
    */
   abstract clone(): this;
 
-  constructor(
-    validators: ComposableValidators<TValue> | null = null,
-    asyncValidators: ComposableAsyncValidators<TValue> | null = null,
-  ) {
-    if (validators) {
-      this.validator.add(validators);
+  constructor(options: ControlOptions<TValue> = {}) {
+    if (options.validators) {
+      this.validator.add(options.validators);
     }
-    if (asyncValidators) {
-      this.asyncValidator.add(asyncValidators);
+    if (options.asyncValidators) {
+      this.asyncValidator.add(options.asyncValidators);
     }
   }
 
@@ -133,7 +131,7 @@ export abstract class BaseControl<TValue = unknown> {
     }
   }
 
-  subscribe(subscriber: Observer<TValue>) {
+  subscribe(subscriber: Observer<TValue | undefined>) {
     return this.valueSubject.subscribe(subscriber);
   }
 

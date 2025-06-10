@@ -1,18 +1,14 @@
 import { BaseControl } from "./base_control";
-import { ComposableAsyncValidators, ComposableValidators, ControlState } from "./types";
+import { ControlOptions, ControlState } from "./types";
 
 export class ItemControl<TValue = unknown> extends BaseControl<TValue> {
-  readonly defaultValue: TValue;
-  private value!: TValue;
+  readonly defaultValue: TValue | undefined;
+  private value: TValue | undefined;
   private isTouched = false;
   protected override shouldTouchOnValidate = true;
 
-  constructor(
-    defaultValue: TValue,
-    validators: ComposableValidators<TValue> | null = null,
-    asyncValidators: ComposableAsyncValidators<TValue> | null = null,
-  ) {
-    super(validators, asyncValidators);
+  constructor(defaultValue?: TValue, options: ControlOptions<TValue> = {}) {
+    super(options);
     this.defaultValue = defaultValue;
     this.value = defaultValue;
 
@@ -29,8 +25,8 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue> {
     return control as this;
   }
 
-  getValue(): TValue {
-    return this.value || (null as unknown as TValue);
+  getValue() {
+    return this.value === "" ? undefined : this.value;
   }
 
   setValue(value: TValue): void {
@@ -43,10 +39,10 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue> {
     }
   }
 
-  // patchValue(value: Partial<TValue>): void {
-  //   this.value = { ...this.value, ...value };
-  //   this.notifyObservers();
-  // }
+  // To comply with BaseControl.patchValue
+  patchValue(value: TValue): void {
+    this.setValue(value);
+  }
 
   getIsValid() {
     return this.isValid;

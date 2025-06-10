@@ -60,7 +60,9 @@ describe("BaseControl", () => {
   describe("validateSync", () => {
     it("runs validators, updates errors & isValid, calls handleValidateResult, returns errors", () => {
       // Set up
-      const control = new TestBaseControl<string | null>([requiredValidator]);
+      const control = new TestBaseControl<string | null>({
+        validators: [requiredValidator],
+      });
       control.setValue(null);
       control.handleValidateResult = vi.fn();
       // Act
@@ -73,7 +75,9 @@ describe("BaseControl", () => {
 
     it("calls onError on error", () => {
       // Set up
-      const control = new TestBaseControl<string | null>([requiredValidator]);
+      const control = new TestBaseControl<string | null>({
+        validators: [requiredValidator],
+      });
       control.setValue(null);
       const onError = vi.fn();
       // Act
@@ -84,7 +88,9 @@ describe("BaseControl", () => {
 
     it("passes options to handleValidateResult", () => {
       // Set up
-      const control = new TestBaseControl<string | null>([requiredValidator]);
+      const control = new TestBaseControl<string | null>({
+        validators: [requiredValidator],
+      });
       const options: ValidateOptions = {
         shouldTouch: false,
         isBubbling: true,
@@ -103,7 +109,9 @@ describe("BaseControl", () => {
   describe("validateAsync", () => {
     it("runs async validators, updates errors & isValid, calls handleValidateResult, throws errors on error", async () => {
       // Set up
-      const control = new TestBaseControl<string | null>(null, [asyncValidator]);
+      const control = new TestBaseControl<string | null>({
+        asyncValidators: [asyncValidator],
+      });
       control.setValue(null);
       control.handleValidateResult = vi.fn();
       // Act
@@ -117,7 +125,9 @@ describe("BaseControl", () => {
 
     it("calls onError on error", async () => {
       // Set up
-      const control = new TestBaseControl<string | null>(null, [asyncValidator]);
+      const control = new TestBaseControl<string | null>({
+        asyncValidators: [asyncValidator],
+      });
       const onError = vi.fn();
       control.setValue(null);
       // Act
@@ -130,7 +140,9 @@ describe("BaseControl", () => {
 
     it("passes options to handleValidateResult", async () => {
       // Set up
-      const control = new TestBaseControl<string | null>(null, [asyncValidator]);
+      const control = new TestBaseControl<string | null>({
+        asyncValidators: [asyncValidator],
+      });
       const options: ValidateOptions = {
         shouldTouch: false,
         isBubbling: true,
@@ -170,7 +182,9 @@ describe("BaseControl", () => {
 
   test("resetState runs validateSync and updates isPending to false", () => {
     // Set up
-    const control = new TestBaseControl([requiredValidator]);
+    const control = new TestBaseControl({
+      validators: [requiredValidator],
+    });
     control.setValue(null);
     // Act
     control._resetState();

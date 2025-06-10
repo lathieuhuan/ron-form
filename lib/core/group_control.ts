@@ -1,11 +1,13 @@
 import { BaseControl } from "./base_control";
-import { ParentControl, ParentControlOptions } from "./parent_control";
+import { ParentControl } from "./parent_control";
 import {
   ComposableAsyncValidators,
   ComposableValidators,
   ControlAtGroupPath,
+  DeepPartial,
   GroupPath,
   GroupValue,
+  ParentControlOptions,
 } from "./types";
 import { getControl } from "./utils/get_control";
 import { toArray } from "./utils/to_array";
@@ -15,13 +17,8 @@ export class GroupControl<
   TValue extends GroupValue<TControls> = GroupValue<TControls>,
 > extends ParentControl<TValue> {
   //
-  constructor(
-    public readonly controls: TControls,
-    validators: ComposableValidators<TValue> | null = null,
-    asyncValidators: ComposableAsyncValidators<TValue> | null = null,
-    options: ParentControlOptions = {},
-  ) {
-    super(validators, asyncValidators, options);
+  constructor(private readonly controls: TControls, options: ParentControlOptions<TValue> = {}) {
+    super(options);
 
     Object.entries(controls).forEach(([name, control]) => {
       control.parent = this;
@@ -52,18 +49,23 @@ export class GroupControl<
   }
 
   getValue(): TValue {
-    const value: Record<string, any> = {};
-
-    for (const [key, control] of Object.entries(this.controls)) {
-      value[key] = control.getValue();
-    }
-    return value as TValue;
+    return Object.entries(this.controls).reduce((acc, [key, control]) => {
+      return Object.assign(acc, { [key]: control.getValue() });
+    }, {}) as TValue;
   }
 
   setValue(value: TValue): void {
     if (typeof value === "object" && value !== null) {
       for (const [key, _value] of Object.entries(value)) {
         this.controls[key]?.setValue(_value);
+      }
+    }
+  }
+
+  patchValue(value: DeepPartial<TValue>): void {
+    if (typeof value === "object" && value !== null) {
+      for (const [key, _value] of Object.entries(value)) {
+        this.controls[key]?.patchValue(_value);
       }
     }
   }

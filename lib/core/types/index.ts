@@ -1,5 +1,5 @@
 export * from "./controls";
-export * from "./notification";
+export * from "./options";
 export * from "./paths";
 export * from "./state";
 export * from "./utils";

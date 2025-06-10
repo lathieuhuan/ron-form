@@ -1,11 +1,12 @@
 import { BaseControl } from "./base_control";
-import { ParentControl, ParentControlOptions } from "./parent_control";
+import { ParentControl } from "./parent_control";
 import {
   ComposableAsyncValidators,
   ComposableValidators,
-  ListPath,
   ControlAtListPath,
   ListItemValue,
+  ListPath,
+  ParentControlOptions,
 } from "./types";
 import { createSubject } from "./utils/create_subject";
 import { getControl } from "./utils/get_control";
@@ -16,10 +17,12 @@ export type ListItemControl<TValue, TControl = BaseControl<TValue>> = {
   control: TControl;
 };
 
+export type ListValue<TValue> = (TValue | undefined)[] | undefined;
+
 export class ListControl<
   TChildControl extends BaseControl<any> = BaseControl<any>,
   TItemValue extends ListItemValue<TChildControl> = ListItemValue<TChildControl>,
-> extends ParentControl<TItemValue[]> {
+> extends ParentControl<(TItemValue | undefined)[]> {
   //
   items: ListItemControl<TItemValue>[] = [];
   private nextId = 1;
@@ -28,11 +31,9 @@ export class ListControl<
 
   constructor(
     private sampleControl: TChildControl,
-    validators: ComposableValidators<TItemValue[]> | null = null,
-    asyncValidators: ComposableAsyncValidators<TItemValue[]> | null = null,
-    options: ParentControlOptions = {},
+    options: ParentControlOptions<(TItemValue | undefined)[]> = {},
   ) {
-    super(validators, asyncValidators, options);
+    super(options);
   }
 
   clone(): this {
@@ -55,12 +56,17 @@ export class ListControl<
     return this.isTouchedList || super.getIsTouched();
   }
 
-  getValue(): TItemValue[] {
-    return this.items.map((item) => item.control.getValue());
+  getValue(): ListValue<TItemValue> {
+    const value = this.items.map((item) => item.control.getValue());
+    return value.length ? value : undefined;
   }
 
-  setValue(value: TItemValue[]): void {
+  setValue(value: (TItemValue | undefined)[]): void {
     this.items.forEach((item, index) => item.control.setValue(value[index]));
+  }
+
+  patchValue(value: (TItemValue | undefined)[]): void {
+    this.items.forEach((item, index) => item.control.patchValue(value[index]));
   }
 
   // LIST ONLY
@@ -69,7 +75,7 @@ export class ListControl<
     return this.listSubject.subscribe(callback);
   }
 
-  insertItem(index: number): void {
+  insertItem(index: number, value?: TItemValue): TChildControl {
     const item = this.sampleControl.clone() as TChildControl;
     item.parent = this;
     item.name = this.nextId.toString();
@@ -81,6 +87,11 @@ export class ListControl<
     this.isTouchedList = true;
     this.notifyObservers();
     item.validateSync({ isBubbling: true });
+
+    if (value) {
+      item.setValue(value);
+    }
+    return item;
   }
 
   removeItem(id: number): void {

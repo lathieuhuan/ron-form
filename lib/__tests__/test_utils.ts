@@ -19,26 +19,54 @@ export const asyncValidator: AsyncValidatorFn<string | null> = async (control) =
 };
 
 export const setupResume = () => {
+  const initials = {
+    role: "Software Engineer",
+    general: {
+      name: "John Doe",
+      age: 30,
+    },
+    contact: {
+      email: "john.doe@example.com",
+      phone: "123-456-7890",
+    },
+  };
+
+  const role = new ItemControl(initials.role);
+  const name = new ItemControl(initials.general.name);
+  const general = new GroupControl({
+    name: name,
+    age: new ItemControl(initials.general.age),
+  });
+  const contact = new GroupControl({
+    email: new ItemControl(initials.contact.email),
+    phone: new ItemControl(initials.contact.phone),
+  });
+  const skills = new ListControl(new ItemControl(""));
+  const experiences = new ListControl(
+    new GroupControl({
+      company: new ItemControl(""),
+      yearCount: new ItemControl(0),
+    }),
+  );
+
   const resume = new GroupControl({
-    role: new ItemControl("Software Engineer"),
-    general: new GroupControl({
-      name: new ItemControl("John Doe"),
-      age: new ItemControl(30),
-    }),
-    contact: new GroupControl({
-      email: new ItemControl("john.doe@example.com"),
-      phone: new ItemControl("123-456-7890"),
-    }),
-    skills: new ListControl(new ItemControl("")),
-    experiences: new ListControl(
-      new GroupControl({
-        company: new ItemControl(""),
-        yearCount: new ItemControl(0),
-      }),
-    ),
+    role,
+    general,
+    contact,
+    skills,
+    experiences,
   });
 
-  return resume;
+  return {
+    resume,
+    role,
+    name,
+    general,
+    contact,
+    skills,
+    experiences,
+    initialValues: initials,
+  };
 };
 
 export const setupNestedGroup = () => {

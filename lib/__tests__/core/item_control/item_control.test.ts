@@ -10,7 +10,7 @@ describe("ItemControl", () => {
       // Set up
       const control = new TestItemControl("");
       // Assert
-      expect(control.getValue()).toBeNull();
+      expect(control.getValue()).toBeUndefined();
       expect(control.getIsTouched()).toBe(false);
       expect(control.getIsValid()).toBe(true);
       expect(control.getIsPending()).toBe(false);
@@ -19,9 +19,11 @@ describe("ItemControl", () => {
 
     test("initial state with validators and invalid initial value", () => {
       // Set up
-      const control = new TestItemControl(null, [requiredValidator]);
+      const control = new TestItemControl(undefined, {
+        validators: [requiredValidator],
+      });
       // Assert
-      expect(control.getValue()).toBeNull();
+      expect(control.getValue()).toBeUndefined();
       expect(control.getIsTouched()).toBe(false);
       expect(control.getIsValid()).toBe(false);
       expect(control.getIsPending()).toBe(false);
@@ -30,7 +32,9 @@ describe("ItemControl", () => {
 
     test("initial state with validators and valid initial value", () => {
       // Set up
-      const control = new TestItemControl(VALID_VALUE, [requiredValidator]);
+      const control = new TestItemControl(VALID_VALUE, {
+        validators: [requiredValidator],
+      });
       // Assert
       expect(control.getValue()).toBe(VALID_VALUE);
       expect(control.getIsTouched()).toBe(false);
@@ -120,7 +124,9 @@ describe("ItemControl", () => {
 
   test("reset value and state, and notifies observers and state observers", () => {
     // Set up
-    const control = new TestItemControl(VALID_VALUE, [requiredValidator]);
+    const control = new TestItemControl(VALID_VALUE, {
+      validators: [requiredValidator],
+    });
     const observer = vi.fn();
     const stateObserver = vi.fn();
     const prevIsValid = control.getIsValid();
@@ -142,7 +148,7 @@ describe("ItemControl", () => {
   describe("validateSync", () => {
     it("turns isTouched to true by default", () => {
       // Set up
-      const control = new TestItemControl<string | null>(null);
+      const control = new TestItemControl<string>();
       expect(control.getIsTouched()).toBe(false);
 
       // Act
@@ -154,7 +160,7 @@ describe("ItemControl", () => {
 
     it("does not turn isTouched to true when shouldTouch is false", () => {
       // Set up
-      const control = new TestItemControl<string | null>(null);
+      const control = new TestItemControl<string>();
       expect(control.getIsTouched()).toBe(false);
 
       // Act

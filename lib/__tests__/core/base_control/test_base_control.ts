@@ -1,5 +1,6 @@
 import { BaseControl } from "@lib/core/base_control";
 import { ControlState } from "@lib/core/types";
+
 export class TestBaseControl<TValue = unknown> extends BaseControl<TValue> {
   value = null as unknown as TValue;
 
@@ -15,8 +16,8 @@ export class TestBaseControl<TValue = unknown> extends BaseControl<TValue> {
     this.resetState();
   }
 
-  clone(): BaseControl<TValue> {
-    return new TestBaseControl<TValue>();
+  clone(): this {
+    return new TestBaseControl<TValue>() as this;
   }
   getControl(): BaseControl<any> | undefined {
     return undefined;
@@ -25,6 +26,9 @@ export class TestBaseControl<TValue = unknown> extends BaseControl<TValue> {
     return this.value;
   }
   setValue(value: TValue): void {
+    this.value = value;
+  }
+  patchValue(value: TValue): void {
     this.value = value;
   }
   getIsValid(): boolean {
@@ -48,4 +52,7 @@ export class TestBaseControl<TValue = unknown> extends BaseControl<TValue> {
   }
   resetValue(): void {}
   reset(): void {}
+  checkIsValid(): boolean {
+    return true;
+  }
 }
