@@ -9,8 +9,8 @@ import type {
 } from "../types";
 import { createSubject, type Observer } from "../utils/create_subject";
 import { mergeErrors } from "../utils/merge_errors";
-import { createAsyncValidator, type AsyncValidator } from "./create_async_validator";
-import { createValidator, type Validator } from "./create_validator";
+import { createAsyncValidator } from "./create_async_validator";
+import { createValidator } from "./create_validator";
 
 export abstract class BaseControl<TValue = unknown> {
   name = "root";
@@ -18,8 +18,8 @@ export abstract class BaseControl<TValue = unknown> {
   errors: ValidationErrors | null = null;
   protected isValid = true;
   protected isPending = false;
-  protected validator: Validator<TValue> = createValidator();
-  protected asyncValidator: AsyncValidator<TValue> = createAsyncValidator();
+  protected validator = createValidator<TValue>();
+  protected asyncValidator = createAsyncValidator<TValue>();
   protected valueSubject = createSubject<TValue | undefined>();
   protected stateSubject = createSubject<ControlState>();
   protected shouldTouchOnValidate = false;

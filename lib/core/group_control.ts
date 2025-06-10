@@ -1,8 +1,6 @@
 import { BaseControl } from "./base_control";
 import { ParentControl } from "./parent_control";
 import {
-  ComposableAsyncValidators,
-  ComposableValidators,
   ControlAtGroupPath,
   DeepPartial,
   GroupPath,
@@ -10,21 +8,22 @@ import {
   ParentControlOptions,
 } from "./types";
 import { getControl } from "./utils/get_control";
-import { toArray } from "./utils/to_array";
 
 export class GroupControl<
   TControls extends Record<string, BaseControl<any>>,
   TValue extends GroupValue<TControls> = GroupValue<TControls>,
 > extends ParentControl<TValue> {
   //
-  constructor(private readonly controls: TControls, options: ParentControlOptions<TValue> = {}) {
+  constructor(public readonly controls: TControls, options: ParentControlOptions<TValue> = {}) {
     super(options);
+    this.controls = controls;
 
     Object.entries(controls).forEach(([name, control]) => {
       control.parent = this;
       control.name = name;
       this.controlSet.add(control);
     });
+    this.validateSync({ isBubbling: false });
   }
 
   clone(): this {
@@ -42,10 +41,7 @@ export class GroupControl<
   getControl<TPath extends GroupPath<TControls>>(
     path: TPath,
   ): ControlAtGroupPath<TControls, TPath> {
-    return getControl(this as BaseControl<unknown>, toArray(path)) as ControlAtGroupPath<
-      TControls,
-      TPath
-    >;
+    return getControl(this as BaseControl<any>, path) as ControlAtGroupPath<TControls, TPath>;
   }
 
   getValue(): TValue {
@@ -54,11 +50,15 @@ export class GroupControl<
     }, {}) as TValue;
   }
 
-  setValue(value: TValue): void {
+  setValue(value: DeepPartial<TValue> | undefined): void {
     if (typeof value === "object" && value !== null) {
-      for (const [key, _value] of Object.entries(value)) {
-        this.controls[key]?.setValue(_value);
+      for (const [key, control] of Object.entries(this.controls)) {
+        control.setValue(value[key]);
       }
+    } else {
+      this.controlSet.forEach((control) => {
+        control.setValue(undefined);
+      });
     }
   }
 

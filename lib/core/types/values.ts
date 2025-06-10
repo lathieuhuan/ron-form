@@ -2,8 +2,9 @@ import type { BaseControl } from "../base_control";
 import type { GroupControl } from "../group_control";
 import type { ItemControl } from "../item_control";
 import type { ListControl } from "../list_control";
+import { DeepPartial } from "./utils";
 
-export type GroupValue<T extends Record<string, BaseControl<any>>> = {
+export type GroupValue<T extends Record<string, BaseControl<any>>> = DeepPartial<{
   [Key in keyof T]: T[Key] extends ItemControl<infer TValue>
     ? TValue
     : T[Key] extends GroupControl<infer GChild extends Record<string, BaseControl<any>>>
@@ -11,7 +12,7 @@ export type GroupValue<T extends Record<string, BaseControl<any>>> = {
     : T[Key] extends ListControl<infer LChild>
     ? ListItemValue<LChild>[]
     : never;
-};
+}>;
 
 export type ListItemValue<T extends BaseControl<any>> = ReturnType<T["getValue"]>;
 

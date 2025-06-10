@@ -3,7 +3,7 @@ import type { ComposableValidators, ValidatorFn } from "../types";
 import { mergeErrors } from "../utils/merge_errors";
 import { trueArray } from "../utils/true_array";
 
-export type Validator<TValue = unknown> = {
+type Validator<TValue = unknown> = {
   readonly validators: Set<ValidatorFn<TValue>>;
   add: (validators: ComposableValidators<TValue>) => void;
   set: (validators: Set<ValidatorFn<TValue>>) => void;

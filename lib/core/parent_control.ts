@@ -23,7 +23,6 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   constructor(options: ParentControlOptions<TValue> = {}) {
     super(options);
     this.isAttentive = options.isAttentive ?? true;
-    this.validateSync({ isBubbling: false });
   }
 
   abstract getControl(path: NamePath): BaseControl<any> | undefined;

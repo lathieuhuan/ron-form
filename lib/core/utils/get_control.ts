@@ -3,7 +3,10 @@ import type { NamePath } from "../types";
 import { GroupControl } from "../group_control";
 import { ListControl } from "../list_control";
 
-export function getControl(parent?: BaseControl, name: NamePath = []): BaseControl | undefined {
+export function getControl<TValue = any>(
+  parent?: BaseControl<TValue>,
+  name: NamePath = [],
+): BaseControl<any> | undefined {
   if (parent && name.length) {
     const first = name.at(0)!;
     const rest = name.slice(1);

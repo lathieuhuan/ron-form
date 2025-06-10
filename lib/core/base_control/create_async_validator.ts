@@ -3,7 +3,7 @@ import type { AsyncValidatorFn, ComposableAsyncValidators } from "../types";
 import { mergeErrors } from "../utils/merge_errors";
 import { trueArray } from "../utils/true_array";
 
-export type AsyncValidator<TValue = unknown> = {
+type AsyncValidator<TValue = unknown> = {
   isActive: boolean;
   readonly validators: Set<AsyncValidatorFn<TValue>>;
   add: (validators: ComposableAsyncValidators<TValue>) => void;

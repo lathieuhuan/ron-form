@@ -34,6 +34,7 @@ export class ListControl<
     options: ParentControlOptions<(TItemValue | undefined)[]> = {},
   ) {
     super(options);
+    this.validateSync({ isBubbling: false });
   }
 
   clone(): this {
