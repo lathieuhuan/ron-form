@@ -1,7 +1,7 @@
 import { requiredValidator, setupResume } from "@lib/__tests__/test_utils";
 import { GroupControl } from "@lib/core/group_control";
 import { ItemControl } from "@lib/core/item_control";
-import { ValidatorFn } from "@lib/core/types";
+import { GroupValue, ValidatorFn } from "@lib/core/types";
 import { describe, expect, test } from "vitest";
 
 describe("GroupControl", () => {
@@ -43,8 +43,11 @@ describe("GroupControl", () => {
     });
 
     const GROUP_ERRORS = { value1: "invalid value 1" };
-    const groupValidator: ValidatorFn<{ value1: string; value2: string }> = (control) => {
-      return control.getValue()?.value1?.length ? null : GROUP_ERRORS;
+    const groupValidator: ValidatorFn<
+      GroupValue<{ value1: ItemControl<string>; value2: ItemControl<string> }>
+    > = (control) => {
+      const valueLength = control.getValue().value1?.length || 0;
+      return valueLength >= 3 ? null : GROUP_ERRORS;
     };
 
     test("initial state with validators and invalid initial value / on GroupControl", () => {

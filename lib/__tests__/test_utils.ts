@@ -6,7 +6,7 @@ import { AsyncValidatorFn, ValidatorFn } from "@lib/core/types";
 export const REQUIRED_ERROR = { required: "required" };
 export const ASYNC_ERROR = { asyncError: "asyncError" };
 
-export const requiredValidator: ValidatorFn<string> = (control) => {
+export const requiredValidator: ValidatorFn<string | undefined> = (control) => {
   return control.getValue() ? null : REQUIRED_ERROR;
 };
 

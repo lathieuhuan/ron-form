@@ -1,13 +1,6 @@
 import { BaseControl } from "./base_control";
 import { ParentControl } from "./parent_control";
-import {
-  ComposableAsyncValidators,
-  ComposableValidators,
-  ControlAtListPath,
-  ListItemValue,
-  ListPath,
-  ParentControlOptions,
-} from "./types";
+import { ControlAtListPath, ListItemValue, ListPath, ParentControlOptions } from "./types";
 import { createSubject } from "./utils/create_subject";
 import { getControl } from "./utils/get_control";
 import { toArray } from "./utils/to_array";
@@ -22,7 +15,8 @@ export type ListValue<TValue> = (TValue | undefined)[] | undefined;
 export class ListControl<
   TChildControl extends BaseControl<any> = BaseControl<any>,
   TItemValue extends ListItemValue<TChildControl> = ListItemValue<TChildControl>,
-> extends ParentControl<(TItemValue | undefined)[]> {
+  TValue extends (TItemValue | undefined)[] = (TItemValue | undefined)[],
+> extends ParentControl<TValue | undefined> {
   //
   items: ListItemControl<TItemValue>[] = [];
   private nextId = 1;
@@ -31,14 +25,14 @@ export class ListControl<
 
   constructor(
     private sampleControl: TChildControl,
-    options: ParentControlOptions<(TItemValue | undefined)[]> = {},
+    options: ParentControlOptions<TValue | undefined> = {},
   ) {
     super(options);
     this.validateSync({ isBubbling: false });
   }
 
   clone(): this {
-    const control = new ListControl<TChildControl, TItemValue>(this.sampleControl);
+    const control = new ListControl<TChildControl, TItemValue, TValue>(this.sampleControl);
     control.validator.set(this.validator.validators);
     control.asyncValidator.set(this.asyncValidator.validators);
     return control as unknown as this;
@@ -57,16 +51,25 @@ export class ListControl<
     return this.isTouchedList || super.getIsTouched();
   }
 
-  getValue(): ListValue<TItemValue> {
+  getValue(): TValue | undefined {
     const value = this.items.map((item) => item.control.getValue());
-    return value.length ? value : undefined;
+    return value.length ? (value as TValue) : undefined;
   }
 
-  setValue(value: (TItemValue | undefined)[]): void {
-    this.items.forEach((item, index) => item.control.setValue(value[index]));
+  /** set undefined will clear all items */
+  setValue(value: TValue | undefined): void {
+    if (value === undefined) {
+      this.items = [];
+      this.nextId = 1;
+      this.listSubject.next(this.items);
+      this.notifyObservers();
+      this.validateSync({ isBubbling: true });
+    } else {
+      this.items.forEach((item, index) => item.control.setValue(value[index]));
+    }
   }
 
-  patchValue(value: (TItemValue | undefined)[]): void {
+  patchValue(value: TValue): void {
     this.items.forEach((item, index) => item.control.patchValue(value[index]));
   }
 

@@ -24,7 +24,7 @@ export abstract class BaseControl<TValue = unknown> {
   protected stateSubject = createSubject<ControlState>();
   protected shouldTouchOnValidate = false;
 
-  abstract getValue(): TValue | undefined;
+  abstract getValue(): TValue;
   abstract setValue(value: TValue | undefined): void;
   abstract patchValue(value: unknown): void;
   abstract getIsValid(): boolean;

@@ -1,13 +1,13 @@
 import { BaseControl } from "./base_control";
 import { ControlOptions, ControlState } from "./types";
 
-export class ItemControl<TValue = unknown> extends BaseControl<TValue> {
+export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefined> {
   readonly defaultValue: TValue | undefined;
   private value: TValue | undefined;
   private isTouched = false;
   protected override shouldTouchOnValidate = true;
 
-  constructor(defaultValue?: TValue, options: ControlOptions<TValue> = {}) {
+  constructor(defaultValue?: TValue, options: ControlOptions<TValue | undefined> = {}) {
     super(options);
     this.defaultValue = defaultValue;
     this.value = defaultValue;
