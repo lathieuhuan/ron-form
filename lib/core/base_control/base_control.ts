@@ -127,7 +127,7 @@ export abstract class BaseControl<TValue = unknown> {
       this.notifyStateObservers();
     }
     if (options?.isBubbling && this.parent !== this) {
-      this.parent.checkIsValid?.();
+      this.parent.checkIsValid();
     }
   }
 

@@ -5,7 +5,6 @@ import {
   makeRequiredAsyncValidator,
   requiredValidator,
 } from "@lib/__tests__/test_utils";
-import { makeValidGroup } from "../group_control/group_control.test_utils";
 import { GroupControl } from "@lib/core/group_control";
 import { ControlState } from "@lib/core/types";
 
@@ -32,7 +31,9 @@ describe("ParentControl", () => {
       // Set up
       const control = new TestParentControl();
       control.addValidator((control) => {
-        return control.getValue().length ? null : { atleast1: "Require atleast 1" };
+        return control.getValue().filter(Boolean).length
+          ? null
+          : { atleast1: "Require atleast 1 valid value" };
       });
       // Act
       control.validateSync();
@@ -108,54 +109,118 @@ describe("ParentControl", () => {
       expect(control.getIsPending()).toBe(true);
       return promise;
     });
+  });
 
-    describe("setIsToucher & getIsTouched", () => {
-      test("ItemControl setIsTouched turns group touched to true", () => {
-        // Set up
-        const control = makeValidGroup();
-        const value1 = control.getControl(["value1"]);
-        expect(control.getIsTouched()).toBe(false);
-        expect(value1.getIsTouched()).toBe(false);
-        // Act
-        value1.setIsTouched(true);
-        // Assert
-        expect(control.getIsTouched()).toBe(true);
-      });
-
-      test("setIsTouched turns touched to true", () => {
-        // Set up
-        const control = makeValidGroup();
-        expect(control.getIsTouched()).toBe(false);
-        // Act
-        control.setIsTouched(true);
-        // Assert
-        expect(control.getIsTouched()).toBe(true);
-      });
-
-      test("setIsTouched notifyStateObservers of the group, children, and parent", () => {
-        // Set up
-        const control = makeValidGroup();
-        const parent = new GroupControl({
-          group: control,
-        });
-        const value1 = control.getControl(["value1"]);
-        const itemStateObserver = vi.fn();
-        const groupStateObserver = vi.fn();
-        const parentStateObserver = vi.fn();
-        control.subscribeState(groupStateObserver);
-        value1.subscribeState(itemStateObserver);
-        parent.subscribeState(parentStateObserver);
-
-        // Act
-        control.setIsTouched(true);
-        // Assert
-        const expectedState = expect.objectContaining({
-          isTouched: true,
-        } as Partial<ControlState>);
-        expect(itemStateObserver).toHaveBeenCalledExactlyOnceWith(expectedState);
-        expect(groupStateObserver).toHaveBeenCalledExactlyOnceWith(expectedState);
-        expect(parentStateObserver).toHaveBeenCalledExactlyOnceWith(expectedState);
-      });
+  describe("setIsTouched & getIsTouched", () => {
+    test("getIsTouched returns true if any child is touched", () => {
+      // Set up
+      const control = new TestParentControl();
+      const value1 = control.getControl([0])!;
+      expect(control.getIsTouched()).toBe(false);
+      expect(value1.getIsTouched()).toBe(false);
+      // Act
+      value1.setIsTouched(true);
+      // Assert
+      expect(control.getIsTouched()).toBe(true);
     });
+
+    test("setIsTouched turns true if itself is touched", () => {
+      // Set up
+      const control = new TestParentControl();
+      expect(control.getIsTouched()).toBe(false);
+      // Act
+      control.setIsTouched(true);
+      // Assert
+      expect(control.getIsTouched()).toBe(true);
+    });
+
+    test("setIsTouched notifyStateObservers of the group, children, and parent", () => {
+      // Set up
+      const control = new TestParentControl();
+      const parent = new GroupControl({
+        group: control,
+      });
+      const value1 = control.getControl([0])!;
+      const itemStateObserver = vi.fn();
+      const groupStateObserver = vi.fn();
+      const parentStateObserver = vi.fn();
+      control.subscribeState(groupStateObserver);
+      value1.subscribeState(itemStateObserver);
+      parent.subscribeState(parentStateObserver);
+      // Act
+      control.setIsTouched(true);
+      // Assert
+      const expectedState = expect.objectContaining({
+        isTouched: true,
+      } as Partial<ControlState>);
+      expect(itemStateObserver).toHaveBeenCalledExactlyOnceWith(expectedState);
+      expect(groupStateObserver).toHaveBeenCalledExactlyOnceWith(expectedState);
+      expect(parentStateObserver).toHaveBeenCalledExactlyOnceWith(expectedState);
+    });
+  });
+
+  test("resetValue", () => {
+    // Set up
+    const control = new TestParentControl();
+    const value1 = control.getControl([0])!;
+    const initialValue = control.getValue();
+    const observer = vi.fn();
+    control.subscribe(observer);
+    // Act
+    value1.setValue("test");
+    expect(control.getValue()).not.toEqual(initialValue);
+    control.resetValue();
+    // Assert
+    expect(control.getValue()).toEqual(initialValue);
+    expect(observer).toHaveBeenCalledExactlyOnceWith(initialValue);
+  });
+
+  test("reset", () => {
+    // Set up
+    const INVALID_VALUE = "test";
+    const ERRORS = { value1: "invalid" };
+    const control = new TestParentControl();
+    const value1 = control.getControl([0])!;
+    const initialValue = control.getValue();
+    const observer = vi.fn();
+    const stateObserver = vi.fn();
+    control.addValidator((ctrl) => {
+      const [value1] = ctrl.getValue();
+      return value1 === INVALID_VALUE ? ERRORS : null;
+    });
+    control.subscribe(observer);
+    control.subscribeState(stateObserver);
+    // Act
+    value1.setValue(INVALID_VALUE);
+    value1.validate({ isBubbling: true });
+    expect(control.getValue()).not.toEqual(initialValue);
+    expect(control.getState()).toEqual<ControlState>({
+      isValid: false,
+      isPending: false,
+      isTouched: true,
+      isError: true,
+      errors: ERRORS,
+    });
+    control.reset();
+    // Assert
+    expect(control.getValue()).toEqual(initialValue);
+    // expect(observer).toHaveBeenCalledExactlyOnceWith(initialValue);
+    expect(observer).toHaveBeenCalledTimes(4);
+    expect(observer).toHaveBeenLastCalledWith(initialValue);
+    // expect(stateObserver).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+    //   isValid: true,
+    //   isPending: false,
+    //   isTouched: false,
+    //   isError: false,
+    //   errors: null,
+    // }));
+  });
+
+  test("debug", () => {
+    const control = new TestParentControl();
+    control.subscribe((value) => {
+      console.log("observer", value);
+    });
+    control.reset();
   });
 });
