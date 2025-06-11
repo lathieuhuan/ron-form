@@ -59,7 +59,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
       control.setIsTouched(isTouched);
       control.notifyStateObservers({ isBubbling: false });
     });
-    this.notifyStateObservers();
+    this.notifyStateObservers({ isBubbling: true });
   }
 
   getState(): ControlState {

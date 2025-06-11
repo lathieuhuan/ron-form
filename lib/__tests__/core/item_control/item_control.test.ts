@@ -1,5 +1,5 @@
+import { REQUIRED_ERROR, requiredValidator } from "@lib/__tests__/test_utils";
 import { describe, expect, it, test, vi } from "vitest";
-import { REQUIRED_ERROR, requiredValidator } from "../../test_utils";
 import { TestItemControl } from "./test_item_control";
 
 describe("ItemControl", () => {
@@ -47,6 +47,7 @@ describe("ItemControl", () => {
   test("setIsTouched", () => {
     // Set up
     const control = new TestItemControl("");
+    expect(control.getIsTouched()).toBe(false);
     // Act
     control.setIsTouched(true);
     // Assert

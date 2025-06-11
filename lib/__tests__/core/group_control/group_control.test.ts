@@ -1,17 +1,19 @@
-import { requiredValidator, setupResume } from "@lib/__tests__/test_utils";
+import { setupResume } from "@lib/__tests__/core/test_utils";
 import { GroupControl } from "@lib/core/group_control";
-import { ItemControl } from "@lib/core/item_control";
-import { GroupValue, ValidatorFn } from "@lib/core/types";
-import { describe, expect, test } from "vitest";
+import { ControlState } from "@lib/core/types";
+import { describe, expect, test, vi } from "vitest";
+import {
+  GROUP_ERRORS,
+  INITIAL_VALUE_1,
+  makeInvalidGroup,
+  makeValidGroup,
+} from "./group_control.test_utils";
 
 describe("GroupControl", () => {
   describe("constructor", () => {
     test("initial state with no validators", () => {
       // Set up
-      const control = new GroupControl({
-        value1: new ItemControl<string>(),
-        value2: new ItemControl<string>(),
-      });
+      const control = makeValidGroup();
       // Assert
       expect(control.getValue()).toEqual({
         value1: undefined,
@@ -23,14 +25,37 @@ describe("GroupControl", () => {
       expect(control.errors).toEqual(null);
     });
 
-    test("initial state with validators and invalid initial value / on ItemControl", () => {
+    test("initial state with validators & valid initial value / on ItemControl", () => {
       // Set up
-      const control = new GroupControl({
-        value1: new ItemControl<string>(undefined, {
-          validators: [requiredValidator],
-        }),
-        value2: new ItemControl<string>(),
+      const control = makeValidGroup("item");
+      // Assert
+      expect(control.getValue()).toEqual({
+        value1: INITIAL_VALUE_1,
+        value2: undefined,
       });
+      expect(control.getIsTouched()).toBe(false);
+      expect(control.getIsValid()).toBe(true);
+      expect(control.getIsPending()).toBe(false);
+      expect(control.errors).toEqual(null);
+    });
+
+    test("initial state with validators & valid initial value / on GroupControl ", () => {
+      // Set up
+      const control = makeValidGroup("group");
+      // Assert
+      expect(control.getValue()).toEqual({
+        value1: INITIAL_VALUE_1,
+        value2: undefined,
+      });
+      expect(control.getIsTouched()).toBe(false);
+      expect(control.getIsValid()).toBe(true);
+      expect(control.getIsPending()).toBe(false);
+      expect(control.errors).toEqual(null);
+    });
+
+    test("initial state with validators & invalid initial value / on ItemControl", () => {
+      // Set up
+      const control = makeInvalidGroup("item");
       // Assert
       expect(control.getValue()).toEqual({
         value1: undefined,
@@ -42,25 +67,9 @@ describe("GroupControl", () => {
       expect(control.errors).toEqual(null); // errors are on ItemControl
     });
 
-    const GROUP_ERRORS = { value1: "invalid value 1" };
-    const groupValidator: ValidatorFn<
-      GroupValue<{ value1: ItemControl<string>; value2: ItemControl<string> }>
-    > = (control) => {
-      const valueLength = control.getValue().value1?.length || 0;
-      return valueLength >= 3 ? null : GROUP_ERRORS;
-    };
-
-    test("initial state with validators and invalid initial value / on GroupControl", () => {
+    test("initial state with validators & invalid initial value / on GroupControl", () => {
       // Set up
-      const control = new GroupControl(
-        {
-          value1: new ItemControl<string>(),
-          value2: new ItemControl<string>(),
-        },
-        {
-          validators: [groupValidator],
-        },
-      );
+      const control = makeInvalidGroup("group");
       // Assert
       expect(control.getValue()).toEqual({
         value1: undefined,
@@ -70,28 +79,6 @@ describe("GroupControl", () => {
       expect(control.getIsValid()).toBe(false);
       expect(control.getIsPending()).toBe(false);
       expect(control.errors).toEqual(GROUP_ERRORS);
-    });
-
-    test("initial state with validators and valid initial value / on GroupControl", () => {
-      // Set up
-      const control = new GroupControl(
-        {
-          value1: new ItemControl<string>("VALUE"),
-          value2: new ItemControl<string>(),
-        },
-        {
-          validators: [groupValidator],
-        },
-      );
-      // Assert
-      expect(control.getValue()).toEqual({
-        value1: "VALUE",
-        value2: undefined,
-      });
-      expect(control.getIsTouched()).toBe(false);
-      expect(control.getIsValid()).toBe(true);
-      expect(control.getIsPending()).toBe(false);
-      expect(control.errors).toEqual(null);
     });
   });
 

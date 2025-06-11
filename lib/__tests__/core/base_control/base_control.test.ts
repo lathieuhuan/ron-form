@@ -1,11 +1,11 @@
-import { ValidateOptions } from "@lib/core/types";
-import { describe, expect, it, test, vi } from "vitest";
 import {
   ASYNC_ERROR,
-  asyncValidator,
   REQUIRED_ERROR,
+  requiredAsyncValidator,
   requiredValidator,
 } from "@lib/__tests__/test_utils";
+import { ValidateOptions } from "@lib/core/types";
+import { describe, expect, it, test, vi } from "vitest";
 import { TestBaseControl } from "./test_base_control";
 
 describe("BaseControl", () => {
@@ -33,7 +33,7 @@ describe("BaseControl", () => {
 
   test("addValidator & removeValidator", () => {
     // Set up
-    const control = new TestBaseControl<string | null>();
+    const control = new TestBaseControl<string | undefined>();
     // Act
     control.addValidator(requiredValidator);
     // Assert
@@ -46,24 +46,24 @@ describe("BaseControl", () => {
 
   test("addAsyncValidator & removeAsyncValidator", () => {
     // Set up
-    const control = new TestBaseControl<string | null>();
+    const control = new TestBaseControl<string | undefined>();
     // Act
-    control.addAsyncValidator(asyncValidator);
+    control.addAsyncValidator(requiredAsyncValidator);
     // Assert
-    expect(control._asyncValidator.validators).toContain(asyncValidator);
+    expect(control._asyncValidator.validators).toContain(requiredAsyncValidator);
     // Act
-    control.removeAsyncValidator(asyncValidator);
+    control.removeAsyncValidator(requiredAsyncValidator);
     // Assert
-    expect(control._asyncValidator.validators).not.toContain(asyncValidator);
+    expect(control._asyncValidator.validators).not.toContain(requiredAsyncValidator);
   });
 
   describe("validateSync", () => {
     it("runs validators, updates errors & isValid, calls handleValidateResult, returns errors", () => {
       // Set up
-      const control = new TestBaseControl<string | null>({
+      const control = new TestBaseControl<string | undefined>({
         validators: [requiredValidator],
       });
-      control.setValue(null);
+      control.setValue(undefined);
       control.handleValidateResult = vi.fn();
       // Act
       const errors = control.validateSync();
@@ -75,10 +75,10 @@ describe("BaseControl", () => {
 
     it("calls onError on error", () => {
       // Set up
-      const control = new TestBaseControl<string | null>({
+      const control = new TestBaseControl<string | undefined>({
         validators: [requiredValidator],
       });
-      control.setValue(null);
+      control.setValue(undefined);
       const onError = vi.fn();
       // Act
       control.validateSync({ onError });
@@ -88,7 +88,7 @@ describe("BaseControl", () => {
 
     it("passes options to handleValidateResult", () => {
       // Set up
-      const control = new TestBaseControl<string | null>({
+      const control = new TestBaseControl<string | undefined>({
         validators: [requiredValidator],
       });
       const options: ValidateOptions = {
@@ -97,7 +97,7 @@ describe("BaseControl", () => {
         isMuted: true,
         onError: () => {},
       };
-      control.setValue(null);
+      control.setValue(undefined);
       control.handleValidateResult = vi.fn();
       // Act
       control.validateSync(options);
@@ -109,10 +109,10 @@ describe("BaseControl", () => {
   describe("validateAsync", () => {
     it("runs async validators, updates errors & isValid, calls handleValidateResult, throws errors on error", async () => {
       // Set up
-      const control = new TestBaseControl<string | null>({
-        asyncValidators: [asyncValidator],
+      const control = new TestBaseControl<string | undefined>({
+        asyncValidators: [requiredAsyncValidator],
       });
-      control.setValue(null);
+      control.setValue(undefined);
       control.handleValidateResult = vi.fn();
       // Act
       await control.validateAsync().catch((error) => {
@@ -125,11 +125,11 @@ describe("BaseControl", () => {
 
     it("calls onError on error", async () => {
       // Set up
-      const control = new TestBaseControl<string | null>({
-        asyncValidators: [asyncValidator],
+      const control = new TestBaseControl<string | undefined>({
+        asyncValidators: [requiredAsyncValidator],
       });
       const onError = vi.fn();
-      control.setValue(null);
+      control.setValue(undefined);
       // Act
       await control.validateAsync({ onError }).catch((error) => {
         expect(error).toEqual(ASYNC_ERROR);
@@ -140,8 +140,8 @@ describe("BaseControl", () => {
 
     it("passes options to handleValidateResult", async () => {
       // Set up
-      const control = new TestBaseControl<string | null>({
-        asyncValidators: [asyncValidator],
+      const control = new TestBaseControl<string | undefined>({
+        asyncValidators: [requiredAsyncValidator],
       });
       const options: ValidateOptions = {
         shouldTouch: false,
@@ -149,7 +149,7 @@ describe("BaseControl", () => {
         isMuted: true,
         onError: () => {},
       };
-      control.setValue(null);
+      control.setValue(undefined);
       control.handleValidateResult = vi.fn();
       // Act
       await control.validateAsync(options).catch(() => {});
@@ -185,7 +185,7 @@ describe("BaseControl", () => {
     const control = new TestBaseControl({
       validators: [requiredValidator],
     });
-    control.setValue(null);
+    control.setValue(undefined);
     // Act
     control._resetState();
     // Assert

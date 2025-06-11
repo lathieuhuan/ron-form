@@ -7,7 +7,7 @@ import {
   setupMatrix3dComplex,
   setupMatrix3dSimple,
   setupResume,
-} from "@lib/__tests__/test_utils";
+} from "@lib/__tests__/core/test_utils";
 import { ItemControl } from "@lib/core/item_control";
 import { ListValue } from "@lib/core/list_control";
 import { GroupValue } from "@lib/core/types";

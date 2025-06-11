@@ -8,7 +8,7 @@ import {
   setupMatrix3dSimple,
   setupNestedGroup,
   setupResume,
-} from "@lib/__tests__/test_utils";
+} from "@lib/__tests__/core/test_utils";
 import { GroupControl } from "@lib/core/group_control";
 import { ItemControl } from "@lib/core/item_control";
 import { ListControl } from "@lib/core/list_control";
