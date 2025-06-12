@@ -28,17 +28,10 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
   getValue() {
     return this.value === "" ? undefined : this.value;
   }
-
   setValue(value: TValue): void {
-    this.value = value === "" ? (null as unknown as TValue) : value;
-    this.notifyObservers();
-
-    if (!this.isTouched) {
-      this.setIsTouched(true);
-      this.notifyStateObservers();
-    }
+    this.value = value === "" ? undefined : value;
+    this.notifyValueObservers();
   }
-
   // To comply with BaseControl.patchValue
   patchValue(value: TValue): void {
     this.setValue(value);
@@ -55,7 +48,6 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
   getIsTouched(): boolean {
     return this.isTouched;
   }
-
   setIsTouched(isTouched: boolean): void {
     this.isTouched = isTouched;
   }
@@ -72,8 +64,13 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
 
   resetValue(): void {
     this.value = this.defaultValue;
-    this.notifyObservers();
+    this.notifyValueObservers();
     // TODO: abort async validator
+  }
+
+  override resetState(): void {
+    super.resetState();
+    this.isTouched = false;
   }
 
   reset(): void {
@@ -84,10 +81,5 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
 
   override checkIsValid(): void {
     // to comply with BaseControl.checkIsValid
-  }
-
-  override resetState(): void {
-    super.resetState();
-    this.isTouched = false;
   }
 }

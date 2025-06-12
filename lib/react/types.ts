@@ -18,7 +18,7 @@ type OmittedProps =
   | "isAttentive"
   | "controlSet"
   | "setIsTouched"
-  | "notifyObservers"
+  | "notifyValueObservers"
   | "notifyStateObservers"
   | "subscribe"
   | "subscribeState"

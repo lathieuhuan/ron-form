@@ -3,7 +3,6 @@ import type {
   ComposableValidators,
   ControlOptions,
   ControlState,
-  NotifyStateOptions,
   ValidateOptions,
   ValidationErrors,
 } from "../types";
@@ -59,12 +58,22 @@ export abstract class BaseControl<TValue = unknown> {
     this.validateSync({ shouldTouch: false });
   }
 
+  // ===== VALIDATION =====
+
   addValidator(validators: ComposableValidators<TValue>): void {
     this.validator.add(validators);
   }
 
   removeValidator(validators: ComposableValidators<TValue>): void {
     this.validator.remove(validators);
+  }
+
+  addAsyncValidator(validators: ComposableAsyncValidators<TValue>): void {
+    this.asyncValidator.add(validators);
+  }
+
+  removeAsyncValidator(validators: ComposableAsyncValidators<TValue>): void {
+    this.asyncValidator.remove(validators);
   }
 
   validateSync(options?: ValidateOptions): ValidationErrors | null {
@@ -83,14 +92,6 @@ export abstract class BaseControl<TValue = unknown> {
       options?.onError?.(this.errors);
     }
     return this.errors;
-  }
-
-  addAsyncValidator(validators: ComposableAsyncValidators<TValue>): void {
-    this.asyncValidator.add(validators);
-  }
-
-  removeAsyncValidator(validators: ComposableAsyncValidators<TValue>): void {
-    this.asyncValidator.remove(validators);
   }
 
   /** Should use it only when you know async validation is enabled for better performance */
@@ -131,6 +132,8 @@ export abstract class BaseControl<TValue = unknown> {
     }
   }
 
+  // ===== OBSERVERS =====
+
   subscribe(subscriber: Observer<TValue | undefined>) {
     return this.valueSubject.subscribe(subscriber);
   }
@@ -139,21 +142,27 @@ export abstract class BaseControl<TValue = unknown> {
     return this.stateSubject.subscribe(subscriber);
   }
 
-  notifyObservers(): void {
+  notifyValueObservers(): void {
     this.valueSubject.next(() => this.getValue());
+  }
+
+  notifyStateObservers(): void {
+    this.stateSubject.next(() => this.getState());
+  }
+
+  notifyValueObserversUpwards(): void {
+    this.notifyValueObservers();
 
     if (this.parent !== this) {
-      this.parent.notifyObservers();
+      this.parent.notifyValueObservers();
     }
   }
 
-  notifyStateObservers(options?: NotifyStateOptions): void {
-    this.stateSubject.next(() => this.getState());
+  notifyStateObserversUpwards(): void {
+    this.notifyStateObservers();
 
-    const isBubbling = options?.isBubbling ?? true;
-
-    if (isBubbling && this.parent !== this) {
-      this.parent.notifyStateObservers(options);
+    if (this.parent !== this) {
+      this.parent.notifyStateObservers();
     }
   }
 }

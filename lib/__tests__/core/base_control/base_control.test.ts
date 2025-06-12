@@ -9,13 +9,13 @@ import { describe, expect, it, test, vi } from "vitest";
 import { TestBaseControl } from "./test_base_control";
 
 describe("BaseControl", () => {
-  test("observers are notified with result of getValue when notifyObservers", () => {
+  test("observers are notified with result of getValue when notifyValueObservers", () => {
     // Set up
     const control = new TestBaseControl();
     const observer = vi.fn();
     control.subscribe(observer);
     // Act
-    control.notifyObservers();
+    control.notifyValueObservers();
     // Assert
     expect(observer).toHaveBeenCalledWith(control.getValue());
   });

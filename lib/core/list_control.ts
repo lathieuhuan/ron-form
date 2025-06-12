@@ -62,7 +62,7 @@ export class ListControl<
       this.items = [];
       this.nextId = 1;
       this.listSubject.next(this.items);
-      this.notifyObservers();
+      this.notifyValueObservers();
       this.validateSync({ isBubbling: true });
     } else {
       this.items.forEach((item, index) => item.control.setValue(value[index]));
@@ -89,7 +89,7 @@ export class ListControl<
     this.nextId++;
     this.listSubject.next(this.items);
     this.isTouchedList = true;
-    this.notifyObservers();
+    this.notifyValueObservers();
     item.validateSync({ isBubbling: true });
 
     if (value) {
@@ -107,7 +107,7 @@ export class ListControl<
       this.controlSet.delete(removedItem.control);
       this.listSubject.next(this.items);
       this.isTouchedList = true;
-      this.notifyObservers();
+      this.notifyValueObservers();
       this.validateSync({ isBubbling: true });
     }
   }

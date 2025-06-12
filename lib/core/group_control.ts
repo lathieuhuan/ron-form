@@ -60,6 +60,7 @@ export class GroupControl<
         control.setValue(undefined);
       });
     }
+    this.notifyObserversUpwards();
   }
 
   patchValue(value: DeepPartial<TValue>): void {
@@ -67,6 +68,7 @@ export class GroupControl<
       for (const [key, _value] of Object.entries(value)) {
         this.controls[key]?.patchValue(_value);
       }
+      this.notifyObserversUpwards();
     }
   }
 }

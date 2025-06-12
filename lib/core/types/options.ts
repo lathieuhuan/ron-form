@@ -1,13 +1,5 @@
 import { ComposableAsyncValidators, ComposableValidators } from "./validation";
 
-export type NotifyStateOptions = {
-  /**
-   * Whether to call notifyStateObservers on the parent whenever
-   * this control notifyStateObservers. Default to true.
-   */
-  isBubbling?: boolean;
-};
-
 export type ControlOptions<TValue = unknown> = {
   validators?: ComposableValidators<TValue>;
   asyncValidators?: ComposableAsyncValidators<TValue>;

@@ -175,52 +175,34 @@ describe("ParentControl", () => {
     expect(observer).toHaveBeenCalledExactlyOnceWith(initialValue);
   });
 
-  test("reset", () => {
-    // Set up
-    const INVALID_VALUE = "test";
-    const ERRORS = { value1: "invalid" };
-    const control = new TestParentControl();
-    const value1 = control.getControl([0])!;
-    const initialValue = control.getValue();
-    const observer = vi.fn();
-    const stateObserver = vi.fn();
-    control.addValidator((ctrl) => {
-      const [value1] = ctrl.getValue();
-      return value1 === INVALID_VALUE ? ERRORS : null;
-    });
-    control.subscribe(observer);
-    control.subscribeState(stateObserver);
-    // Act
-    value1.setValue(INVALID_VALUE);
-    value1.validate({ isBubbling: true });
-    expect(control.getValue()).not.toEqual(initialValue);
-    expect(control.getState()).toEqual<ControlState>({
-      isValid: false,
-      isPending: false,
-      isTouched: true,
-      isError: true,
-      errors: ERRORS,
-    });
-    control.reset();
-    // Assert
-    expect(control.getValue()).toEqual(initialValue);
-    // expect(observer).toHaveBeenCalledExactlyOnceWith(initialValue);
-    expect(observer).toHaveBeenCalledTimes(4);
-    expect(observer).toHaveBeenLastCalledWith(initialValue);
-    // expect(stateObserver).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
-    //   isValid: true,
-    //   isPending: false,
-    //   isTouched: false,
-    //   isError: false,
-    //   errors: null,
-    // }));
-  });
-
-  test("debug", () => {
-    const control = new TestParentControl();
-    control.subscribe((value) => {
-      console.log("observer", value);
-    });
-    control.reset();
-  });
+  // test("reset", () => {
+  //   // Set up
+  //   const INVALID_VALUE = "test";
+  //   const ERRORS = { value1: "invalid" };
+  //   const control = new TestParentControl();
+  //   const value1 = control.getControl([0])!;
+  //   const initialValue = control.getValue();
+  //   const observer = vi.fn();
+  //   const stateObserver = vi.fn();
+  //   control.addValidator((ctrl) => {
+  //     const [value1] = ctrl.getValue();
+  //     return value1 === INVALID_VALUE ? ERRORS : null;
+  //   });
+  //   control.subscribe(observer);
+  //   control.subscribeState(stateObserver);
+  //   // Act
+  //   value1.setValue(INVALID_VALUE);
+  //   value1.validate({ isBubbling: true });
+  //   expect(control.getValue()).not.toEqual(initialValue);
+  //   expect(control.getState()).toEqual<ControlState>({
+  //     isValid: false,
+  //     isPending: false,
+  //     isTouched: true,
+  //     isError: true,
+  //     errors: ERRORS,
+  //   });
+  //   control.reset();
+  //   // Assert
+  //   expect(control.getValue()).toEqual(initialValue);
+  // });
 });

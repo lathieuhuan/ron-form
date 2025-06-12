@@ -55,16 +55,7 @@ describe("ItemControl", () => {
   });
 
   describe("setValue", () => {
-    it("updates value", () => {
-      // Set up
-      const control = new TestItemControl("");
-      // Act
-      control.setValue(VALID_VALUE);
-      // Assert
-      expect(control.getValue()).toBe(VALID_VALUE);
-    });
-
-    it("notifies observers", () => {
+    it("updates value and notifies observers when field is not touched", () => {
       // Set up
       const control = new TestItemControl("");
       const observer = vi.fn();
@@ -72,23 +63,11 @@ describe("ItemControl", () => {
       // Act
       control.setValue(VALID_VALUE);
       // Assert
+      expect(control.getValue()).toBe(VALID_VALUE);
       expect(observer).toHaveBeenCalledWith(VALID_VALUE);
     });
 
-    it("when field is not touched turns isTouched to true and notify state observers", () => {
-      // Set up
-      const control = new TestItemControl("");
-      const observer = vi.fn();
-      control.subscribeState(observer);
-      expect(control.getIsTouched()).toBe(false);
-      // Act
-      control.setValue(VALID_VALUE);
-      // Assert
-      expect(control.getIsTouched()).toBe(true);
-      expect(observer).toHaveBeenCalledWith(control.getState());
-    });
-
-    it("when field is touched does not notify state observers", () => {
+    it("does not notify state observers when field is touched", () => {
       // Set up
       const control = new TestItemControl("");
       const observer = vi.fn();

@@ -77,27 +77,25 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
 
   resetValue(): void {
     this.controlSet.forEach((control) => control.resetValue());
-    this.notifyObservers();
+    this.notifyValueObservers();
     // TODO: abort async validator
   }
 
   reset(): void {
     this.controlSet.forEach((control) => control.reset());
-    this.notifyObservers();
+    this.notifyValueObservers();
     this.resetState();
     // TODO: abort async validator
   }
 
-  setFieldValue(path: NamePath, value: any): void {
-    this.getControl(path)?.setValue(value);
-  }
+  checkIsValid(): void {
+    if (this.isAttentive) {
+      this.validateSync(); // also notifyStateObservers
 
-  getFieldValue(path: NamePath): any {
-    return this.getControl(path)?.getValue();
-  }
-
-  validateField(path: NamePath, options?: ValidateOptions): ValidationErrors | null {
-    return this.getControl(path)?.validate(options) ?? null;
+      if (this.parent instanceof ParentControl && this.parent !== this) {
+        this.parent.checkIsValid();
+      }
+    }
   }
 
   validateAllChildren(options?: ValidateOptions) {
@@ -121,21 +119,25 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
     return this.getIsValid();
   }
 
+  // ===== DELEGATE to child controls =====
+
+  setFieldValue(path: NamePath, value: any): void {
+    this.getControl(path)?.setValue(value);
+  }
+
+  getFieldValue(path: NamePath): any {
+    return this.getControl(path)?.getValue();
+  }
+
+  validateField(path: NamePath, options?: ValidateOptions): ValidationErrors | null {
+    return this.getControl(path)?.validate(options) ?? null;
+  }
+
   resetFieldValue(path: NamePath): void {
     this.getControl(path)?.resetValue();
   }
 
   resetField(path: NamePath): void {
     this.getControl(path)?.reset();
-  }
-
-  checkIsValid(): void {
-    if (this.isAttentive) {
-      this.validateSync(); // also notifyStateObservers
-
-      if (this.parent instanceof ParentControl && this.parent !== this) {
-        this.parent.checkIsValid();
-      }
-    }
   }
 }
