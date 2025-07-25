@@ -1,5 +1,5 @@
-import { BaseControl } from "@lib/core/base_control";
 import { ControlState } from "@lib/core/types";
+import { BaseControl } from "../BaseControl";
 
 export class TestBaseControl<TValue = unknown> extends BaseControl<TValue> {
   value = null as unknown as TValue;
@@ -10,10 +10,6 @@ export class TestBaseControl<TValue = unknown> extends BaseControl<TValue> {
 
   get _asyncValidator() {
     return this.asyncValidator;
-  }
-
-  _resetState(): void {
-    this.resetState();
   }
 
   clone(): this {
@@ -32,7 +28,7 @@ export class TestBaseControl<TValue = unknown> extends BaseControl<TValue> {
     this.value = value;
   }
   getIsValid(): boolean {
-    return this.isValid;
+    return true;
   }
   getIsPending(): boolean {
     return this.isPending;
@@ -51,6 +47,7 @@ export class TestBaseControl<TValue = unknown> extends BaseControl<TValue> {
     };
   }
   resetValue(): void {}
+  resetState(): void {}
   reset(): void {}
   checkIsValid(): boolean {
     return true;

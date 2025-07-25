@@ -1,7 +1,7 @@
-import { BaseControl } from "@lib/core/base_control";
+import { BaseControl } from "@lib/core/BaseControl";
 import { FormControl } from "@lib/core/form_control";
 import { GroupControl } from "@lib/core/group_control";
-import { ItemControl } from "@lib/core/item_control";
+import { ItemControl } from "@lib/core/controls/ItemControl";
 import { ListControl } from "@lib/core/list_control";
 import { ParentControlOptions } from "@lib/core/parent_control";
 import {

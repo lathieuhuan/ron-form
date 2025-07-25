@@ -1,7 +1,8 @@
-import type { BaseControl } from "./base_control";
-import type { ComposableValidators, ValidatorFn } from "../types";
-import { mergeErrors } from "../utils/merge_errors";
-import { trueArray } from "../utils/true_array";
+import type { ComposableValidators, ValidatorFn } from "@lib/core/types";
+import type { BaseControl } from "./BaseControl";
+
+import { mergeErrors } from "@lib/core/utils/merge_errors";
+import { trueArray } from "@lib/core/utils/true_array";
 
 type Validator<TValue = unknown> = {
   readonly validators: Set<ValidatorFn<TValue>>;

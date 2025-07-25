@@ -1,5 +1,5 @@
-export { BaseControl } from "./core/base_control";
-export { ItemControl } from "./core/item_control";
+export { BaseControl } from "./core/BaseControl";
+export { ItemControl } from "./core/controls/ItemControl";
 export { GroupControl } from "./core/group_control";
 export { ListControl } from "./core/list_control";
 export { FormControl } from "./core/form_control";

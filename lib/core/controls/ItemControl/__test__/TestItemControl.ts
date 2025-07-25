@@ -1,3 +1,3 @@
-import { ItemControl } from "@lib/core/item_control";
+import { ItemControl } from "../ItemControl";
 
 export class TestItemControl<TValue> extends ItemControl<TValue> {}

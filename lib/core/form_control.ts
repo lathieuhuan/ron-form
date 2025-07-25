@@ -1,4 +1,4 @@
-import { BaseControl } from "./base_control";
+import { BaseControl } from "./BaseControl";
 import { GroupControl } from "./group_control";
 import { ParentControlOptions } from "./parent_control";
 import { ComposableAsyncValidators, ComposableValidators, GroupValue } from "./types";

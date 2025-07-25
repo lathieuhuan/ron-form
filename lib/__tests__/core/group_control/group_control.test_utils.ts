@@ -1,6 +1,6 @@
 import { requiredValidator } from "@lib/__tests__/test_utils";
 import { GroupControl } from "@lib/core/group_control";
-import { ItemControl } from "@lib/core/item_control";
+import { ItemControl } from "@lib/core/controls/ItemControl";
 import { GroupValue, ValidatorFn } from "@lib/core/types";
 
 export const INITIAL_VALUE_1 = "value";

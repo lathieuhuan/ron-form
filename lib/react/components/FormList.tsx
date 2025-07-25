@@ -4,7 +4,7 @@ import { ListControl } from "@lib/core/list_control";
 import { NamePath } from "@lib/core/types";
 import { useControl } from "../hooks/useControl";
 import { ReactBaseControl } from "../types";
-import { BaseControl } from "@lib/core/base_control";
+import { BaseControl } from "@lib/core/BaseControl";
 
 type ReactListItemControl<
   TValue = unknown,

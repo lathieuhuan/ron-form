@@ -1,7 +1,7 @@
 import { cloneElement, SyntheticEvent, useEffect, useState } from "react";
 
 import { ParentControl } from "@lib/core/parent_control";
-import { ItemControl } from "@lib/core/item_control";
+import { ItemControl } from "@lib/core/controls/ItemControl";
 import { NamePath } from "@lib/core/types";
 import { useControl } from "../hooks";
 import { ReactItemControl } from "../types";

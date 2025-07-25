@@ -8,7 +8,7 @@ import {
   setupMatrix3dSimple,
   setupResume,
 } from "@lib/__tests__/core/test_utils";
-import { ItemControl } from "@lib/core/item_control";
+import { ItemControl } from "@lib/core/controls/ItemControl";
 import { ListValue } from "@lib/core/list_control";
 import { GroupValue } from "@lib/core/types";
 

@@ -1,7 +1,8 @@
-import type { BaseControl } from "./base_control";
-import type { AsyncValidatorFn, ComposableAsyncValidators } from "../types";
-import { mergeErrors } from "../utils/merge_errors";
-import { trueArray } from "../utils/true_array";
+import type { AsyncValidatorFn, ComposableAsyncValidators } from "@lib/core/types";
+import type { BaseControl } from "./BaseControl";
+
+import { mergeErrors } from "@lib/core/utils/merge_errors";
+import { trueArray } from "@lib/core/utils/true_array";
 
 type AsyncValidator<TValue = unknown> = {
   isActive: boolean;

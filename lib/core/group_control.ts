@@ -1,4 +1,4 @@
-import { BaseControl } from "./base_control";
+import { BaseControl } from "./BaseControl";
 import { ParentControl } from "./parent_control";
 import {
   ControlAtGroupPath,

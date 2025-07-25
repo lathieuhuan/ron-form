@@ -1,4 +1,4 @@
-import type { BaseControl } from "../base_control";
+import type { BaseControl } from "../BaseControl";
 import type { NamePath } from "../types";
 import { GroupControl } from "../group_control";
 import { ListControl } from "../list_control";

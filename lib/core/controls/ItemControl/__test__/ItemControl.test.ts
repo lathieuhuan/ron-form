@@ -1,6 +1,6 @@
-import { REQUIRED_ERROR, requiredValidator } from "@lib/__tests__/test_utils";
+import { REQUIRED_ERROR, requiredValidator } from "@lib/core/test/test_utils";
 import { describe, expect, it, test, vi } from "vitest";
-import { TestItemControl } from "./test_item_control";
+import { TestItemControl } from "./TestItemControl";
 
 describe("ItemControl", () => {
   const VALID_VALUE = "xxx";
@@ -59,7 +59,7 @@ describe("ItemControl", () => {
       // Set up
       const control = new TestItemControl("");
       const observer = vi.fn();
-      control.subscribe(observer);
+      control.subscribeValue(observer);
       // Act
       control.setValue(VALID_VALUE);
       // Assert
@@ -84,7 +84,7 @@ describe("ItemControl", () => {
     // Set up
     const control = new TestItemControl(VALID_VALUE);
     const observer = vi.fn();
-    control.subscribe(observer);
+    control.subscribeValue(observer);
     // Act
     control.resetValue();
     // Assert
@@ -111,7 +111,7 @@ describe("ItemControl", () => {
     const stateObserver = vi.fn();
     const prevIsValid = control.getIsValid();
     const prevErrors = control.errors;
-    control.subscribe(observer);
+    control.subscribeValue(observer);
     control.subscribeState(stateObserver);
     // Act
     control.reset();
@@ -144,7 +144,7 @@ describe("ItemControl", () => {
       expect(control.getIsTouched()).toBe(false);
 
       // Act
-      control.validateSync({ shouldTouch: false });
+      control.validateSync();
 
       // Assert
       expect(control.getIsTouched()).toBe(false);

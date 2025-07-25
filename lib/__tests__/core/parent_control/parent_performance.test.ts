@@ -1,5 +1,5 @@
 import { GroupControl } from "@lib/core/group_control";
-import { ItemControl } from "@lib/core/item_control";
+import { ItemControl } from "@lib/core/controls/ItemControl";
 import { describe, expect, test, vi } from "vitest";
 
 // We test performance of the ParentControl via GroupControl

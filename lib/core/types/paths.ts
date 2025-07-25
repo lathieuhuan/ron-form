@@ -1,6 +1,6 @@
-import type { BaseControl } from "../base_control";
+import type { BaseControl } from "../BaseControl";
 import type { GroupControl } from "../group_control";
-import type { ItemControl } from "../item_control";
+import type { ItemControl } from "../controls/ItemControl";
 import type { ListControl } from "../list_control";
 
 export type NamePath = (string | number)[];

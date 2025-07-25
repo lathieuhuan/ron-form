@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { BaseControl } from "@lib/core/base_control";
+import { BaseControl } from "@lib/core/BaseControl";
 import { NamePath } from "@lib/core/types";
 import { ReactBaseControl } from "../types";
 import { useControl } from "./useControl";

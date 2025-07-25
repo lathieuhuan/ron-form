@@ -1,4 +1,4 @@
-import { ItemControl } from "@lib/core/item_control";
+import { ItemControl } from "@lib/core/controls/ItemControl";
 import { ParentControl } from "@lib/core/parent_control";
 import { ParentControlOptions } from "@lib/core/types";
 

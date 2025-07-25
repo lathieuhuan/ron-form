@@ -1,21 +1,17 @@
-import { BaseControl } from "./base_control";
-import { ControlOptions, ControlState } from "./types";
+import { ControlOptions, ControlState } from "@lib/core/types";
+import { BaseControl } from "../BaseControl";
 
 export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefined> {
   readonly defaultValue: TValue | undefined;
   private value: TValue | undefined;
   private isTouched = false;
-  protected override shouldTouchOnValidate = true;
 
   constructor(defaultValue?: TValue, options: ControlOptions<TValue | undefined> = {}) {
     super(options);
     this.defaultValue = defaultValue;
     this.value = defaultValue;
 
-    this.validateSync({
-      isBubbling: false,
-      shouldTouch: false,
-    });
+    this.validateSync();
   }
 
   clone(): this {
@@ -38,7 +34,7 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
   }
 
   getIsValid() {
-    return this.isValid;
+    return this.errors === null;
   }
 
   getIsPending(): boolean {
@@ -53,11 +49,13 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
   }
 
   getState(): ControlState {
+    const isValid = this.getIsValid();
+
     return {
-      isValid: this.isValid,
+      isValid,
       isPending: this.isPending,
       isTouched: this.isTouched,
-      isError: !this.isValid && this.isTouched,
+      isError: !isValid && this.isTouched,
       errors: this.errors,
     };
   }
@@ -65,21 +63,18 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
   resetValue(): void {
     this.value = this.defaultValue;
     this.notifyValueObservers();
-    // TODO: abort async validator
   }
 
-  override resetState(): void {
-    super.resetState();
+  resetState(): void {
+    this.errors = this.validateSync();
     this.isTouched = false;
+    this.isPending = false;
+    this.notifyStateObservers();
   }
 
   reset(): void {
     this.resetValue();
     this.resetState();
-    // TODO: abort async validator
-  }
-
-  override checkIsValid(): void {
-    // to comply with BaseControl.checkIsValid
+    this.abortAsyncValidation();
   }
 }
