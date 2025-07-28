@@ -1,50 +1,70 @@
-import { describe, expect, it, test, vi } from "vitest";
-import { TestParentControl } from "./test_parent_control";
+import { GroupControl } from "@lib/core/controls/GroupControl";
 import {
-  requiredAsyncValidator,
   makeRequiredAsyncValidator,
+  requiredAsyncValidator,
   requiredValidator,
-} from "@lib/__tests__/test_utils";
-import { GroupControl } from "@lib/core/group_control";
+} from "@lib/core/test-utils/validation-utils";
 import { ControlState } from "@lib/core/types";
+import { describe, expect, it, test, vi } from "vitest";
+import { TestParentControl } from "./TestParentControl";
 
 describe("ParentControl", () => {
   describe("getIsValid", () => {
-    it("returns true if all children and itself are valid", () => {
+    test("getIsValid returns false if one of the children is invalid", () => {
+      // Set up
       const control = new TestParentControl();
       expect(control.getIsValid()).toBe(true);
-    });
 
-    it("returns false if any child is invalid", () => {
-      // Set up
-      const control = new TestParentControl();
-      const first = control.getControl([0])!;
       // Act
+      const first = control.getControl([0]);
+      const second = control.getControl([1]);
       first.addValidator(requiredValidator);
-      first.validateSync();
+      const error = first.validateSync();
+      first.setErrors(error);
+      expect(first.getIsValid()).toEqual(false);
+      expect(second.getIsValid()).toEqual(true);
+
       // Assert
-      expect(first.getIsValid()).toBe(false);
-      expect(control.getIsValid()).toBe(false);
+      expect(control.getIsValid()).toEqual(false);
     });
 
-    it("returns false if itself is invalid", () => {
+    test("getIsValid returns false if itself is invalid, regardless of children", () => {
+      // Set up
+      const control = new TestParentControl({
+        validators: [() => ({ error: "invalid" })],
+      });
+      const first = control.getControl([0]);
+      const second = control.getControl([1]);
+      expect(first.getIsValid()).toEqual(true);
+      expect(second.getIsValid()).toEqual(true);
+
+      // Act
+      const error = control.validateSync();
+      control.setErrors(error);
+
+      // Assert
+      expect(control.getIsValid()).toEqual(false);
+    });
+
+    test("getIsValid returns true if all children and itself are valid", () => {
       // Set up
       const control = new TestParentControl();
-      control.addValidator((control) => {
-        return control.getValue().filter(Boolean).length
-          ? null
-          : { atleast1: "Require atleast 1 valid value" };
-      });
-      // Act
-      control.validateSync();
+      expect(control.getControl([0]).getIsValid()).toBe(true);
+      expect(control.getControl([1]).getIsValid()).toBe(true);
+
       // Assert
-      expect(control.getIsValid()).toBe(false);
+      expect(control.getIsValid()).toBe(true);
     });
   });
 
   describe("getIsPending", () => {
-    it("returns false if no child and itself are not pending", () => {
+    it("returns false if all children and itself are not pending", () => {
+      // Set up
       const control = new TestParentControl();
+      expect(control.getControl([0]).getIsPending()).toBe(false);
+      expect(control.getControl([1]).getIsPending()).toBe(false);
+
+      // Assert
       expect(control.getIsPending()).toBe(false);
     });
 
@@ -56,7 +76,6 @@ describe("ParentControl", () => {
       // Assert
       const firstPromise = first
         .validateAsync()
-        .catch(() => {})
         .finally(() => {
           expect(first.getIsPending()).toBe(false);
           expect(control.getIsPending()).toBe(false);
@@ -165,7 +184,7 @@ describe("ParentControl", () => {
     const value1 = control.getControl([0])!;
     const initialValue = control.getValue();
     const observer = vi.fn();
-    control.subscribe(observer);
+    control.subscribeValue(observer);
     // Act
     value1.setValue("test");
     expect(control.getValue()).not.toEqual(initialValue);

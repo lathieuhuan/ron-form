@@ -1,7 +1,7 @@
-import type { BaseControl } from "../BaseControl";
-import type { NamePath } from "../types";
-import { GroupControl } from "../group_control";
-import { ListControl } from "../list_control";
+import type { BaseControl } from "@lib/core/controls/BaseControl";
+import type { NamePath } from "@lib/core/types";
+import { GroupControl } from "@lib/core/controls/GroupControl";
+import { ListControl } from "@lib/core/controls/ListControl";
 
 export function getControl<TValue = any>(
   parent?: BaseControl<TValue>,

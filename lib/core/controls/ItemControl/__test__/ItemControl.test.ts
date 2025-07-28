@@ -1,5 +1,5 @@
-import { REQUIRED_ERROR, requiredValidator } from "@lib/core/test/test_utils";
-import { describe, expect, it, test, vi } from "vitest";
+import { REQUIRED_ERROR, requiredValidator } from "@lib/core/test-utils/validation-utils";
+import { describe, expect, test, vi } from "vitest";
 import { TestItemControl } from "./TestItemControl";
 
 describe("ItemControl", () => {
@@ -12,22 +12,9 @@ describe("ItemControl", () => {
       // Assert
       expect(control.getValue()).toBeUndefined();
       expect(control.getIsTouched()).toBe(false);
+      expect(control.getIsPending()).toBe(false);
       expect(control.getIsValid()).toBe(true);
-      expect(control.getIsPending()).toBe(false);
-      expect(control.errors).toEqual(null);
-    });
-
-    test("initial state with validators and invalid initial value", () => {
-      // Set up
-      const control = new TestItemControl(undefined, {
-        validators: [requiredValidator],
-      });
-      // Assert
-      expect(control.getValue()).toBeUndefined();
-      expect(control.getIsTouched()).toBe(false);
-      expect(control.getIsValid()).toBe(false);
-      expect(control.getIsPending()).toBe(false);
-      expect(control.errors).toEqual(REQUIRED_ERROR);
+      expect(control.getErrors()).toEqual(null);
     });
 
     test("initial state with validators and valid initial value", () => {
@@ -40,11 +27,24 @@ describe("ItemControl", () => {
       expect(control.getIsTouched()).toBe(false);
       expect(control.getIsValid()).toBe(true);
       expect(control.getIsPending()).toBe(false);
-      expect(control.errors).toEqual(null);
+      expect(control.getErrors()).toEqual(null);
+    });
+
+    test("initial state with validators and invalid initial value", () => {
+      // Set up
+      const control = new TestItemControl(undefined, {
+        validators: [requiredValidator],
+      });
+      // Assert
+      expect(control.getValue()).toBeUndefined();
+      expect(control.getIsTouched()).toBe(false);
+      expect(control.getIsPending()).toBe(false);
+      expect(control.getIsValid()).toBe(false);
+      expect(control.getErrors()).toEqual(REQUIRED_ERROR);
     });
   });
 
-  test("setIsTouched", () => {
+  test("setIsTouched & getIsTouched", () => {
     // Set up
     const control = new TestItemControl("");
     expect(control.getIsTouched()).toBe(false);
@@ -52,10 +52,41 @@ describe("ItemControl", () => {
     control.setIsTouched(true);
     // Assert
     expect(control.getIsTouched()).toBe(true);
+    // Act
+    control.setIsTouched(false);
+    // Assert
+    expect(control.getIsTouched()).toBe(false);
   });
 
-  describe("setValue", () => {
-    it("updates value and notifies observers when field is not touched", () => {
+  test("getIsError returns !isValid & isTouched", () => {
+    // Set up
+    const control = new TestItemControl(undefined, {
+      validators: [requiredValidator],
+    });
+    // Assert
+    expect(control.getIsError()).toBe(false);
+    // Act
+    control.setIsTouched(true);
+    // Assert
+    expect(control.getIsError()).toBe(true);
+  });
+
+  describe("setValue & getValue", () => {
+    test("getValue returns value when value is not empty string", () => {
+      // Set up
+      const control = new TestItemControl(VALID_VALUE);
+      // Assert
+      expect(control.getValue()).toBe(VALID_VALUE);
+    });
+
+    test("getValue returns undefined when value is empty string", () => {
+      // Set up
+      const control = new TestItemControl("");
+      // Assert
+      expect(control.getValue()).toBeUndefined();
+    });
+
+    test("setValue sets value, does not notify value observers", () => {
       // Set up
       const control = new TestItemControl("");
       const observer = vi.fn();
@@ -64,90 +95,93 @@ describe("ItemControl", () => {
       control.setValue(VALID_VALUE);
       // Assert
       expect(control.getValue()).toBe(VALID_VALUE);
-      expect(observer).toHaveBeenCalledWith(VALID_VALUE);
+      expect(observer).not.toHaveBeenCalled();
     });
 
-    it("does not notify state observers when field is touched", () => {
+    test("setValue sets value undefined if value is empty string, still does not notify value observers", () => {
       // Set up
       const control = new TestItemControl("");
       const observer = vi.fn();
-      control.subscribeState(observer);
+      control.subscribeValue(observer);
       // Act
-      control.setIsTouched(true);
-      control.setValue(VALID_VALUE);
+      control.setValue("");
       // Assert
+      expect(control.getValue()).toBeUndefined();
       expect(observer).not.toHaveBeenCalled();
     });
   });
 
-  test("resetValue to defaultValue and notifies observers", () => {
+  test("resetValue sets value to defaultValue, does not notify value observers", () => {
     // Set up
-    const control = new TestItemControl(VALID_VALUE);
+    const control = new TestItemControl("defaultValue");
     const observer = vi.fn();
     control.subscribeValue(observer);
     // Act
+    control.setValue("newValue");
     control.resetValue();
     // Assert
-    expect(control.getValue()).toBe(control.defaultValue);
-    expect(observer).toHaveBeenCalledWith(control.defaultValue);
+    expect(control.getValue()).toBe("defaultValue");
+    expect(observer).not.toHaveBeenCalled();
   });
 
-  test("resetState turns isTouched to false", () => {
+  test("resetState resets state & errors, does not notify state observers [no validators]", () => {
     // Set up
-    const control = new TestItemControl("");
+    const control = new TestItemControl();
+    const observer = vi.fn();
+    control.subscribeValue(observer);
     // Act
     control.setIsTouched(true);
     control.resetState();
     // Assert
-    expect(control.getIsTouched()).toBe(false);
+    expect(control.getState()).toEqual({
+      isTouched: false,
+      isPending: false,
+      isValid: true,
+      isError: false,
+      errors: null,
+    });
+    expect(observer).not.toHaveBeenCalled();
   });
 
-  test("reset value and state, and notifies observers and state observers", () => {
+  test("resetState resets state & errors, does not notify state observers [validators, valid initial value]", () => {
     // Set up
     const control = new TestItemControl(VALID_VALUE, {
       validators: [requiredValidator],
     });
     const observer = vi.fn();
-    const stateObserver = vi.fn();
-    const prevIsValid = control.getIsValid();
-    const prevErrors = control.errors;
     control.subscribeValue(observer);
-    control.subscribeState(stateObserver);
     // Act
-    control.reset();
+    control.setIsTouched(true);
+    control.resetState();
     // Assert
-    expect(control.getValue()).toBe(control.defaultValue);
-    expect(control.getIsTouched()).toBe(false);
-    expect(control.getIsValid()).toBe(prevIsValid);
-    expect(control.getIsPending()).toBe(false);
-    expect(control.errors).toEqual(prevErrors);
-    expect(observer).toHaveBeenCalledWith(control.defaultValue);
-    expect(stateObserver).toHaveBeenCalledWith(control.getState());
+    expect(control.getState()).toEqual({
+      isTouched: false,
+      isPending: false,
+      isValid: true,
+      isError: false,
+      errors: null,
+    });
+    expect(observer).not.toHaveBeenCalled();
   });
 
-  describe("validateSync", () => {
-    it("turns isTouched to true by default", () => {
-      // Set up
-      const control = new TestItemControl<string>();
-      expect(control.getIsTouched()).toBe(false);
-
-      // Act
-      control.validateSync();
-
-      // Assert
-      expect(control.getIsTouched()).toBe(true);
+  test("resetState resets state & errors, does not notify state observers [validators, invalid initial value]", () => {
+    // Set up
+    const control = new TestItemControl(undefined, {
+      validators: [requiredValidator],
     });
-
-    it("does not turn isTouched to true when shouldTouch is false", () => {
-      // Set up
-      const control = new TestItemControl<string>();
-      expect(control.getIsTouched()).toBe(false);
-
-      // Act
-      control.validateSync();
-
-      // Assert
-      expect(control.getIsTouched()).toBe(false);
+    const observer = vi.fn();
+    control.subscribeValue(observer);
+    // Act
+    control.setIsTouched(true);
+    control.resetState();
+    // Assert
+    expect(control.getState()).toEqual({
+      isTouched: false,
+      isPending: false,
+      isValid: false,
+      isError: false,
+      errors: REQUIRED_ERROR,
     });
+    expect(observer).not.toHaveBeenCalled();
   });
 });

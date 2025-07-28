@@ -1,6 +1,9 @@
 import { describe } from "node:test";
 import { expectTypeOf, test } from "vitest";
 
+import { GroupControl } from "@lib/core/controls/GroupControl";
+import { ItemControl } from "@lib/core/controls/ItemControl";
+import { ListControl } from "@lib/core/controls/ListControl";
 import {
   setupMatrix2dComplex,
   setupMatrix2dSimple,
@@ -8,10 +11,7 @@ import {
   setupMatrix3dSimple,
   setupNestedGroup,
   setupResume,
-} from "@lib/__tests__/core/test_utils";
-import { GroupControl } from "@lib/core/group_control";
-import { ItemControl } from "@lib/core/controls/ItemControl";
-import { ListControl } from "@lib/core/list_control";
+} from "@lib/core/test-utils/parent-utils";
 
 type ExperienceControl = GroupControl<{
   company: ItemControl<string>;

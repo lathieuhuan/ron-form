@@ -1,14 +1,12 @@
-import { BaseControl } from "./BaseControl";
+import { BaseControl } from "../BaseControl";
 import {
-  ComposableAsyncValidators,
-  ComposableValidators,
   ControlState,
   NamePath,
   ParentControlOptions,
   ValidateAllOptions,
   ValidateOptions,
   ValidationErrors,
-} from "./types";
+} from "../../types";
 
 /**
  * ParentControl has its own validators and errors,
@@ -18,6 +16,7 @@ import {
 export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue> {
   override parent: ParentControl<any> = this;
   isAttentive: boolean;
+  // Child control class needs to populate this set
   controlSet: Set<BaseControl<any>> = new Set();
 
   constructor(options: ParentControlOptions<TValue> = {}) {
@@ -33,7 +32,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
         return false;
       }
     }
-    return this.isValid;
+    return this.errors === null;
   }
 
   getIsPending(): boolean {
@@ -57,9 +56,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   setIsTouched(isTouched: boolean): void {
     this.controlSet.forEach((control) => {
       control.setIsTouched(isTouched);
-      control.notifyStateObservers({ isBubbling: false });
     });
-    this.notifyStateObservers({ isBubbling: true });
   }
 
   getState(): ControlState {
@@ -77,26 +74,26 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
 
   resetValue(): void {
     this.controlSet.forEach((control) => control.resetValue());
-    this.notifyValueObservers();
-    // TODO: abort async validator
+  }
+
+  resetState(): void {
+    this.controlSet.forEach((control) => control.resetState());
   }
 
   reset(): void {
     this.controlSet.forEach((control) => control.reset());
-    this.notifyValueObservers();
-    this.resetState();
-    // TODO: abort async validator
+    this.abortAsyncValidation();
   }
 
-  checkIsValid(): void {
-    if (this.isAttentive) {
-      this.validateSync(); // also notifyStateObservers
+  // checkIsValid(): void {
+  //   if (this.isAttentive) {
+  //     this.validateSync();
 
-      if (this.parent instanceof ParentControl && this.parent !== this) {
-        this.parent.checkIsValid();
-      }
-    }
-  }
+  //     if (this.parent instanceof ParentControl && this.parent !== this) {
+  //       this.parent.checkIsValid();
+  //     }
+  //   }
+  // }
 
   validateAllChildren(options?: ValidateOptions) {
     for (const control of this.controlSet) {
@@ -109,13 +106,8 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   }
 
   validateAll(options?: ValidateAllOptions): boolean {
-    const _options = {
-      ...options,
-      isBubbling: false,
-    };
-
-    this.validateSync(_options);
-    this.validateAllChildren(_options);
+    this.validateSync(options);
+    this.validateAllChildren(options);
     return this.getIsValid();
   }
 

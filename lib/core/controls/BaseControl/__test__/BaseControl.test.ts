@@ -3,33 +3,11 @@ import {
   REQUIRED_ERROR,
   requiredAsyncValidator,
   requiredValidator,
-} from "@lib/core/test/test_utils";
+} from "@lib/core/test-utils/validation-utils";
 import { describe, expect, it, test, vi } from "vitest";
 import { TestBaseControl } from "./TestBaseControl";
 
 describe("BaseControl", () => {
-  test("value observers are notified with result of getValue when notifyValueObservers", () => {
-    // Set up
-    const control = new TestBaseControl();
-    const observer = vi.fn();
-    control.subscribeValue(observer);
-    // Act
-    control.notifyValueObservers();
-    // Assert
-    expect(observer).toHaveBeenCalledWith(control.getValue());
-  });
-
-  test("state observers are notified with result of getState when notifyStateObservers", () => {
-    // Set up
-    const control = new TestBaseControl();
-    const observer = vi.fn();
-    control.subscribeState(observer);
-    // Act
-    control.notifyStateObservers();
-    // Assert
-    expect(observer).toHaveBeenCalledWith(control.getState());
-  });
-
   test("addValidator & removeValidator", () => {
     // Set up
     const control = new TestBaseControl<string | undefined>();
@@ -115,5 +93,27 @@ describe("BaseControl", () => {
       expect(errors).toEqual(null);
       expect(onError).not.toHaveBeenCalled();
     });
+  });
+
+  test("when notifyValueObservers, value observers are notified with result of getValue", () => {
+    // Set up
+    const control = new TestBaseControl();
+    const observer = vi.fn();
+    control.subscribeValue(observer);
+    // Act
+    control.notifyValueObservers();
+    // Assert
+    expect(observer).toHaveBeenCalledWith(control.getValue());
+  });
+
+  test("when notifyStateObservers, state observers are notified with result of getState", () => {
+    // Set up
+    const control = new TestBaseControl();
+    const observer = vi.fn();
+    control.subscribeState(observer);
+    // Act
+    control.notifyStateObservers();
+    // Assert
+    expect(observer).toHaveBeenCalledWith(control.getState());
   });
 });

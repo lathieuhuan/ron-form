@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { ListControl } from "@lib/core/list_control";
+import { ListControl } from "@lib/core/controls/ListControl/ListControl";
 import { NamePath } from "@lib/core/types";
 import { useControl } from "../hooks/useControl";
 import { ReactBaseControl } from "../types";

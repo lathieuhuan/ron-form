@@ -1,8 +1,8 @@
-import { BaseControl } from "@lib/core/BaseControl";
+import { BaseControl } from "@lib/core/controls/BaseControl";
 import { FormControl } from "@lib/core/form_control";
-import { GroupControl } from "@lib/core/group_control";
+import { GroupControl } from "@lib/core/controls/GroupControl/GroupControl";
 import { ItemControl } from "@lib/core/controls/ItemControl";
-import { ListControl } from "@lib/core/list_control";
+import { ListControl } from "@lib/core/controls/ListControl/ListControl";
 import { GroupValue, ListValue, NamePath } from "@lib/core/types";
 
 type ReadonlyProps<T, K extends keyof T> = Omit<T, K> & {

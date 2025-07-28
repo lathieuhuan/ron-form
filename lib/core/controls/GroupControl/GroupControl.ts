@@ -1,13 +1,13 @@
-import { BaseControl } from "./BaseControl";
-import { ParentControl } from "./parent_control";
+import { getControl } from "@lib/core/utils/get_control";
 import {
   ControlAtGroupPath,
   DeepPartial,
   GroupPath,
   GroupValue,
   ParentControlOptions,
-} from "./types";
-import { getControl } from "./utils/get_control";
+} from "../../types";
+import { BaseControl } from "../BaseControl";
+import { ParentControl } from "../ParentControl";
 
 export class GroupControl<
   TControls extends Record<string, BaseControl<any>>,
@@ -23,7 +23,11 @@ export class GroupControl<
       control.name = name;
       this.controlSet.add(control);
     });
-    this.validateSync({ isBubbling: false });
+
+    const errors = this.validateSync();
+    if (errors) {
+      this.errors = errors;
+    }
   }
 
   clone(): this {
@@ -60,7 +64,7 @@ export class GroupControl<
         control.setValue(undefined);
       });
     }
-    this.notifyObserversUpwards();
+    // this.notifyObserversUpwards();
   }
 
   patchValue(value: DeepPartial<TValue>): void {
@@ -68,7 +72,7 @@ export class GroupControl<
       for (const [key, _value] of Object.entries(value)) {
         this.controls[key]?.patchValue(_value);
       }
-      this.notifyObserversUpwards();
+      // this.notifyObserversUpwards();
     }
   }
 }

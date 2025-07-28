@@ -14,13 +14,13 @@ import { createValidator } from "./createValidator";
 export abstract class BaseControl<TValue = unknown> {
   name = "root";
   parent: BaseControl<any> = this;
-  errors: ValidationErrors | null = null;
   // protected isValid = true;
   protected isPending = false;
   protected validator = createValidator<TValue>();
   protected asyncValidator = createAsyncValidator<TValue>();
   protected valueSubject = createSubject<TValue | undefined>();
   protected stateSubject = createSubject<ControlState>();
+  protected errors: ValidationErrors | null = null;
 
   abstract getValue(): TValue;
   abstract setValue(value: TValue | undefined): void;
@@ -51,6 +51,17 @@ export abstract class BaseControl<TValue = unknown> {
     if (options.asyncValidators) {
       this.asyncValidator.add(options.asyncValidators);
     }
+  }
+
+  getIsError(): boolean {
+    return !this.getIsValid() && this.getIsTouched();
+  }
+
+  getErrors(): ValidationErrors | null {
+    return this.errors;
+  }
+  setErrors(errors: ValidationErrors | null, replace = false): void {
+    this.errors = replace ? errors : mergeErrors([this.errors, errors]);
   }
 
   // ===== VALIDATION =====

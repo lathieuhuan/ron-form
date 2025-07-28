@@ -1,5 +1,5 @@
 import { requiredValidator } from "@lib/__tests__/test_utils";
-import { GroupControl } from "@lib/core/group_control";
+import { GroupControl } from "@lib/core/controls/GroupControl/GroupControl";
 import { ItemControl } from "@lib/core/controls/ItemControl";
 import { GroupValue, ValidatorFn } from "@lib/core/types";
 

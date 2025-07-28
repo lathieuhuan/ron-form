@@ -1,5 +1,5 @@
 import { setupResume } from "@lib/__tests__/core/test_utils";
-import { GroupControl } from "@lib/core/group_control";
+import { GroupControl } from "@lib/core/controls/GroupControl/GroupControl";
 import { ControlState } from "@lib/core/types";
 import { describe, expect, test, vi } from "vitest";
 import {

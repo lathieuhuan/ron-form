@@ -49,7 +49,4 @@ export class TestBaseControl<TValue = unknown> extends BaseControl<TValue> {
   resetValue(): void {}
   resetState(): void {}
   reset(): void {}
-  checkIsValid(): boolean {
-    return true;
-  }
 }

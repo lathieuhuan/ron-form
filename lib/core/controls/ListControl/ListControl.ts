@@ -1,16 +1,19 @@
-import { BaseControl } from "./BaseControl";
-import { ParentControl } from "./parent_control";
-import { ControlAtListPath, ListItemValue, ListPath, ParentControlOptions } from "./types";
-import { createSubject } from "./utils/create_subject";
-import { getControl } from "./utils/get_control";
-import { toArray } from "./utils/to_array";
+import type {
+  ControlAtListPath,
+  ListItemValue,
+  ListPath,
+  ParentControlOptions,
+} from "@lib/core/types";
+import { createSubject } from "@lib/core/utils/create_subject";
+import { getControl } from "@lib/core/utils/get_control";
+import { toArray } from "@lib/core/utils/to_array";
+import { BaseControl } from "../BaseControl";
+import { ParentControl } from "../ParentControl";
 
 export type ListItemControl<TValue, TControl = BaseControl<TValue>> = {
   id: number;
   control: TControl;
 };
-
-export type ListValue<TValue> = (TValue | undefined)[] | undefined;
 
 export class ListControl<
   TChildControl extends BaseControl<any> = BaseControl<any>,

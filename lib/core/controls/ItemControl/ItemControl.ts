@@ -11,7 +11,10 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     this.defaultValue = defaultValue;
     this.value = defaultValue;
 
-    this.validateSync();
+    const errors = this.validateSync();
+    if (errors) {
+      this.errors = errors;
+    }
   }
 
   clone(): this {
@@ -26,7 +29,6 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
   }
   setValue(value: TValue): void {
     this.value = value === "" ? undefined : value;
-    this.notifyValueObservers();
   }
   // To comply with BaseControl.patchValue
   patchValue(value: TValue): void {
@@ -55,21 +57,19 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
       isValid,
       isPending: this.isPending,
       isTouched: this.isTouched,
-      isError: !isValid && this.isTouched,
+      isError: !isValid && this.getIsTouched(),
       errors: this.errors,
     };
   }
 
   resetValue(): void {
     this.value = this.defaultValue;
-    this.notifyValueObservers();
   }
 
   resetState(): void {
     this.errors = this.validateSync();
     this.isTouched = false;
     this.isPending = false;
-    this.notifyStateObservers();
   }
 
   reset(): void {

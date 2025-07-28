@@ -1,7 +1,7 @@
-import type { BaseControl } from "../BaseControl";
-import type { GroupControl } from "../group_control";
+import type { BaseControl } from "../controls/BaseControl";
+import type { GroupControl } from "../controls/GroupControl";
 import type { ItemControl } from "../controls/ItemControl";
-import type { ListControl } from "../list_control";
+import type { ListControl } from "../controls/ListControl";
 
 export type GroupValue<T extends Record<string, BaseControl<any>>> = {
   [Key in keyof T]: T[Key] extends ItemControl<infer TValue>
@@ -14,6 +14,8 @@ export type GroupValue<T extends Record<string, BaseControl<any>>> = {
 };
 
 export type ListItemValue<T extends BaseControl<any>> = ReturnType<T["getValue"]>;
+
+export type ListValue<TValue> = (TValue | undefined)[] | undefined;
 
 // This will cause: Type instantiation is excessively deep and possibly infinite.ts(2589)
 // export type ListItemValue<T extends BaseControl<any>> = T extends ItemControl<infer TValue>

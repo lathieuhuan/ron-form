@@ -1,6 +1,6 @@
-import { GroupControl } from "@lib/core/group_control";
+import { GroupControl } from "@lib/core/controls/GroupControl";
 import { ItemControl } from "@lib/core/controls/ItemControl";
-import { ListControl } from "@lib/core/list_control";
+import { ListControl } from "@lib/core/controls/ListControl";
 
 export const setupResume = () => {
   const initials = {

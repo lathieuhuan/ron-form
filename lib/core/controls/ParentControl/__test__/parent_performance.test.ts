@@ -1,4 +1,4 @@
-import { GroupControl } from "@lib/core/group_control";
+import { GroupControl } from "@lib/core/controls/GroupControl/GroupControl";
 import { ItemControl } from "@lib/core/controls/ItemControl";
 import { describe, expect, test, vi } from "vitest";
 

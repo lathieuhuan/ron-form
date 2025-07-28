@@ -1,4 +1,4 @@
-import type { BaseControl } from "../BaseControl";
+import type { BaseControl } from "../controls/BaseControl";
 
 export type ValidateOptions = {
   // /** Whether to touch the control after validate. Only work on ItemControl. Default to true */

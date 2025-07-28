@@ -1,6 +1,6 @@
-import type { BaseControl } from "../BaseControl";
-import type { GroupControl } from "../group_control";
-import type { ListControl } from "../list_control";
+import type { BaseControl } from "../controls/BaseControl";
+import type { GroupControl } from "../controls/GroupControl/GroupControl";
+import type { ListControl } from "../controls/ListControl/ListControl";
 import type { NamePath } from "./paths";
 import type { GroupValue } from "./values";
 
