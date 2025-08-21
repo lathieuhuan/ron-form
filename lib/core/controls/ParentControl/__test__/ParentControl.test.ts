@@ -3,7 +3,7 @@ import {
   requiredAsyncValidator,
   requiredValidator,
 } from "@lib/core/test-utils/validation-utils";
-import { describe, expect, it, test } from "vitest";
+import { describe, expect, it, test, vi } from "vitest";
 import { TestParentControl } from "./TestParentControl";
 
 describe("ParentControl", () => {
@@ -148,7 +148,7 @@ describe("ParentControl", () => {
     expect(second.getIsTouched()).toBe(true);
   });
 
-  test("resetValue resets all children's values", () => {
+  test("resetValue resets all children's values, runs validateSync on parent once, and notify parent's value & state observers once", () => {
     // Set up
     const control = new TestParentControl();
     const first = control.getControl([0])!;
@@ -156,12 +156,27 @@ describe("ParentControl", () => {
     first.setValue("test");
     second.setValue("test");
 
+    const validatorObserver = vi.fn();
+    const valueObserver = vi.fn();
+    const stateObserver = vi.fn();
+    control.addValidator(() => {
+      validatorObserver();
+      return null;
+    });
+    control.subscribeValue(valueObserver);
+    control.subscribeState(stateObserver);
+
     // Act
     control.resetValue();
 
     // Assert
     expect(first.getValue()).toEqual(undefined);
     expect(second.getValue()).toEqual(undefined);
+    expect(validatorObserver).toHaveBeenCalledOnce();
+    expect(valueObserver).toHaveBeenCalledOnce();
+    expect(valueObserver).toHaveBeenCalledWith([undefined, undefined]);
+    expect(stateObserver).toHaveBeenCalledOnce();
+    expect(stateObserver).toHaveBeenCalledWith(control.getState());
   });
 
   test("resetState resets parent's and all children's state", () => {
@@ -191,5 +206,26 @@ describe("ParentControl", () => {
     expect(control.getErrors()).toEqual(null);
     expect(first.getErrors()).toEqual(null);
     expect(second.getErrors()).toEqual(null);
+  });
+
+  test("signalChange runs validateSync on parent when child ItemControl changes value", () => {
+    // Set up
+    const control = new TestParentControl();
+    control.addValidator((c) => {
+      return c.getValue()[0] ? null : { error: "error" };
+    });
+    const first = control.getControl([0])!;
+
+    // Act
+    first.setValue("value");
+
+    // Assert
+    expect(control.getErrors()).toEqual(null);
+
+    // Act
+    first.setValue(undefined);
+
+    // Assert
+    expect(control.getErrors()).toEqual({ error: "error" });
   });
 });

@@ -86,7 +86,22 @@ describe("ItemControl", () => {
       expect(control.getValue()).toBeUndefined();
     });
 
-    test("setValue sets value, does not notify value observers", () => {
+    test("setValue after changes value, will validate and notify value & state observers", () => {
+      // Set up
+      const control = new TestItemControl("");
+      const valueObserver = vi.fn();
+      const stateObserver = vi.fn();
+      control.subscribeValue(valueObserver);
+      control.subscribeState(stateObserver);
+      // Act
+      control.setValue("123");
+      // Assert
+      expect(control.getValue()).toBe("123");
+      expect(valueObserver).toHaveBeenCalledWith("123");
+      expect(stateObserver).toHaveBeenCalledWith(control.getState());
+    });
+
+    test("setValue changes value", () => {
       // Set up
       const control = new TestItemControl("");
       const observer = vi.fn();
@@ -95,10 +110,10 @@ describe("ItemControl", () => {
       control.setValue(VALID_VALUE);
       // Assert
       expect(control.getValue()).toBe(VALID_VALUE);
-      expect(observer).not.toHaveBeenCalled();
+      expect(observer).toHaveBeenCalledWith(VALID_VALUE);
     });
 
-    test("setValue sets value undefined if value is empty string, still does not notify value observers", () => {
+    test("setValue changes value to undefined if value is empty string", () => {
       // Set up
       const control = new TestItemControl("");
       const observer = vi.fn();
@@ -107,21 +122,21 @@ describe("ItemControl", () => {
       control.setValue("");
       // Assert
       expect(control.getValue()).toBeUndefined();
-      expect(observer).not.toHaveBeenCalled();
+      expect(observer).toHaveBeenCalledWith(undefined);
     });
   });
 
-  test("resetValue sets value to defaultValue, does not notify value observers", () => {
+  test("resetValue sets value to defaultValue, and notifies value observers", () => {
     // Set up
     const control = new TestItemControl("defaultValue");
+    control.setValue("newValue");
+    // Act
     const observer = vi.fn();
     control.subscribeValue(observer);
-    // Act
-    control.setValue("newValue");
     control.resetValue();
     // Assert
     expect(control.getValue()).toBe("defaultValue");
-    expect(observer).not.toHaveBeenCalled();
+    expect(observer).toHaveBeenCalledWith("defaultValue");
   });
 
   test("resetState resets state & errors, does not notify state observers [no validators]", () => {

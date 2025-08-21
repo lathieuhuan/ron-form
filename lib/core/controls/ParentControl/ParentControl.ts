@@ -14,16 +14,26 @@ import {
 
 export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue> {
   override parent: ParentControl<any> = this;
-  isAttentive: boolean;
+  protected isAttentive = true;
   // Child control class needs to populate this set
   controlSet: Set<BaseControl<any>> = new Set();
 
   constructor(options: ParentControlOptions<TValue> = {}) {
     super(options);
-    this.isAttentive = options.isAttentive ?? true;
+    // this.isAttentive = options.isAttentive ?? true;
   }
 
   abstract getControl(path: NamePath): BaseControl<any> | undefined;
+
+  protected onValueChange(): void {
+    this.validateSync();
+    this.notifyValueObservers();
+    this.notifyStateObservers();
+
+    if (this.parent !== this && this.parent instanceof ParentControl) {
+      this.parent.signalChange();
+    }
+  }
 
   getIsValid(): boolean {
     for (const control of this.controlSet) {
@@ -72,7 +82,10 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   }
 
   resetValue(): void {
+    this.isAttentive = false;
     this.controlSet.forEach((control) => control.resetValue());
+    this.isAttentive = true;
+    this.onValueChange();
   }
 
   resetState(): void {
@@ -85,22 +98,20 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
     this.abortAsyncValidation();
   }
 
-  // checkIsValid(): void {
-  //   if (this.isAttentive) {
-  //     this.validateSync();
+  /** For children to signal a value change to this parent */
+  signalChange(): void {
+    if (this.isAttentive) {
+      this.onValueChange();
+    }
+  }
 
-  //     if (this.parent instanceof ParentControl && this.parent !== this) {
-  //       this.parent.checkIsValid();
-  //     }
-  //   }
-  // }
-
-  validateAllSync(options?: ValidateOptions) {
+  // run validateSync on all descendants
+  validateSyncDescendants(options?: ValidateOptions) {
     for (const control of this.controlSet) {
       control.validateSync(options);
 
       if (control instanceof ParentControl) {
-        control.validateAllSync(options);
+        control.validateSyncDescendants(options);
       }
     }
   }
