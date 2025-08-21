@@ -1,13 +1,6 @@
-import { setupResume } from "@lib/__tests__/core/test_utils";
-import { GroupControl } from "@lib/core/controls/GroupControl/GroupControl";
-import { ControlState } from "@lib/core/types";
-import { describe, expect, test, vi } from "vitest";
-import {
-  GROUP_ERRORS,
-  INITIAL_VALUE_1,
-  makeInvalidGroup,
-  makeValidGroup,
-} from "./group_control.test_utils";
+import { setupResume } from "@lib/core/test-utils/parent-utils";
+import { describe, expect, it, test } from "vitest";
+import { GROUP_ERRORS, INITIAL_VALUE_1, makeInvalidGroup, makeValidGroup } from "./test-utils";
 
 describe("GroupControl", () => {
   describe("constructor", () => {
@@ -22,10 +15,11 @@ describe("GroupControl", () => {
       expect(control.getIsTouched()).toBe(false);
       expect(control.getIsValid()).toBe(true);
       expect(control.getIsPending()).toBe(false);
-      expect(control.errors).toEqual(null);
+      expect(control.getIsError()).toBe(false);
+      expect(control.getErrors()).toEqual(null);
     });
 
-    test("initial state with validators & valid initial value / on ItemControl", () => {
+    test("initial state with validators on ItemControl & valid initial value", () => {
       // Set up
       const control = makeValidGroup("item");
       // Assert
@@ -36,10 +30,11 @@ describe("GroupControl", () => {
       expect(control.getIsTouched()).toBe(false);
       expect(control.getIsValid()).toBe(true);
       expect(control.getIsPending()).toBe(false);
-      expect(control.errors).toEqual(null);
+      expect(control.getIsError()).toBe(false);
+      expect(control.getErrors()).toEqual(null);
     });
 
-    test("initial state with validators & valid initial value / on GroupControl ", () => {
+    test("initial state with validators on GroupControl & valid initial value", () => {
       // Set up
       const control = makeValidGroup("group");
       // Assert
@@ -50,10 +45,11 @@ describe("GroupControl", () => {
       expect(control.getIsTouched()).toBe(false);
       expect(control.getIsValid()).toBe(true);
       expect(control.getIsPending()).toBe(false);
-      expect(control.errors).toEqual(null);
+      expect(control.getIsError()).toBe(false);
+      expect(control.getErrors()).toEqual(null);
     });
 
-    test("initial state with validators & invalid initial value / on ItemControl", () => {
+    test("initial state with validators on ItemControl & invalid initial value", () => {
       // Set up
       const control = makeInvalidGroup("item");
       // Assert
@@ -64,10 +60,11 @@ describe("GroupControl", () => {
       expect(control.getIsTouched()).toBe(false);
       expect(control.getIsValid()).toBe(false);
       expect(control.getIsPending()).toBe(false);
-      expect(control.errors).toEqual(null); // errors are on ItemControl
+      expect(control.getIsError()).toBe(false);
+      expect(control.getErrors()).toEqual(null); // errors are on ItemControl
     });
 
-    test("initial state with validators & invalid initial value / on GroupControl", () => {
+    test("initial state with validators on GroupControl & invalid initial value", () => {
       // Set up
       const control = makeInvalidGroup("group");
       // Assert
@@ -78,18 +75,19 @@ describe("GroupControl", () => {
       expect(control.getIsTouched()).toBe(false);
       expect(control.getIsValid()).toBe(false);
       expect(control.getIsPending()).toBe(false);
-      expect(control.errors).toEqual(GROUP_ERRORS);
+      expect(control.getIsError()).toBe(false);
+      expect(control.getErrors()).toEqual(GROUP_ERRORS);
     });
   });
 
   test("getControl", () => {
     const { resume, role, general, skills, experiences } = setupResume();
 
-    expect(resume.getControl(["role"])).toBe(role);
-    expect(resume.getControl(["general"])).toBe(general);
-    expect(resume.getControl(["skills"])).toBe(skills);
-    expect(resume.getControl(["experiences"])).toBe(experiences);
-    expect(resume.getControl(["general", "age"])).toBe(general.getControl(["age"]));
+    expect(resume.getControl(["role"])).toBe(role); // item
+    expect(resume.getControl(["general"])).toBe(general); // group
+    expect(resume.getControl(["skills"])).toBe(skills); // list
+    expect(resume.getControl(["experiences"])).toBe(experiences); // list of groups
+    expect(resume.getControl(["general", "age"])).toBe(general.getControl(["age"])); // nested item
   });
 
   test("getValue", () => {
@@ -104,14 +102,16 @@ describe("GroupControl", () => {
   });
 
   describe("patchValue", () => {
-    test("change value of a single independent ItemControl", () => {
+    it("changes value of a single independent ItemControl", () => {
       // Set up
       const NEW_ROLE = "new role";
       const { resume, general, role, contact, skills, experiences, initialValues } = setupResume();
+
       // Act
       resume.patchValue({
         role: NEW_ROLE,
       });
+
       // Assert
       expect(role.getValue()).toEqual(NEW_ROLE);
       // Others are the same
@@ -125,17 +125,19 @@ describe("GroupControl", () => {
       });
     });
 
-    test("change value of a single ItemControl, in a sub-group", () => {
+    it("changes value of a single ItemControl, in a sub-group", () => {
       // Set up
       const NEW_NAME = "new name";
       const { resume, role, general, name, contact, skills, experiences, initialValues } =
         setupResume();
+
       // Act
       resume.patchValue({
         general: {
           name: NEW_NAME,
         },
       });
+
       // Assert
       expect(name.getValue()).toEqual(NEW_NAME);
       expect(general.getValue()).toEqual({
@@ -149,12 +151,13 @@ describe("GroupControl", () => {
       expect(experiences.getValue()).toEqual(undefined);
     });
 
-    test("change value of multiple ItemControls", () => {
+    it("changes value of multiple ItemControls", () => {
       // Set up
       const NEW_ROLE = "new role";
       const NEW_NAME = "new name";
       const NEW_EMAIL = "new email";
       const { resume, role, name, contact, skills, experiences, initialValues } = setupResume();
+
       // Act
       resume.patchValue({
         role: NEW_ROLE,
@@ -165,6 +168,7 @@ describe("GroupControl", () => {
           email: NEW_EMAIL,
         },
       });
+
       // Assert
       expect(role.getValue()).toEqual(NEW_ROLE);
       expect(name.getValue()).toEqual(NEW_NAME);
@@ -187,7 +191,7 @@ describe("GroupControl", () => {
     });
   });
 
-  test("setValue", () => {
+  test("setValue replaces every value, what not present is undefined", () => {
     // Set up
     const NEW_ROLE = "new role";
     const NEW_NAME = "new name";
@@ -199,9 +203,11 @@ describe("GroupControl", () => {
         name: NEW_NAME,
       },
     });
+
     // Assert
     expect(role.getValue()).toEqual(NEW_ROLE);
     expect(name.getValue()).toEqual(NEW_NAME);
+
     // Others are undefined
     expect(resume.getControl(["general", "age"]).getValue()).toEqual(undefined);
     expect(contact.getValue()).toEqual({

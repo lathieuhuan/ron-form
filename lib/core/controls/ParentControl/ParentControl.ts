@@ -3,7 +3,6 @@ import {
   ControlState,
   NamePath,
   ParentControlOptions,
-  ValidateAllOptions,
   ValidateOptions,
   ValidationErrors,
 } from "../../types";

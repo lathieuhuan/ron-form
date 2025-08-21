@@ -26,13 +26,18 @@ export abstract class BaseControl<TValue = unknown> {
   abstract getValue(): TValue;
   abstract setValue(value: TValue | undefined): void;
   abstract patchValue(value: unknown): void;
+  abstract resetValue(): void;
+
   abstract getIsValid(): boolean;
+
   abstract getIsPending(): boolean;
+
   abstract getIsTouched(): boolean;
   abstract setIsTouched(isTouched: boolean): void;
+
   abstract getState(): ControlState;
-  abstract resetValue(): void;
   abstract resetState(): void;
+
   abstract reset(): void;
   /** for children controls to bubble isValid */
   // abstract checkIsValid(): void;

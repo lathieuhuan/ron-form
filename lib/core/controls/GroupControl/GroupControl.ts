@@ -1,4 +1,4 @@
-import { getControl } from "@lib/core/utils/get_control";
+import { getControl } from "@lib/core/utils/getControl";
 import {
   ControlAtGroupPath,
   DeepPartial,
@@ -25,8 +25,9 @@ export class GroupControl<
     });
 
     const errors = this.validateSync();
+
     if (errors) {
-      this.errors = errors;
+      this.syncErrors = errors;
     }
   }
 

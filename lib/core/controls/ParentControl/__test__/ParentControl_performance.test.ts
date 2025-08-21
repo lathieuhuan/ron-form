@@ -20,10 +20,10 @@ describe("ParentControl performance", () => {
     const parentObserver = vi.fn();
     const child1Observer = vi.fn();
     const child2Observer = vi.fn();
-    grand.subscribe(grandObserver);
-    parent.subscribe(parentObserver);
-    child1.subscribe(child1Observer);
-    child2.subscribe(child2Observer);
+    grand.subscribeValue(grandObserver);
+    parent.subscribeValue(parentObserver);
+    child1.subscribeValue(child1Observer);
+    child2.subscribeValue(child2Observer);
     // Act
     parent.setValue({ child1: "1" });
     // Assert
@@ -48,10 +48,10 @@ describe("ParentControl performance", () => {
     const parentObserver = vi.fn();
     const child1Observer = vi.fn();
     const child2Observer = vi.fn();
-    grand.subscribe(grandObserver);
-    parent.subscribe(parentObserver);
-    child1.subscribe(child1Observer);
-    child2.subscribe(child2Observer);
+    grand.subscribeValue(grandObserver);
+    parent.subscribeValue(parentObserver);
+    child1.subscribeValue(child1Observer);
+    child2.subscribeValue(child2Observer);
     // Act
     parent.patchValue({ child1: "1" });
     // Assert

@@ -5,7 +5,7 @@ import type {
   ParentControlOptions,
 } from "@lib/core/types";
 import { createSubject } from "@lib/core/utils/create_subject";
-import { getControl } from "@lib/core/utils/get_control";
+import { getControl } from "@lib/core/utils/getControl";
 import { toArray } from "@lib/core/utils/to_array";
 import { BaseControl } from "../BaseControl";
 import { ParentControl } from "../ParentControl";
