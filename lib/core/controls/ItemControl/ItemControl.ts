@@ -13,7 +13,7 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
 
     const errors = this.validateSync();
     if (errors) {
-      this.errors = errors;
+      this.syncErrors = errors;
     }
   }
 
@@ -36,7 +36,7 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
   }
 
   getIsValid() {
-    return this.errors === null;
+    return this.getErrors() === null;
   }
 
   getIsPending(): boolean {
@@ -58,7 +58,7 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
       isPending: this.isPending,
       isTouched: this.isTouched,
       isError: !isValid && this.getIsTouched(),
-      errors: this.errors,
+      errors: this.getErrors(),
     };
   }
 
@@ -67,7 +67,7 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
   }
 
   resetState(): void {
-    this.errors = this.validateSync();
+    this.syncErrors = this.validateSync();
     this.isTouched = false;
     this.isPending = false;
   }

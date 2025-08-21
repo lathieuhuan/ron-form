@@ -32,7 +32,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
         return false;
       }
     }
-    return this.errors === null;
+    return this.getErrors() === null;
   }
 
   getIsPending(): boolean {
@@ -68,7 +68,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
       isPending: this.getIsPending(),
       isTouched,
       isError: !isValid && isTouched,
-      errors: this.errors,
+      errors: this.getErrors(),
     };
   }
 
@@ -78,6 +78,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
 
   resetState(): void {
     this.controlSet.forEach((control) => control.resetState());
+    this.setErrors(null, true);
   }
 
   reset(): void {
@@ -95,21 +96,21 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   //   }
   // }
 
-  validateAllChildren(options?: ValidateOptions) {
+  validateAllSync(options?: ValidateOptions) {
     for (const control of this.controlSet) {
       control.validateSync(options);
 
       if (control instanceof ParentControl) {
-        control.validateAllChildren(options);
+        control.validateAllSync(options);
       }
     }
   }
 
-  validateAll(options?: ValidateAllOptions): boolean {
-    this.validateSync(options);
-    this.validateAllChildren(options);
-    return this.getIsValid();
-  }
+  // validateAll(options?: ValidateAllOptions): boolean {
+  //   this.validateSync(options);
+  //   this.validateAllChildren(options);
+  //   return this.getIsValid();
+  // }
 
   // ===== DELEGATE to child controls =====
 

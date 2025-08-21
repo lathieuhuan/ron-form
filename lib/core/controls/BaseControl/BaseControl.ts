@@ -20,7 +20,8 @@ export abstract class BaseControl<TValue = unknown> {
   protected asyncValidator = createAsyncValidator<TValue>();
   protected valueSubject = createSubject<TValue | undefined>();
   protected stateSubject = createSubject<ControlState>();
-  protected errors: ValidationErrors | null = null;
+  protected syncErrors: ValidationErrors | null = null;
+  protected asyncErrors: ValidationErrors | null = null;
 
   abstract getValue(): TValue;
   abstract setValue(value: TValue | undefined): void;
@@ -58,10 +59,10 @@ export abstract class BaseControl<TValue = unknown> {
   }
 
   getErrors(): ValidationErrors | null {
-    return this.errors;
+    return mergeErrors([this.syncErrors, this.asyncErrors]);
   }
   setErrors(errors: ValidationErrors | null, replace = false): void {
-    this.errors = replace ? errors : mergeErrors([this.errors, errors]);
+    this.syncErrors = replace ? errors : mergeErrors([this.syncErrors, errors]);
   }
 
   // ===== VALIDATION =====
@@ -85,6 +86,7 @@ export abstract class BaseControl<TValue = unknown> {
   /** run synchronous validators and return errors */
   validateSync(options?: ValidateOptions): ValidationErrors | null {
     const errors = this.validator.validate(this);
+    this.syncErrors = errors;
 
     if (errors) {
       options?.onError?.(errors);
@@ -92,8 +94,13 @@ export abstract class BaseControl<TValue = unknown> {
     return errors;
   }
 
+  /** run asynchronous validators and return errors */
   async validateAsync(options?: ValidateOptions): Promise<ValidationErrors | null> {
+    this.isPending = true;
     const errors = await this.asyncValidator.validate(this);
+
+    this.asyncErrors = errors;
+    this.isPending = false;
 
     if (errors) {
       options?.onError?.(errors);
@@ -105,27 +112,10 @@ export abstract class BaseControl<TValue = unknown> {
     // TODO
   }
 
-  private async validateBoth({
-    onError,
-    ...restOptions
-  }: ValidateOptions = {}): Promise<ValidationErrors | null> {
-    this.errors = this.validateSync(restOptions);
-    this.isPending = true;
-
-    const asyncErrors = await this.validateAsync(restOptions);
-    this.errors = mergeErrors([this.errors, asyncErrors]);
-    this.isPending = false;
-
-    if (this.errors) {
-      onError?.(this.errors);
-    }
-
-    return this.errors;
-  }
-
   validate(options?: ValidateOptions) {
     if (this.asyncValidator.isActive) {
-      this.validateBoth(options);
+      this.validateSync(options);
+      this.validateAsync(options);
     } else {
       this.validateSync(options);
     }
