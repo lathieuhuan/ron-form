@@ -72,7 +72,6 @@ export class ListControl<
 
   getValue(): TValue | undefined {
     const value = this.items.map((item) => item.control.getValue());
-    console.log("value", value);
     return value.length
       ? (value as TValue)
       : this.isTouched
