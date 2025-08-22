@@ -208,24 +208,26 @@ describe("ParentControl", () => {
     expect(second.getErrors()).toEqual(null);
   });
 
-  test("signalChange runs validateSync on parent when child ItemControl changes value", () => {
-    // Set up
-    const control = new TestParentControl();
-    control.addValidator((c) => {
-      return c.getValue()[0] ? null : { error: "error" };
-    });
-    const first = control.getControl([0])!;
+  // other methods are tested in GroupControl & ListControl tests
 
-    // Act
-    first.setValue("value");
+  // test("signalChange runs validateSync on parent when child ItemControl changes value", () => {
+  //   // Set up
+  //   const control = new TestParentControl();
+  //   control.addValidator((c) => {
+  //     return c.getValue()[0] ? null : { error: "error" };
+  //   });
+  //   const first = control.getControl([0])!;
 
-    // Assert
-    expect(control.getErrors()).toEqual(null);
+  //   // Act
+  //   first.setValue("value");
 
-    // Act
-    first.setValue(undefined);
+  //   // Assert
+  //   expect(control.getErrors()).toEqual(null);
 
-    // Assert
-    expect(control.getErrors()).toEqual({ error: "error" });
-  });
+  //   // Act
+  //   first.setValue(undefined);
+
+  //   // Assert
+  //   expect(control.getErrors()).toEqual({ error: "error" });
+  // });
 });

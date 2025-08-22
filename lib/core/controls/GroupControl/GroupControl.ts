@@ -65,7 +65,6 @@ export class GroupControl<
         control.setValue(undefined);
       });
     }
-    // this.notifyObserversUpwards();
   }
 
   patchValue(value: DeepPartial<TValue>): void {
@@ -73,7 +72,29 @@ export class GroupControl<
       for (const [key, _value] of Object.entries(value)) {
         this.controls[key]?.patchValue(_value);
       }
-      // this.notifyObserversUpwards();
     }
+  }
+
+  // ===== DELEGATE to child controls =====
+
+  override getFieldValue<TPath extends GroupPath<TControls>>(
+    path: TPath,
+  ): ReturnType<ControlAtGroupPath<TControls, TPath>["getValue"]> {
+    return this.getControl(path)?.getValue();
+  }
+
+  override setFieldValue<TPath extends GroupPath<TControls>>(
+    path: TPath,
+    value: ReturnType<ControlAtGroupPath<TControls, TPath>["getValue"]>,
+  ): void {
+    this.getControl(path)?.setValue(value);
+  }
+
+  override resetFieldValue<TPath extends GroupPath<TControls>>(path: TPath): void {
+    this.getControl(path)?.resetValue();
+  }
+
+  override resetField<TPath extends GroupPath<TControls>>(path: TPath): void {
+    this.getControl(path)?.reset();
   }
 }

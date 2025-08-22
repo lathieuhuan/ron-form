@@ -86,43 +86,22 @@ describe("ItemControl", () => {
       expect(control.getValue()).toBeUndefined();
     });
 
-    test("setValue after changes value, will validate and notify value & state observers", () => {
-      // Set up
-      const control = new TestItemControl("");
-      const valueObserver = vi.fn();
-      const stateObserver = vi.fn();
-      control.subscribeValue(valueObserver);
-      control.subscribeState(stateObserver);
-      // Act
-      control.setValue("123");
-      // Assert
-      expect(control.getValue()).toBe("123");
-      expect(valueObserver).toHaveBeenCalledWith("123");
-      expect(stateObserver).toHaveBeenCalledWith(control.getState());
-    });
-
     test("setValue changes value", () => {
       // Set up
       const control = new TestItemControl("");
-      const observer = vi.fn();
-      control.subscribeValue(observer);
       // Act
       control.setValue(VALID_VALUE);
       // Assert
       expect(control.getValue()).toBe(VALID_VALUE);
-      expect(observer).toHaveBeenCalledWith(VALID_VALUE);
     });
 
     test("setValue changes value to undefined if value is empty string", () => {
       // Set up
       const control = new TestItemControl("");
-      const observer = vi.fn();
-      control.subscribeValue(observer);
       // Act
       control.setValue("");
       // Assert
       expect(control.getValue()).toBeUndefined();
-      expect(observer).toHaveBeenCalledWith(undefined);
     });
   });
 
@@ -131,12 +110,9 @@ describe("ItemControl", () => {
     const control = new TestItemControl("defaultValue");
     control.setValue("newValue");
     // Act
-    const observer = vi.fn();
-    control.subscribeValue(observer);
     control.resetValue();
     // Assert
     expect(control.getValue()).toBe("defaultValue");
-    expect(observer).toHaveBeenCalledWith("defaultValue");
   });
 
   test("resetState resets state & errors, does not notify state observers [no validators]", () => {

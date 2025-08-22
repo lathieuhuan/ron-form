@@ -230,4 +230,76 @@ describe("GroupControl", () => {
       experiences: undefined,
     });
   });
+
+  test("validateSyncDescendants", () => {
+    // Set up
+    const { resume, role, contact, initialValues } = setupResume();
+    const email = contact.getControl(["email"]);
+    role.addValidator((c) => {
+      return c.getValue() === initialValues.role ? { error: "role error" } : null;
+    });
+    email.addValidator((c) => {
+      return c.getValue() === initialValues.contact.email ? { error: "email error" } : null;
+    });
+    expect(resume.getIsValid()).toBe(true);
+    expect(role.getIsValid()).toBe(true);
+    expect(email.getIsValid()).toBe(true);
+
+    // Act
+    resume.validateSyncDescendants();
+
+    // Assert
+    expect(resume.getIsValid()).toBe(false);
+    expect(role.getErrors()).toEqual({ error: "role error" });
+    expect(email.getErrors()).toEqual({ error: "email error" });
+  });
+
+  test("getFieldValue", () => {
+    // Set up
+    const { resume, initialValues } = setupResume();
+
+    // Act
+    expect(resume.getFieldValue(["role"])).toEqual(initialValues.role);
+    expect(resume.getFieldValue(["general", "name"])).toEqual(initialValues.general.name);
+  });
+
+  test("setFieldValue", () => {
+    // Set up
+    const { resume } = setupResume();
+
+    // Act
+    resume.setFieldValue(["role"], "new role");
+    resume.setFieldValue(["general", "name"], "new name");
+    resume.setFieldValue(["contact"], {
+      email: "new email",
+      phone: "new phone",
+    });
+
+    // Assert
+    expect(resume.getFieldValue(["role"])).toEqual("new role");
+    expect(resume.getFieldValue(["general", "name"])).toEqual("new name");
+    expect(resume.getFieldValue(["contact", "email"])).toEqual("new email");
+    expect(resume.getFieldValue(["contact", "phone"])).toEqual("new phone");
+  });
+
+  test("resetFieldValue", () => {
+    // Set up
+    const { resume, initialValues } = setupResume();
+
+    // Act
+    resume.setFieldValue(["role"], "new role");
+    resume.setFieldValue(["general", "name"], "new name");
+    resume.setFieldValue(["contact"], {
+      email: "new email",
+      phone: "new phone",
+    });
+    resume.resetFieldValue(["role"]);
+    resume.resetFieldValue(["general", "name"]);
+    resume.resetFieldValue(["contact"]);
+
+    // Assert
+    expect(resume.getFieldValue(["role"])).toEqual(initialValues.role);
+    expect(resume.getFieldValue(["general", "name"])).toEqual(initialValues.general.name);
+    expect(resume.getFieldValue(["contact"])).toEqual(initialValues.contact);
+  });
 });

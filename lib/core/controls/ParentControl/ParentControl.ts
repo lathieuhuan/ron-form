@@ -25,15 +25,15 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
 
   abstract getControl(path: NamePath): BaseControl<any> | undefined;
 
-  protected onValueChange(): void {
-    this.validateSync();
-    this.notifyValueObservers();
-    this.notifyStateObservers();
+  // protected onValueChange(): void {
+  //   this.validateSync();
+  //   this.notifyValueObservers();
+  //   this.notifyStateObservers();
 
-    if (this.parent !== this && this.parent instanceof ParentControl) {
-      this.parent.signalChange();
-    }
-  }
+  //   if (this.parent !== this && this.parent instanceof ParentControl) {
+  //     this.parent.signalChange();
+  //   }
+  // }
 
   getIsValid(): boolean {
     for (const control of this.controlSet) {
@@ -85,7 +85,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
     this.isAttentive = false;
     this.controlSet.forEach((control) => control.resetValue());
     this.isAttentive = true;
-    this.onValueChange();
+    // this.onValueChange();
   }
 
   resetState(): void {
@@ -99,11 +99,11 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   }
 
   /** For children to signal a value change to this parent */
-  signalChange(): void {
-    if (this.isAttentive) {
-      this.onValueChange();
-    }
-  }
+  // signalChange(): void {
+  //   if (this.isAttentive) {
+  //     this.onValueChange();
+  //   }
+  // }
 
   // run validateSync on all descendants
   validateSyncDescendants(options?: ValidateOptions) {
@@ -124,17 +124,17 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
 
   // ===== DELEGATE to child controls =====
 
-  setFieldValue(path: NamePath, value: any): void {
-    this.getControl(path)?.setValue(value);
-  }
-
   getFieldValue(path: NamePath): any {
     return this.getControl(path)?.getValue();
   }
 
-  validateField(path: NamePath, options?: ValidateOptions): ValidationErrors | null {
-    return this.getControl(path)?.validate(options) ?? null;
+  setFieldValue(path: NamePath, value: any): void {
+    this.getControl(path)?.setValue(value);
   }
+
+  // validateField(path: NamePath, options?: ValidateOptions): ValidationErrors | null {
+  //   return this.getControl(path)?.validate(options) ?? null;
+  // }
 
   resetFieldValue(path: NamePath): void {
     this.getControl(path)?.resetValue();

@@ -117,14 +117,14 @@ export abstract class BaseControl<TValue = unknown> {
     // TODO
   }
 
-  validate(options?: ValidateOptions) {
-    if (this.asyncValidator.isActive) {
-      this.validateSync(options);
-      this.validateAsync(options);
-    } else {
-      this.validateSync(options);
-    }
-  }
+  // validate(options?: ValidateOptions) {
+  //   if (this.asyncValidator.isActive) {
+  //     this.validateSync(options);
+  //     this.validateAsync(options);
+  //   } else {
+  //     this.validateSync(options);
+  //   }
+  // }
 
   // handleValidateResult(options?: ValidateOptions): void {
   //   if (!options?.isMuted) {

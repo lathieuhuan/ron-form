@@ -25,22 +25,11 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     return control as this;
   }
 
-  private onValueChange(): void {
-    this.validateSync();
-    this.notifyValueObservers();
-    this.notifyStateObservers();
-
-    if (this.parent instanceof ParentControl) {
-      this.parent.signalChange();
-    }
-  }
-
   getValue() {
     return this.value === "" ? undefined : this.value;
   }
   setValue(value: TValue): void {
     this.value = value === "" ? undefined : value;
-    this.onValueChange();
   }
   // To comply with BaseControl.patchValue
   patchValue(value: TValue): void {
@@ -76,7 +65,6 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
 
   resetValue(): void {
     this.value = this.defaultValue;
-    this.onValueChange();
   }
 
   resetState(): void {
@@ -90,4 +78,17 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     this.resetState();
     this.abortAsyncValidation();
   }
+
+  /** Validate and notify */
+  // validate(): void {
+  //   this.validateSync();
+  //   this.notifyValueObservers();
+  //   this.notifyStateObservers();
+
+  //   // TODO: validateAsync
+
+  //   if (this.parent instanceof ParentControl) {
+  //     this.parent.signalChange();
+  //   }
+  // }
 }
