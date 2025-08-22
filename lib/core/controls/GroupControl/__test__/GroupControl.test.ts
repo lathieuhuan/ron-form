@@ -1,6 +1,6 @@
 import { setupResume } from "@lib/core/test-utils/parent-utils";
 import { describe, expect, it, test } from "vitest";
-import { GROUP_ERRORS, INITIAL_VALUE_1, makeInvalidGroup, makeValidGroup } from "./test-utils";
+import { GROUP_ERRORS, INITIAL_VALUE, makeInvalidGroup, makeValidGroup } from "./test-utils";
 
 describe("GroupControl", () => {
   describe("constructor", () => {
@@ -24,7 +24,7 @@ describe("GroupControl", () => {
       const control = makeValidGroup("item");
       // Assert
       expect(control.getValue()).toEqual({
-        value1: INITIAL_VALUE_1,
+        value1: INITIAL_VALUE,
         value2: undefined,
       });
       expect(control.getIsTouched()).toBe(false);
@@ -39,7 +39,7 @@ describe("GroupControl", () => {
       const control = makeValidGroup("group");
       // Assert
       expect(control.getValue()).toEqual({
-        value1: INITIAL_VALUE_1,
+        value1: INITIAL_VALUE,
         value2: undefined,
       });
       expect(control.getIsTouched()).toBe(false);

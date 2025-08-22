@@ -10,9 +10,14 @@ import { toArray } from "@lib/core/utils/to_array";
 import { BaseControl } from "../BaseControl";
 import { ParentControl } from "../ParentControl";
 
-export type ListItemControl<TValue, TControl = BaseControl<TValue>> = {
+export type ListControlItem<TValue, TControl = BaseControl<TValue>> = {
   id: number;
   control: TControl;
+};
+
+type ListControlOptions<TValue> = ParentControlOptions<TValue | undefined> & {
+  /** initialValues[i] undefined will not override the item's initial value. */
+  initialValues?: TValue | undefined;
 };
 
 export class ListControl<
@@ -21,17 +26,23 @@ export class ListControl<
   TValue extends (TItemValue | undefined)[] = (TItemValue | undefined)[],
 > extends ParentControl<TValue | undefined> {
   //
-  items: ListItemControl<TItemValue>[] = [];
+  items: ListControlItem<TItemValue>[] = [];
+  private sampleControl: TChildControl;
   private nextId = 1;
-  private listSubject = createSubject<ListItemControl<TItemValue>[]>();
-  private isTouchedList = false;
+  private listSubject = createSubject<ListControlItem<TItemValue>[]>();
+  private isTouched = false;
 
-  constructor(
-    private sampleControl: TChildControl,
-    options: ParentControlOptions<TValue | undefined> = {},
-  ) {
+  constructor(sampleControl: TChildControl, options: ListControlOptions<TValue> = {}) {
     super(options);
-    this.validateSync({ isBubbling: false });
+    this.sampleControl = sampleControl.clone();
+
+    if (options.initialValues) {
+      options.initialValues.forEach((value, index) => {
+        this.insertItem(index, value);
+      });
+    }
+
+    this.validateSync();
   }
 
   clone(): this {
@@ -51,54 +62,111 @@ export class ListControl<
   }
 
   override getIsTouched(): boolean {
-    return this.isTouchedList || super.getIsTouched();
+    return this.isTouched || super.getIsTouched();
+  }
+
+  override setIsTouched(isTouched: boolean): void {
+    this.isTouched = isTouched;
+    super.setIsTouched(isTouched);
   }
 
   getValue(): TValue | undefined {
     const value = this.items.map((item) => item.control.getValue());
-    return value.length ? (value as TValue) : undefined;
+    console.log("value", value);
+    return value.length
+      ? (value as TValue)
+      : this.isTouched
+      ? ([] as unknown as TValue)
+      : undefined;
   }
 
-  /** set undefined will clear all items */
-  setValue(value: TValue | undefined): void {
-    if (value === undefined) {
-      this.items = [];
-      this.nextId = 1;
-      this.listSubject.next(this.items);
-      this.notifyValueObservers();
-      this.validateSync({ isBubbling: true });
-    } else {
-      this.items.forEach((item, index) => item.control.setValue(value[index]));
-    }
+  /**
+   * - values undefined will set value of every item to undefined.
+   * - value[i] undefined will set value of item[i] to undefined.
+   * - item[n] with n >= values.length will be set value to undefined.
+   */
+  setValue(values: TValue | undefined = [] as unknown as TValue): void {
+    this.items.forEach((item, index) => item.control.setValue(values[index]));
   }
 
-  patchValue(value: TValue): void {
-    this.items.forEach((item, index) => item.control.patchValue(value[index]));
+  /**
+   * - if values[i] is undefined, item[i] will keep its value.
+   * - item[n] with n >= values.length will keep its value.
+   */
+  patchValue(values: TValue): void {
+    values.forEach((value, index) => {
+      if (value) {
+        this.items[index]?.control.patchValue(value);
+      }
+    });
   }
 
   // LIST ONLY
 
-  subscribeList(callback: (items: ListItemControl<TItemValue>[]) => void) {
+  subscribeList(callback: (items: ListControlItem<TItemValue>[]) => void) {
     return this.listSubject.subscribe(callback);
   }
 
-  insertItem(index: number, value?: TItemValue): TChildControl {
+  private createItem(value?: TItemValue): TChildControl {
     const item = this.sampleControl.clone() as TChildControl;
     item.parent = this;
     item.name = this.nextId.toString();
+
+    if (value !== undefined) {
+      item.setValue(value);
+    }
+
+    return item;
+  }
+
+  /**
+   * If value is provided (not undefined), it will override the item's initial value.
+   * If index < 0 || index > items.length, this operation will fail and return undefined.
+   */
+  insertItem(index: number, value?: TItemValue): TChildControl | undefined {
+    if (index < 0 || index > this.items.length) {
+      return undefined;
+    }
+
+    const item = this.createItem(value);
 
     this.items.splice(index, 0, { id: this.nextId, control: item });
     this.controlSet.add(item);
     this.nextId++;
     this.listSubject.next(this.items);
-    this.isTouchedList = true;
-    this.notifyValueObservers();
-    item.validateSync({ isBubbling: true });
+    // this.isTouched = true;
+    // this.notifyValueObservers();
+    // item.validateSync();
 
-    if (value) {
-      item.setValue(value);
-    }
     return item;
+  }
+
+  /**
+   * @returns new items.
+   * If index < 0 || index > items.length, this operation will fail and return undefined.
+   */
+  insertItems(
+    index: number,
+    count: number,
+    values?: TItemValue[],
+  ): ListControlItem<TItemValue>[] | undefined {
+    if (index < 0 || index > this.items.length) {
+      return undefined;
+    }
+
+    const newItems: ListControlItem<TItemValue>[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const item = this.createItem(values?.[i]);
+      newItems.push({ id: this.nextId, control: item });
+      this.controlSet.add(item);
+      this.nextId++;
+    }
+
+    this.items.splice(index, 0, ...newItems);
+    this.listSubject.next(this.items);
+
+    return newItems;
   }
 
   removeItem(id: number): void {
@@ -109,9 +177,17 @@ export class ListControl<
     if (removedItem) {
       this.controlSet.delete(removedItem.control);
       this.listSubject.next(this.items);
-      this.isTouchedList = true;
-      this.notifyValueObservers();
-      this.validateSync({ isBubbling: true });
+      // this.isTouched = true;
+      // this.notifyValueObservers();
+      // this.validateSync();
     }
+  }
+
+  clearItems(): void {
+    this.items = [];
+    this.nextId = 1;
+    this.listSubject.next(this.items);
+    // this.notifyValueObservers();
+    // this.validateSync();
   }
 }

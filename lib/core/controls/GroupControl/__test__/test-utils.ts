@@ -3,7 +3,7 @@ import { ItemControl } from "@lib/core/controls/ItemControl";
 import { requiredValidator } from "@lib/core/test-utils/validation-utils";
 import { GroupValue, ValidatorFn } from "@lib/core/types";
 
-export const INITIAL_VALUE_1 = "value";
+export const INITIAL_VALUE = "value";
 export const GROUP_ERRORS = { value1: "invalid value 1" };
 
 const groupValidator: ValidatorFn<
@@ -16,7 +16,7 @@ const groupValidator: ValidatorFn<
 export function makeValidGroup(validatorsOn?: "group" | "item") {
   if (validatorsOn === "item") {
     return new GroupControl({
-      value1: new ItemControl<string>(INITIAL_VALUE_1, {
+      value1: new ItemControl<string>(INITIAL_VALUE, {
         validators: [requiredValidator],
       }),
       value2: new ItemControl<string>(),
@@ -25,7 +25,7 @@ export function makeValidGroup(validatorsOn?: "group" | "item") {
   if (validatorsOn === "group") {
     return new GroupControl(
       {
-        value1: new ItemControl<string>(INITIAL_VALUE_1),
+        value1: new ItemControl<string>(INITIAL_VALUE),
         value2: new ItemControl<string>(),
       },
       {

@@ -44,8 +44,8 @@ export abstract class BaseControl<TValue = unknown> {
   /**
    * Only copy the following:
    * - item: default value
+   * - group: initial controls
    * - list: sampleControl
-   * - group: controls
    * - current validators and async validators
    */
   abstract clone(): this;
