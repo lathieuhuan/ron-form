@@ -17,7 +17,7 @@ export type ListControlItem<TValue, TControl = BaseControl<TValue>> = {
 
 type ListControlOptions<TValue> = ParentControlOptions<TValue | undefined> & {
   /** initialValues[i] undefined will not override the item's initial value. */
-  initialValues?: TValue | undefined;
+  initialValues?: TValue;
 };
 
 export class ListControl<
@@ -36,11 +36,9 @@ export class ListControl<
     super(options);
     this.sampleControl = sampleControl.clone();
 
-    if (options.initialValues) {
-      options.initialValues.forEach((value, index) => {
-        this.insertItem(index, value);
-      });
-    }
+    options.initialValues?.forEach((value, index) => {
+      this.insertItem(index, value);
+    });
 
     this.validateSync();
   }
@@ -119,17 +117,23 @@ export class ListControl<
   }
 
   /**
-   * If value is provided (not undefined), it will override the item's initial value.
-   * If index < 0 || index > items.length, this operation will fail and return undefined.
+   * - If value is provided (not undefined), it will override the item's initial value.
+   * - If index is undefined, it will be inserted at the end of the list.
+   * - If index < 0 || index > items.length, this operation will fail and return undefined.
    */
-  insertItem(index: number, value?: TItemValue): TChildControl | undefined {
-    if (index < 0 || index > this.items.length) {
+  insertItem(index?: number, value?: TItemValue): TChildControl | undefined {
+    if (index !== undefined && (index < 0 || index > this.items.length)) {
       return undefined;
     }
 
     const item = this.createItem(value);
 
-    this.items.splice(index, 0, { id: this.nextId, control: item });
+    if (index === undefined) {
+      this.items.push({ id: this.nextId, control: item });
+    } else {
+      this.items.splice(index, 0, { id: this.nextId, control: item });
+    }
+
     this.controlSet.add(item);
     this.nextId++;
     this.listSubject.next(this.items);
@@ -141,28 +145,36 @@ export class ListControl<
   }
 
   /**
+   * - If index is undefined, new items will be inserted at the end of the list.
+   * - If index < 0 || index > items.length, this operation will fail and return undefined.
    * @returns new items.
-   * If index < 0 || index > items.length, this operation will fail and return undefined.
    */
   insertItems(
-    index: number,
-    count: number,
-    values?: TItemValue[],
+    countOrValues: number | TItemValue[],
+    index?: number,
   ): ListControlItem<TItemValue>[] | undefined {
-    if (index < 0 || index > this.items.length) {
+    if (index !== undefined && (index < 0 || index > this.items.length)) {
       return undefined;
     }
 
     const newItems: ListControlItem<TItemValue>[] = [];
+    const count = typeof countOrValues === "number" ? countOrValues : countOrValues.length;
+    const values = typeof countOrValues === "number" ? undefined : countOrValues;
 
     for (let i = 0; i < count; i++) {
       const item = this.createItem(values?.[i]);
+
       newItems.push({ id: this.nextId, control: item });
       this.controlSet.add(item);
       this.nextId++;
     }
 
-    this.items.splice(index, 0, ...newItems);
+    if (index === undefined) {
+      this.items.push(...newItems);
+    } else {
+      this.items.splice(index, 0, ...newItems);
+    }
+
     this.listSubject.next(this.items);
 
     return newItems;
