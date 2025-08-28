@@ -24,12 +24,16 @@ export class ListControl<
   TChildControl extends BaseControl<any> = BaseControl<any>,
   TItemValue extends ListItemValue<TChildControl> = ListItemValue<TChildControl>,
   TValue extends (TItemValue | undefined)[] = (TItemValue | undefined)[],
+  TListItem extends ListControlItem<TItemValue, TChildControl> = ListControlItem<
+    TItemValue,
+    TChildControl
+  >,
 > extends ParentControl<TValue | undefined> {
   //
-  items: ListControlItem<TItemValue>[] = [];
+  private items: TListItem[] = [];
   private sampleControl: TChildControl;
   private nextId = 1;
-  private listSubject = createSubject<ListControlItem<TItemValue>[]>();
+  private listSubject = createSubject<TListItem[]>();
   private isTouched = false;
 
   constructor(sampleControl: TChildControl, options: ListControlOptions<TValue> = {}) {
@@ -37,7 +41,7 @@ export class ListControl<
     this.sampleControl = sampleControl.clone();
 
     options.initialValues?.forEach((value, index) => {
-      this.insertItem(index, value);
+      this.insertItem(value, index);
     });
 
     this.validateSync();
@@ -57,6 +61,10 @@ export class ListControl<
       TChildControl,
       TPath
     >;
+  }
+
+  getItems(): TListItem[] {
+    return this.items;
   }
 
   override getIsTouched(): boolean {
@@ -82,15 +90,15 @@ export class ListControl<
    * - value[i] undefined will set value of item[i] to undefined.
    * - item[n] with n >= values.length will be set value to undefined.
    */
-  setValue(values: TValue | undefined = [] as unknown as TValue): void {
-    this.items.forEach((item, index) => item.control.setValue(values[index]));
+  setValue(values: (TItemValue | undefined)[] | undefined): void {
+    this.items.forEach((item, index) => item.control.setValue(values?.[index]));
   }
 
   /**
    * - if values[i] is undefined, item[i] will keep its value.
    * - item[n] with n >= values.length will keep its value.
    */
-  patchValue(values: TValue): void {
+  patchValue(values: (TItemValue | undefined)[]): void {
     values.forEach((value, index) => {
       if (value) {
         this.items[index]?.control.patchValue(value);
@@ -100,11 +108,11 @@ export class ListControl<
 
   // LIST ONLY
 
-  subscribeList(callback: (items: ListControlItem<TItemValue>[]) => void) {
+  subscribeList(callback: (items: TListItem[]) => void) {
     return this.listSubject.subscribe(callback);
   }
 
-  private createItem(value?: TItemValue): TChildControl {
+  private createItemControl(value?: TItemValue): TChildControl {
     const item = this.sampleControl.clone() as TChildControl;
     item.parent = this;
     item.name = this.nextId.toString();
@@ -121,20 +129,21 @@ export class ListControl<
    * - If index is undefined, it will be inserted at the end of the list.
    * - If index < 0 || index > items.length, this operation will fail and return undefined.
    */
-  insertItem(index?: number, value?: TItemValue): TChildControl | undefined {
+  insertItem(value?: TItemValue, index?: number): TListItem | undefined {
     if (index !== undefined && (index < 0 || index > this.items.length)) {
       return undefined;
     }
 
-    const item = this.createItem(value);
+    const itemControl = this.createItemControl(value);
+    const item = { id: this.nextId, control: itemControl } as TListItem;
 
     if (index === undefined) {
-      this.items.push({ id: this.nextId, control: item });
+      this.items.push(item);
     } else {
-      this.items.splice(index, 0, { id: this.nextId, control: item });
+      this.items.splice(index, 0, item);
     }
 
-    this.controlSet.add(item);
+    this.controlSet.add(itemControl);
     this.nextId++;
     this.listSubject.next(this.items);
     // this.isTouched = true;
@@ -149,22 +158,19 @@ export class ListControl<
    * - If index < 0 || index > items.length, this operation will fail and return undefined.
    * @returns new items.
    */
-  insertItems(
-    countOrValues: number | TItemValue[],
-    index?: number,
-  ): ListControlItem<TItemValue>[] | undefined {
+  insertItems(countOrValues: number | TItemValue[], index?: number): TListItem[] | undefined {
     if (index !== undefined && (index < 0 || index > this.items.length)) {
       return undefined;
     }
 
-    const newItems: ListControlItem<TItemValue>[] = [];
+    const newItems: TListItem[] = [];
     const count = typeof countOrValues === "number" ? countOrValues : countOrValues.length;
     const values = typeof countOrValues === "number" ? undefined : countOrValues;
 
     for (let i = 0; i < count; i++) {
-      const item = this.createItem(values?.[i]);
+      const item = this.createItemControl(values?.[i]);
 
-      newItems.push({ id: this.nextId, control: item });
+      newItems.push({ id: this.nextId, control: item } as TListItem);
       this.controlSet.add(item);
       this.nextId++;
     }
@@ -180,9 +186,13 @@ export class ListControl<
     return newItems;
   }
 
-  removeItem(id: number): void {
+  removeItem(id: number): TListItem | undefined {
     const index = this.items.findIndex((item) => item.id === id);
-    if (index === -1) return;
+
+    if (index === -1) {
+      return undefined;
+    }
+
     const [removedItem] = this.items.splice(index, 1);
 
     if (removedItem) {
@@ -191,7 +201,11 @@ export class ListControl<
       // this.isTouched = true;
       // this.notifyValueObservers();
       // this.validateSync();
+
+      return removedItem;
     }
+
+    return undefined;
   }
 
   clearItems(): void {

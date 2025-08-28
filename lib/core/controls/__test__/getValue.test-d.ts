@@ -1,21 +1,21 @@
-import { describe } from "node:test";
-import { expectTypeOf, test } from "vitest";
+import { describe, expectTypeOf, test } from "vitest";
 
+import { ItemControl } from "@lib/core/controls/ItemControl";
 import {
   setupMatrix2dComplex,
   setupMatrix2dSimple,
   setupMatrix3dComplex,
   setupMatrix3dSimple,
   setupResume,
-} from "@lib/__tests__/core/test_utils";
-import { ItemControl } from "@lib/core/controls/ItemControl";
-import { ListValue } from "@lib/core/controls/ListControl/ListControl";
+} from "@lib/core/test-utils/parent-utils";
 import { GroupValue } from "@lib/core/types";
 
 type ExperienceValue = {
   company: string | undefined;
   yearCount: number | undefined;
 };
+
+type ListValue<TValue> = (TValue | undefined)[] | undefined;
 
 type Matrix2dValue<TValue> = ListValue<ListValue<TValue>>;
 type Matrix3dValue<TValue> = ListValue<ListValue<ListValue<TValue>>>;
