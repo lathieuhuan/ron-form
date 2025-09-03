@@ -1,8 +1,8 @@
 import type { AsyncValidatorFn, ComposableAsyncValidators } from "@lib/core/types";
 import type { BaseControl } from "./BaseControl";
 
-import { mergeErrors } from "@lib/core/utils/merge_errors";
-import { trueArray } from "@lib/core/utils/true_array";
+import { mergeErrors } from "@lib/core/utils/mergeErrors";
+import { trueArray } from "@lib/core/utils/trueArray";
 
 type AsyncValidator<TValue = unknown> = {
   isActive: boolean;

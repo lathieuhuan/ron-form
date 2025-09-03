@@ -418,6 +418,27 @@ describe("ListControl", () => {
     });
   });
 
+  test("removeItems should remove the items that match the filter and return the removed items", () => {
+    // Set up
+    const control = new ListControl(new ItemControl<string>(), {
+      initialValues: ["111", "_222", "333", "_444", "555"],
+    });
+    const [_, item1, __, item3] = control.getItems();
+
+    // Act
+    const removedItems = control.removeItems(
+      (item) => item.control.getValue()?.startsWith("_") ?? false,
+    );
+
+    // Assert
+    expect(control.getItems().length).toBe(3);
+    expect(control.getValue()).toEqual(["111", "333", "555"]);
+    expect(removedItems).toBeDefined();
+    expect(removedItems.length).toBe(2);
+    expect(removedItems[0]).toBe(item1);
+    expect(removedItems[1]).toBe(item3);
+  });
+
   test("clearItems should remove all items", () => {
     // Set up
     const control = new ListControl(new ItemControl<string>(), {

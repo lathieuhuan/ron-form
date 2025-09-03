@@ -6,8 +6,8 @@ import type {
   ValidateOptions,
   ValidationErrors,
 } from "@lib/core/types";
-import { createSubject, type Observer } from "@lib/core/utils/create_subject";
-import { mergeErrors } from "@lib/core/utils/merge_errors";
+import { createSubject, type Observer } from "@lib/core/utils/createSubject";
+import { mergeErrors } from "@lib/core/utils/mergeErrors";
 import { createAsyncValidator } from "./createAsyncValidator";
 import { createValidator } from "./createValidator";
 

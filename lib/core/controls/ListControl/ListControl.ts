@@ -4,9 +4,9 @@ import type {
   ListPath,
   ParentControlOptions,
 } from "@lib/core/types";
-import { createSubject } from "@lib/core/utils/create_subject";
+import { createSubject } from "@lib/core/utils/createSubject";
 import { getControl } from "@lib/core/utils/getControl";
-import { toArray } from "@lib/core/utils/to_array";
+import { toArray } from "@lib/core/utils/toArray";
 import { BaseControl } from "../BaseControl";
 import { ParentControl } from "../ParentControl";
 
@@ -206,6 +206,21 @@ export class ListControl<
     }
 
     return undefined;
+  }
+
+  removeItems(shouldRemove: (item: TListItem) => boolean): TListItem[] {
+    const removedItems: TListItem[] = [];
+
+    this.items = this.items.filter((item) => {
+      const removed = shouldRemove(item);
+
+      if (removed) {
+        removedItems.push(item);
+      }
+      return !removed;
+    });
+
+    return removedItems;
   }
 
   clearItems(): void {

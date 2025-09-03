@@ -31,5 +31,5 @@
     }
   },
   "exclude": ["src", "lib/core", "lib/react"],
-  "include": ["lib/__tests__/**/*.test-d.ts"]
+  "include": ["lib/**/*.test-d.ts"]
 }

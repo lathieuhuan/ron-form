@@ -1,5 +1,5 @@
 import { Noop } from "../types";
-import { isFunction } from "./is_function";
+import { isFunction } from "./isFunction";
 
 export type Observer<T> = (value: T) => void;
 

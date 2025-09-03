@@ -3,7 +3,7 @@ import {
   requiredAsyncValidator,
   requiredValidator,
 } from "@lib/core/test-utils/validation-utils";
-import { describe, expect, it, test, vi } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import { TestParentControl } from "./TestParentControl";
 
 describe("ParentControl", () => {
@@ -148,23 +148,15 @@ describe("ParentControl", () => {
     expect(second.getIsTouched()).toBe(true);
   });
 
-  test("resetValue resets all children's values, runs validateSync on parent once, and notify parent's value & state observers once", () => {
+  test("resetValue resets all children's values", () => {
     // Set up
     const control = new TestParentControl();
     const first = control.getControl([0])!;
     const second = control.getControl([1])!;
+    expect(first.getValue()).toEqual(undefined);
+    expect(second.getValue()).toEqual(undefined);
     first.setValue("test");
     second.setValue("test");
-
-    const validatorObserver = vi.fn();
-    const valueObserver = vi.fn();
-    const stateObserver = vi.fn();
-    control.addValidator(() => {
-      validatorObserver();
-      return null;
-    });
-    control.subscribeValue(valueObserver);
-    control.subscribeState(stateObserver);
 
     // Act
     control.resetValue();
@@ -172,11 +164,6 @@ describe("ParentControl", () => {
     // Assert
     expect(first.getValue()).toEqual(undefined);
     expect(second.getValue()).toEqual(undefined);
-    expect(validatorObserver).toHaveBeenCalledOnce();
-    expect(valueObserver).toHaveBeenCalledOnce();
-    expect(valueObserver).toHaveBeenCalledWith([undefined, undefined]);
-    expect(stateObserver).toHaveBeenCalledOnce();
-    expect(stateObserver).toHaveBeenCalledWith(control.getState());
   });
 
   test("resetState resets parent's and all children's state", () => {

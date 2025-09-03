@@ -15,7 +15,7 @@ export default defineConfig({
   test: {
     root: "./",
     typecheck: {
-      exclude: ["src", "lib/core", "lib/react"],
+      exclude: ["src", "lib/react"],
       include: ["lib/**/*.test-d.ts"],
       tsconfig: "tsconfig.vitest.json",
     },
