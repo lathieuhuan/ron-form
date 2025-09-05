@@ -15,21 +15,34 @@ export const setupResume = () => {
     },
   };
 
+  // Simple ItemControl
   const role = new ItemControl(initials.role);
+
+  // Simple GroupControl - item can be defined separately or inline
   const name = new ItemControl(initials.general.name);
   const general = new GroupControl({
     name: name,
     age: new ItemControl(initials.general.age),
   });
+
+  //
   const contact = new GroupControl({
     email: new ItemControl(initials.contact.email),
     phone: new ItemControl(initials.contact.phone),
   });
+
+  // Simple ListControl
   const skills = new ListControl(new ItemControl(""));
+
+  // Complex ListControl: List of Groups containing a List.
+  // Define projects separately instead of inline in the group control
+  // for typescript to infer the type correctly
+  const projects = new ListControl(new ItemControl(""));
   const experiences = new ListControl(
     new GroupControl({
       company: new ItemControl(""),
       yearCount: new ItemControl(0),
+      projects,
     }),
   );
 

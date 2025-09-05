@@ -1,11 +1,5 @@
 import { BaseControl } from "../BaseControl";
-import {
-  ControlState,
-  NamePath,
-  ParentControlOptions,
-  ValidateOptions,
-  ValidationErrors,
-} from "../../types";
+import { ControlState, NamePath, ParentControlOptions, ValidateOptions } from "../../types";
 
 /**
  * ParentControl has its own validators and errors,

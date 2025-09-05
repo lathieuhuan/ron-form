@@ -254,13 +254,17 @@ describe("GroupControl", () => {
     expect(email.getErrors()).toEqual({ error: "email error" });
   });
 
+  // Methods that delegate to child controls
+
   test("getFieldValue", () => {
     // Set up
     const { resume, initialValues } = setupResume();
 
     // Act
-    expect(resume.getFieldValue(["role"])).toEqual(initialValues.role);
-    expect(resume.getFieldValue(["general", "name"])).toEqual(initialValues.general.name);
+    const roleValue = resume.getFieldValue(["role"]);
+    const nameValue = resume.getFieldValue(["general", "name"]);
+    expect(roleValue).toEqual(initialValues.role);
+    expect(nameValue).toEqual(initialValues.general.name);
   });
 
   test("setFieldValue", () => {

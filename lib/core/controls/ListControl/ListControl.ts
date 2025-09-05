@@ -4,6 +4,9 @@ import type {
   ListPath,
   ParentControlOptions,
 } from "@lib/core/types";
+import type { ItemControl } from "../ItemControl";
+import type { GroupControl } from "../GroupControl";
+
 import { createSubject } from "@lib/core/utils/createSubject";
 import { getControl } from "@lib/core/utils/getControl";
 import { toArray } from "@lib/core/utils/toArray";
@@ -230,4 +233,40 @@ export class ListControl<
     // this.notifyValueObservers();
     // this.validateSync();
   }
+
+  // ===== DELEGATE to child controls =====
+
+  override getFieldValue<
+    TPath extends ListPath<TChildControl>,
+    TControl = ControlAtListPath<TChildControl, TPath>,
+  >(
+    path: TPath,
+  ): TControl extends BaseControl<infer TBaseValue>
+    ? TBaseValue
+    : TControl extends ItemControl<infer TItemValue>
+    ? TItemValue
+    : TControl extends GroupControl<infer _, infer TGroupValue>
+    ? TGroupValue
+    : TControl extends ListControl<infer _, infer __, infer TListValue>
+    ? TListValue
+    : TControl extends undefined
+    ? undefined
+    : never {
+    return this.getControl(path)?.getValue();
+  }
+
+  // override setFieldValue<TPath extends GroupPath<TControls>>(
+  //   path: TPath,
+  //   value: ReturnType<ControlAtGroupPath<TControls, TPath>["getValue"]>,
+  // ): void {
+  //   this.getControl(path)?.setValue(value);
+  // }
+
+  // override resetFieldValue<TPath extends GroupPath<TControls>>(path: TPath): void {
+  //   this.getControl(path)?.resetValue();
+  // }
+
+  // override resetField<TPath extends GroupPath<TControls>>(path: TPath): void {
+  //   this.getControl(path)?.reset();
+  // }
 }

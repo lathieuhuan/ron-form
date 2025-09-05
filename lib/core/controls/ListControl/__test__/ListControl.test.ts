@@ -1,6 +1,7 @@
 import { describe, expect, it, test } from "vitest";
 import { ItemControl } from "../../ItemControl";
 import { ListControl } from "../ListControl";
+import { setupResume } from "@lib/core/test-utils/parent-utils";
 
 describe("ListControl", () => {
   describe("constructor & getControl", () => {
@@ -451,5 +452,23 @@ describe("ListControl", () => {
     // Assert
     expect(control.getItems().length).toBe(0);
     expect(control.getValue()).toEqual(undefined);
+  });
+
+  // Methods that delegate to child controls
+
+  test("getFieldValue", () => {
+    // Set up
+    const listControl = new ListControl(new ItemControl<string>(), {
+      initialValues: ["111", "333"],
+    });
+    const { experiences } = setupResume();
+    // const projectControl = experiences.getControl([0])?.getControl(["projects"]);
+    const control = experiences.getControl([0]);
+    const value = control?.getValue().projects;
+    const value2 = experiences.getFieldValue([0, "projects"]);
+    const value3 = listControl.getFieldValue([0]);
+    // Act
+    // expect(control.getFieldValue([0])).toBe("111");
+    // expect(control.getFieldValue([1])).toBe("333");
   });
 });
