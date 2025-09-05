@@ -10,12 +10,13 @@ import {
 } from "@lib/core/test-utils/parent-utils";
 import { GroupValue } from "@lib/core/types";
 
+type ListValue<TValue> = (TValue | undefined)[] | undefined;
+
 type ExperienceValue = {
   company: string | undefined;
   yearCount: number | undefined;
+  projects: (string | undefined)[];
 };
-
-type ListValue<TValue> = (TValue | undefined)[] | undefined;
 
 type Matrix2dValue<TValue> = ListValue<ListValue<TValue>>;
 type Matrix3dValue<TValue> = ListValue<ListValue<ListValue<TValue>>>;
@@ -41,7 +42,8 @@ describe("getValue", () => {
 
     // ListControl of GroupControl
     const experiences = resume.getControl(["experiences"]);
-    expectTypeOf(experiences.getValue()).toEqualTypeOf<ListValue<ExperienceValue>>();
+    const experiencesValue = experiences.getValue();
+    expectTypeOf(experiencesValue).toEqualTypeOf<ListValue<ExperienceValue>>();
 
     // ListControl of ListControl of ItemControl
     const matrix2d = setupMatrix2dSimple();
