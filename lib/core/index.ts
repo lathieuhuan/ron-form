@@ -5,5 +5,5 @@ export { ItemControl } from "./controls/ItemControl";
 export { ListControl } from "./controls/ListControl";
 export { ParentControl } from "./controls/ParentControl";
 export * from "./types";
-export { REQUIRED } from "./validators";
+export * from "./validators";
 
