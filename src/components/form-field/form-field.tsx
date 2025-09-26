@@ -1,8 +1,7 @@
-import { ControlState, NamePath } from "@lib/core/types";
-import { useWatchState } from "@lib/react";
-import { ReactBaseControl } from "@lib/react/types";
+import clsx from "clsx";
 
-import "./form-field.css";
+import { ControlState, NamePath } from "@lib/core";
+import { ReactBaseControl, useControlState } from "@lib/react";
 
 type FormFieldProps = {
   className?: string;
@@ -13,16 +12,16 @@ type FormFieldProps = {
 };
 
 export function FormField({ className = "", label, name = [], control, children }: FormFieldProps) {
-  const state = useWatchState(name, control);
+  const state = useControlState(name, control);
   const error = state.isTouched && state.errors ? Object.values(state.errors)[0] : null;
 
   return (
-    <div className={`form-field ${className}`}>
-      <div className="form-field__content">
+    <div className={clsx("relative mb-5", className)}>
+      <div className="flex flex-col gap-1">
         <label>{label}</label>
         {typeof children === "function" ? children(state) : children}
       </div>
-      {error && <div className="form-field__error">{error}</div>}
+      {error && <div className="absolute top-full mt-1 pl-1 text-danger text-xs">{error}</div>}
     </div>
   );
 }

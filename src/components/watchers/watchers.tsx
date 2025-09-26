@@ -1,9 +1,9 @@
-import { BaseControl, useWatch, useWatchState } from "@lib/react";
+import { ReactBaseControl, useWatch, useControlState } from "@lib/react";
 
 type WatcherProps = {
   className?: string;
   title?: string;
-  control: BaseControl;
+  control: ReactBaseControl;
 };
 
 export function ValueWatcher({ title, control, className }: WatcherProps) {
@@ -19,7 +19,7 @@ export function ValueWatcher({ title, control, className }: WatcherProps) {
 }
 
 export function StateWatcher({ title, control, className }: WatcherProps) {
-  const state = useWatchState([], control);
+  const state = useControlState([], control);
   return (
     <div className={className}>
       {title && <h3>{title}</h3>}

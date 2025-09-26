@@ -1,5 +1,5 @@
-import { REQUIRED, FormControl, ListControl } from "@lib";
-import { FormItem, FormList, ItemControl } from "@lib/react";
+import { FormControl, ItemControl, ListControl, REQUIRED } from "@lib/core";
+import { FormItem, FormList } from "@lib/react";
 import { useMemo } from "react";
 
 import { Button } from "@src/components/button";
@@ -12,7 +12,11 @@ import "./case-styles.css";
 export function Case3() {
   const form = useMemo(() => {
     return new FormControl({
-      names: new ListControl(new ItemControl("", [REQUIRED])),
+      names: new ListControl(
+        new ItemControl("", {
+          validators: [REQUIRED],
+        }),
+      ),
     });
   }, []);
 
@@ -29,7 +33,7 @@ export function Case3() {
 
   return (
     <CaseLayout
-      form={form}
+      form={form as any}
       description={
         <ul>
           <li>Simple form list with required string fields.</li>

@@ -3,6 +3,7 @@ import type {
   ComposableValidators,
   ControlOptions,
   ControlState,
+  NamePath,
   ValidateOptions,
   ValidationErrors,
 } from "@lib/core/types";

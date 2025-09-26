@@ -1,5 +1,11 @@
+import {
+  ControlState,
+  NamePath,
+  ParentControlOptions,
+  ValidateOptions,
+  ValidationErrors,
+} from "@lib/core/types";
 import { BaseControl } from "../BaseControl";
-import { ControlState, NamePath, ParentControlOptions, ValidateOptions } from "../../types";
 
 /**
  * ParentControl has its own validators and errors,
@@ -110,11 +116,11 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
     }
   }
 
-  // validateAll(options?: ValidateAllOptions): boolean {
-  //   this.validateSync(options);
-  //   this.validateAllChildren(options);
-  //   return this.getIsValid();
-  // }
+  validateSyncAll(): boolean {
+    this.validateSync();
+    this.validateSyncDescendants();
+    return this.getIsValid();
+  }
 
   // ===== DELEGATE to child controls =====
 
@@ -126,9 +132,9 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
     this.getControl(path)?.setValue(value);
   }
 
-  // validateField(path: NamePath, options?: ValidateOptions): ValidationErrors | null {
-  //   return this.getControl(path)?.validate(options) ?? null;
-  // }
+  validateField(path: NamePath, options?: ValidateOptions): ValidationErrors | null {
+    return this.getControl(path)?.validateSync(options) ?? null;
+  }
 
   resetFieldValue(path: NamePath): void {
     this.getControl(path)?.resetValue();

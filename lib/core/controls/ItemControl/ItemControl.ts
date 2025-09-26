@@ -1,4 +1,4 @@
-import { ControlOptions, ControlState } from "@lib/core/types";
+import { ControlOptions, ControlState, NamePath } from "@lib/core/types";
 import { BaseControl } from "../BaseControl";
 import { ParentControl } from "../ParentControl";
 
@@ -23,6 +23,10 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     control.validator.set(this.validator.validators);
     control.asyncValidator.set(this.asyncValidator.validators);
     return control as this;
+  }
+
+  getControl(): BaseControl<any> {
+    return this;
   }
 
   getValue() {

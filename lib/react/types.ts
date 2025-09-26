@@ -6,34 +6,18 @@ import { ParentControl } from "@lib/core/controls/ParentControl";
 import { FormControl } from "@lib/core/form_control";
 import { GroupValue, ListItemValue } from "@lib/core/types";
 
-type ReadonlyProps<T, K extends keyof T> = Omit<T, K> & {
+type TurnReadonly<T, K extends keyof T> = Omit<T, K> & {
   readonly [P in K]: T[P];
 };
 
-type OmittedProps =
-  | "name"
-  | "controls"
-  | "isValid"
-  | "isPending"
-  | "isTouched"
-  | "isAttentive"
-  | "controlSet"
-  | "setIsTouched"
-  | "notifyValueObservers"
-  | "notifyStateObservers"
-  | "subscribe"
-  | "subscribeState"
-  | "checkIsValid"
-  | "connectForm"
-  | "handleSubmit"
-  | "handleValidateResult";
+type OmittedProps = "name";
 
 // type TransfromProps = {
 //   getControl(path: NamePath): ReactBaseControl<any>;
 // };
 
 type ReactControl<TControl extends BaseControl<any>> = Omit<
-  ReadonlyProps<TControl, "parent">,
+  TurnReadonly<TControl, "parent">,
   OmittedProps
 >;
 

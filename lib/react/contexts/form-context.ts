@@ -1,4 +1,6 @@
 import { createContext } from "react";
-import { BaseControl } from "@lib/core/controls/BaseControl";
 
-export const FormContext = createContext<BaseControl<any> | null>(null);
+import { ItemControl } from "@lib/core/controls/ItemControl";
+import { ReactBaseControl } from "../types";
+
+export const FormContext = createContext<ReactBaseControl<any>>(new ItemControl<any>());

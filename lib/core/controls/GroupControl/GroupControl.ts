@@ -5,6 +5,8 @@ import {
   GroupPath,
   GroupValue,
   ParentControlOptions,
+  ValidateOptions,
+  ValidationErrors,
 } from "../../types";
 import { BaseControl } from "../BaseControl";
 import { ParentControl } from "../ParentControl";
@@ -88,6 +90,13 @@ export class GroupControl<
     value: ReturnType<ControlAtGroupPath<TControls, TPath>["getValue"]>,
   ): void {
     this.getControl(path)?.setValue(value);
+  }
+
+  override validateField<TPath extends GroupPath<TControls>>(
+    path: TPath,
+    options?: ValidateOptions,
+  ): ValidationErrors | null {
+    return this.getControl(path)?.validateSync(options);
   }
 
   override resetFieldValue<TPath extends GroupPath<TControls>>(path: TPath): void {

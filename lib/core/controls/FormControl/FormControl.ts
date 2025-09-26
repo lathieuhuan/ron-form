@@ -1,9 +1,4 @@
-import type {
-  ComposableAsyncValidators,
-  ComposableValidators,
-  GroupValue,
-  ParentControlOptions,
-} from "../../types";
+import type { GroupValue, ParentControlOptions } from "../../types";
 import type { BaseControl } from "../BaseControl";
 import { GroupControl } from "../GroupControl";
 
@@ -46,7 +41,7 @@ export class FormControl<
 
     this.setIsTouched(true);
 
-    if (this.validateAll()) {
+    if (this.validateSyncAll()) {
       this.submitListeners.forEach((listener) => {
         listener({ status: "success", value: this.getValue() });
       });

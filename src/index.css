@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.25rem;
@@ -19,16 +21,11 @@
   --color-danger: #ff4d4f;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-button {
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
+@theme {
+  --color-danger: #ff4d4f;
+  --color-border: #828282;
+  --color-muted: rgba(255, 255, 255, 0.67);
+  --color-primary: #349cfe;
 }
 
 .app {
