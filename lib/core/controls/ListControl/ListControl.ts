@@ -48,7 +48,7 @@ export class ListControl<
       this.insertItem(value, index);
     });
 
-    this.validateSync();
+    this.validate();
   }
 
   clone(): this {
@@ -164,7 +164,7 @@ export class ListControl<
     this.listSubject.next(this.items);
     // this.isTouched = true;
     // this.notifyValueObservers();
-    // item.validateSync();
+    // item.validate();
 
     return item;
   }
@@ -216,7 +216,7 @@ export class ListControl<
       this.listSubject.next(this.items);
       // this.isTouched = true;
       // this.notifyValueObservers();
-      // this.validateSync();
+      // this.validate();
 
       return removedItem;
     }
@@ -244,7 +244,7 @@ export class ListControl<
     this.nextId = 1;
     this.listSubject.next(this.items);
     // this.notifyValueObservers();
-    // this.validateSync();
+    // this.validate();
   }
 
   // ===== DELEGATE to child controls =====

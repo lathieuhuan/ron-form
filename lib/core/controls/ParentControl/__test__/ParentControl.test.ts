@@ -19,7 +19,7 @@ describe("ParentControl", () => {
       expect(second.getIsValid()).toEqual(true);
 
       // Act
-      const error = control.validateSync();
+      const error = control.validate();
       control.setErrors(error);
 
       // Assert
@@ -35,7 +35,7 @@ describe("ParentControl", () => {
       expect(control.getIsValid()).toBe(true);
 
       // Act
-      first.validateSync();
+      first.validate();
       expect(first.getIsValid()).toEqual(false);
       expect(second.getIsValid()).toEqual(true);
 
@@ -197,7 +197,7 @@ describe("ParentControl", () => {
 
   // other methods are tested in GroupControl & ListControl tests
 
-  // test("signalChange runs validateSync on parent when child ItemControl changes value", () => {
+  // test("signalChange runs validate on parent when child ItemControl changes value", () => {
   //   // Set up
   //   const control = new TestParentControl();
   //   control.addValidator((c) => {

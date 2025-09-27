@@ -36,19 +36,19 @@ describe("BaseControl", () => {
     expect(control._asyncValidator.validators).not.toContain(requiredAsyncValidator);
   });
 
-  describe("validateSync", () => {
+  describe("validate", () => {
     it("updates errors", () => {
       // Set up
       const control = new TestBaseControl<string | undefined>({
         validators: [requiredValidator],
       });
       // Act
-      control.validateSync();
+      control.validate();
       // Assert
       expect(control.getErrors()).toEqual(REQUIRED_ERROR);
 
       control.setValue(VALID_VALUE);
-      control.validateSync();
+      control.validate();
       expect(control.getErrors()).toEqual(null);
     });
 
@@ -60,7 +60,7 @@ describe("BaseControl", () => {
       const onError = vi.fn();
       control.setValue(undefined);
       // Act
-      const errors = control.validateSync({ onError });
+      const errors = control.validate({ onError });
       // Assert
       expect(errors).toEqual(REQUIRED_ERROR);
       expect(onError).toHaveBeenCalledWith(REQUIRED_ERROR);
@@ -74,7 +74,7 @@ describe("BaseControl", () => {
       const onError = vi.fn();
       control.setValue(VALID_VALUE);
       // Act
-      const errors = control.validateSync({ onError });
+      const errors = control.validate({ onError });
       // Assert
       expect(errors).toEqual(null);
       expect(onError).not.toHaveBeenCalled();

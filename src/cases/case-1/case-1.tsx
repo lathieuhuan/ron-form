@@ -67,8 +67,8 @@ export function Case1() {
         onClick={() => console.log(form.getFieldValue(["username"]))}
       />
       <CaseAction
-        description="Set value to 'abc'"
-        onClick={() => form.setFieldValue(["username"], "abc")}
+        description="Set value to undefined (no validate)"
+        onClick={() => form.setFieldValue(["username"], undefined)}
       />
       <CaseAction description="Validate" onClick={() => form.validateField(["username"])} />
       <CaseAction

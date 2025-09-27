@@ -27,7 +27,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   abstract getControl(path: NamePath): BaseControl<any> | undefined;
 
   // protected onValueChange(): void {
-  //   this.validateSync();
+  //   this.validate();
   //   this.notifyValueObservers();
   //   this.notifyStateObservers();
 
@@ -113,10 +113,10 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   //   }
   // }
 
-  // run validateSync on all descendants
+  // run validate on all descendants
   validateSyncDescendants(options?: ValidateOptions) {
     for (const control of this.controlSet) {
-      control.validateSync(options);
+      control.validate(options);
 
       if (control instanceof ParentControl) {
         control.validateSyncDescendants(options);
@@ -125,7 +125,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   }
 
   validateSyncAll(): boolean {
-    this.validateSync();
+    this.validate();
     this.validateSyncDescendants();
     return this.getIsValid();
   }
@@ -136,12 +136,13 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
     return this.getControl(path)?.getValue();
   }
 
+  /** No validate */
   setFieldValue(path: NamePath, value: any): void {
     this.getControl(path)?.["_setValue"](value);
   }
 
   validateField(path: NamePath, options?: ValidateOptions): ValidationErrors | null {
-    return this.getControl(path)?.validateSync(options) ?? null;
+    return this.getControl(path)?.validate(options) ?? null;
   }
 
   resetFieldValue(path: NamePath): void {

@@ -28,7 +28,7 @@ export class GroupControl<
       this.controlSet.add(control);
     });
 
-    const errors = this.validateSync();
+    const errors = this.validate();
 
     if (errors) {
       this.syncErrors = errors;
@@ -113,7 +113,7 @@ export class GroupControl<
     path: TPath,
     options?: ValidateOptions,
   ): ValidationErrors | null {
-    return this.getControl(path)?.validateSync(options);
+    return this.getControl(path)?.validate(options);
   }
 
   override resetFieldValue<TPath extends GroupPath<TControls>>(

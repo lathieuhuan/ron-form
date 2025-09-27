@@ -11,7 +11,7 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     this.defaultValue = defaultValue;
     this.value = defaultValue;
 
-    const errors = this.validateSync();
+    const errors = this.validate();
     if (errors) {
       this.syncErrors = errors;
     }
@@ -89,7 +89,7 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
   }
 
   resetState(): void {
-    this.syncErrors = this.validateSync();
+    this.syncErrors = this.validate();
     this.isTouched = false;
     this.isPending = false;
   }

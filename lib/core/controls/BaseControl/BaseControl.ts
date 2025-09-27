@@ -105,7 +105,7 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
   }
 
   /** run synchronous validators and return errors */
-  validateSync(options?: ValidateOptions): ValidationErrors | null {
+  validate(options?: ValidateOptions): ValidationErrors | null {
     const errors = this.validator.validate(this);
     this.syncErrors = errors;
 
@@ -135,10 +135,10 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
 
   // validate(options?: ValidateOptions) {
   //   if (this.asyncValidator.isActive) {
-  //     this.validateSync(options);
+  //     this.validate(options);
   //     this.validateAsync(options);
   //   } else {
-  //     this.validateSync(options);
+  //     this.validate(options);
   //   }
   // }
 

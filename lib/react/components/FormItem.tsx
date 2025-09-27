@@ -35,7 +35,7 @@ export function FormItem<TValue = unknown>({
       control.setIsTouched(true);
     }
 
-    control.validateSync();
+    control.validate();
     control.notifyValueObservers();
     control.notifyStateObservers();
   };
