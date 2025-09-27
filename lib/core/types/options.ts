@@ -6,6 +6,11 @@ export type ControlOptions<TValue = unknown> = {
 };
 
 export type ParentControlOptions<TValue = unknown> = ControlOptions<TValue> & {
-  /** Whether to listen to the state of the children. Default to true. */
+  /** Whether to listen to the state of the children. Default true. */
   isAttentive?: boolean;
+};
+
+export type ValueChangeOptions = {
+  /** If true, do not notify the subscribers. Default false. */
+  mute?: boolean;
 };

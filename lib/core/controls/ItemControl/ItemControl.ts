@@ -1,6 +1,5 @@
-import { ControlOptions, ControlState, NamePath } from "@lib/core/types";
+import { ControlOptions, ControlState, ValueChangeOptions } from "@lib/core/types";
 import { BaseControl } from "../BaseControl";
-import { ParentControl } from "../ParentControl";
 
 export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefined> {
   readonly defaultValue: TValue | undefined;
@@ -29,19 +28,38 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     return this;
   }
 
+  // ↓↓↓ VALUE ↓↓↓
+
   getValue() {
     return this.value === "" ? undefined : this.value;
   }
-  protected _setValue(value: TValue): void {
+
+  protected _setValue(value: TValue | undefined): void {
     this.value = value === "" ? undefined : value;
   }
-  // To comply with BaseControl.patchValue
-  protected _patchValue(value: TValue): void {
+  setValue(value: TValue | undefined, options?: ValueChangeOptions): void {
+    this._setValue(value);
+    this.onValueChange(options);
+  }
+
+  // To comply with patchValue on BaseControl
+  protected _patchValue(value: TValue | undefined): void {
     this._setValue(value);
   }
+  patchValue(value: TValue | undefined, options?: ValueChangeOptions): void {
+    this._patchValue(value);
+    this.onValueChange(options);
+  }
+
   protected _resetValue(): void {
     this.value = this.defaultValue;
   }
+  resetValue(options?: ValueChangeOptions): void {
+    this._resetValue();
+    this.onValueChange(options);
+  }
+
+  // ↑↑↑ VALUE ↑↑↑
 
   getIsValid() {
     return this.getErrors() === null;
@@ -81,17 +99,4 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     this.resetState();
     this.abortAsyncValidation();
   }
-
-  /** Validate and notify */
-  // validate(): void {
-  //   this.validateSync();
-  //   this.notifyValueObservers();
-  //   this.notifyStateObservers();
-
-  //   // TODO: validateAsync
-
-  //   if (this.parent instanceof ParentControl) {
-  //     this.parent.signalChange();
-  //   }
-  // }
 }

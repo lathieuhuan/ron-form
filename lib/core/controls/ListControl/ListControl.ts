@@ -3,6 +3,7 @@ import type {
   ListItemValue,
   ListPath,
   ParentControlOptions,
+  ValueChangeOptions,
 } from "@lib/core/types";
 import type { ItemControl } from "../ItemControl";
 import type { GroupControl } from "../GroupControl";
@@ -79,6 +80,8 @@ export class ListControl<
     super.setIsTouched(isTouched);
   }
 
+  // ↓↓↓ VALUE ↓↓↓
+
   getValue(): TValue | undefined {
     const value = this.items.map((item) => item.control.getValue());
     return value.length
@@ -96,6 +99,10 @@ export class ListControl<
   protected _setValue(values: (TItemValue | undefined)[] | undefined): void {
     this.items.forEach((item, index) => item.control["_setValue"](values?.[index]));
   }
+  setValue(values: (TItemValue | undefined)[] | undefined, options?: ValueChangeOptions): void {
+    this._setValue(values);
+    this.onValueChange(options);
+  }
 
   /**
    * - if values[i] is undefined, item[i] will keep its value.
@@ -108,6 +115,12 @@ export class ListControl<
       }
     });
   }
+  patchValue(values: (TItemValue | undefined)[], options?: ValueChangeOptions): void {
+    this._patchValue(values);
+    this.onValueChange(options);
+  }
+
+  // ↑↑↑ VALUE ↑↑↑
 
   // LIST ONLY
 

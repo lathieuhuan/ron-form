@@ -5,6 +5,7 @@ import type {
   ControlState,
   ValidateOptions,
   ValidationErrors,
+  ValueChangeOptions,
 } from "@lib/core/types";
 import { createSubject, type Observer } from "@lib/core/utils/createSubject";
 import { mergeErrors } from "@lib/core/utils/mergeErrors";
@@ -25,9 +26,9 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
   protected asyncErrors: ValidationErrors | null = null;
 
   abstract getValue(): TValue;
-  // abstract _setValue(value: TValue | undefined): void;
-  // abstract _patchValue(value: unknown): void;
-  // abstract _resetValue(): void;
+  abstract setValue(value: TValue | undefined, options?: ValueChangeOptions): void;
+  abstract patchValue(value: unknown, options?: ValueChangeOptions): void;
+  abstract resetValue(options?: ValueChangeOptions): void;
 
   abstract getIsValid(): boolean;
 
@@ -71,6 +72,14 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
   }
   setErrors(errors: ValidationErrors | null, replace = false): void {
     this.syncErrors = replace ? errors : mergeErrors([this.syncErrors, errors]);
+  }
+
+  // ===== EVENT HANDLERS =====
+
+  protected onValueChange(options?: ValueChangeOptions): void {
+    if (!options?.mute) {
+      this.notifyValueObservers();
+    }
   }
 
   // ===== VALIDATION =====

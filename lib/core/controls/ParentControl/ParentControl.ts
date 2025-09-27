@@ -4,6 +4,7 @@ import {
   ParentControlOptions,
   ValidateOptions,
   ValidationErrors,
+  ValueChangeOptions,
 } from "@lib/core/types";
 import { BaseControl } from "../BaseControl";
 
@@ -86,6 +87,13 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
     this.controlSet.forEach((control) => control["_resetValue"]());
     this.isAttentive = true;
     // this.onValueChange();
+  }
+  resetValue(options?: ValueChangeOptions): void {
+    this._resetValue();
+
+    if (!options?.mute) {
+      this.notifyValueObservers();
+    }
   }
 
   resetState(): void {
