@@ -9,7 +9,7 @@ export function Input({ value = "", ...props }: InputProps) {
       {...props}
       className={clsx(
         "px-2 py-1 rounded-sm border border-border outline-none focus:ring-1 focus:ring-primary",
-        "aria-invalid:border-danger aria-invalid:focus:ring-danger",
+        "aria-invalid:border-destructive aria-invalid:focus:ring-destructive",
         props.className,
       )}
       value={value}

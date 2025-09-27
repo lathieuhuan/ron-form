@@ -15,7 +15,7 @@ export function Sidebar({ items }: SidebarProps) {
           href={item.path}
           key={item.path}
           data-active={activePath === item.path}
-          className="p-2 rounded-xs font-semibold hover:bg-background data-[active=true]:text-secondary"
+          className="p-2 rounded font-semibold hover:bg-background data-[active=true]:text-primary"
           onClick={(e) => {
             e.preventDefault();
             window.history.pushState({}, "", item.path);

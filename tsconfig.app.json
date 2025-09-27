@@ -26,7 +26,6 @@
     "baseUrl": ".",
     "paths": {
       "@lib/*": ["lib/*"],
-      "@lib": ["lib"],
       "@src/*": ["src/*"]
     }
   },

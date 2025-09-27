@@ -43,7 +43,7 @@ export function FormField({ className = "", label, name = [], control, children 
             })
           : children}
       </div>
-      {error && <div className="absolute top-full mt-1 pl-1 text-danger text-xs">{error}</div>}
+      {error && <div className="absolute top-full mt-1 pl-1 text-destructive text-xs">{error}</div>}
     </div>
   );
 }

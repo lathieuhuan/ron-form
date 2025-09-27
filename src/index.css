@@ -16,20 +16,15 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  --color-border: #828282;
-  --color-muted: rgba(255, 255, 255, 0.67);
-  --color-primary: #349cfe;
-  --color-secondary: greenyellow;
-  --color-danger: #ff4d4f;
 }
 
 @theme {
-  --color-danger: #ff4d4f;
+  --color-destructive: #ff4d4f;
   --color-border: #828282;
   --color-muted: rgba(255, 255, 255, 0.67);
-  --color-primary: #349cfe;
-  --color-secondary: greenyellow;
+  --color-primary: greenyellow;
+  --color-primary-foreground: black;
+  --color-secondary: #349cfe;
   --color-background: var(--background);
 }
 

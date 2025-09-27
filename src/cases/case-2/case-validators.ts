@@ -1,4 +1,4 @@
-import { ValidatorFn, AsyncValidatorFn } from "@lib";
+import { ValidatorFn, AsyncValidatorFn } from "@lib/core";
 import { ERole, FormValues } from "./case-types";
 
 export const numberValidator: ValidatorFn<any> = (control) => {

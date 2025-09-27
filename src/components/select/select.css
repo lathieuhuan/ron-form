@@ -11,7 +11,7 @@
   border: 2px solid var(--color-border);
 
   &.error {
-    border-color: var(--color-danger);
+    border-color: var(--color-destructive);
   }
 }
 
@@ -21,6 +21,6 @@
 }
 
 .select.error:focus {
-  border-color: var(--color-danger);
-  outline: 1px solid var(--color-danger);
+  border-color: var(--color-destructive);
+  outline: 1px solid var(--color-destructive);
 }

@@ -1,10 +1,10 @@
-import { FormControl, GroupControl, ItemControl, REQUIRED } from "@lib";
+import { FormControl, GroupControl, ItemControl, REQUIRED } from "@lib/core";
 import { FormItem } from "@lib/react";
 import { useEffect, useMemo } from "react";
 
-import { CaseAction, CaseLayout } from "@src/components/case-layout";
-import { FormField } from "@src/components/form-field";
-import { Input } from "@src/components/input";
+import { CaseAction, CaseLayout } from "@src/components/CaseLayout";
+import { FormField } from "@src/components/FormField";
+import { Input } from "@src/components/Input";
 import { Select } from "@src/components/select";
 import { ROLE_OPTIONS } from "./case-constants";
 import { ERole } from "./case-types";
