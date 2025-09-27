@@ -1,5 +1,5 @@
-import { FormControl, ItemControl, REQUIRED } from "@lib/core";
-import { FormItem, ReactFormControl } from "@lib/react";
+import { r, REQUIRED } from "@lib/core";
+import { FormItem } from "@lib/react";
 import { useEffect, useMemo } from "react";
 
 import { CaseAction, CaseLayout } from "@src/components/case-layout";
@@ -8,8 +8,8 @@ import { Input } from "@src/components/input";
 
 export function Case1() {
   const form = useMemo(() => {
-    return new FormControl({
-      username: new ItemControl("initial", {
+    return r.form({
+      username: r.item("initial", {
         validators: [REQUIRED],
       }),
     });

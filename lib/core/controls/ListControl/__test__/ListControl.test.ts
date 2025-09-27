@@ -105,7 +105,7 @@ describe("ListControl", () => {
     });
   });
 
-  describe("setValue", () => {
+  describe("_setValue", () => {
     it("should set each child's value to the passed value respectively", () => {
       // Set up
       const control = new ListControl(new ItemControl<string>(), {
@@ -117,7 +117,7 @@ describe("ListControl", () => {
       expect(item2.control.getValue()).toBe("333");
 
       // Act
-      control.setValue(["abc", undefined, "xyz"]);
+      control["_setValue"](["abc", undefined, "xyz"]);
 
       // Assert
       expect(item0.control.getValue()).toBe("abc");
@@ -133,7 +133,7 @@ describe("ListControl", () => {
       const [item0, item1] = control.getItems();
 
       // Act
-      control.setValue(["333"]);
+      control["_setValue"](["333"]);
 
       // Assert
       expect(item0.control.getValue()).toBe("333");
@@ -150,7 +150,7 @@ describe("ListControl", () => {
       expect(item1.control.getValue()).toBe("222");
 
       // Act
-      control.setValue(undefined);
+      control["_setValue"](undefined);
 
       // Assert
       expect(item0.control.getValue()).toBeUndefined();
@@ -158,7 +158,7 @@ describe("ListControl", () => {
     });
   });
 
-  test(`patchValue should set each child's value to the passed value respectively,
+  test(`_patchValue should set each child's value to the passed value respectively,
     if a value is undefined, the child at the same index will keep its value,
     the children that are out of the passed array's range will also keep their values`, () => {
     // Set up
@@ -171,7 +171,7 @@ describe("ListControl", () => {
     expect(item2.control.getValue()).toBe("333");
 
     // Act
-    control.patchValue(["abc", undefined, "xyz"]);
+    control["_patchValue"](["abc", undefined, "xyz"]);
 
     // Assert
     expect(item0.control.getValue()).toBe("abc");

@@ -1,8 +1,11 @@
-import type { BaseControl } from "../controls/BaseControl";
-import type { GroupControl } from "../controls/GroupControl/GroupControl";
-import type { ListControl } from "../controls/ListControl/ListControl";
+import type { BaseControl, ProtectedControl } from "../controls/BaseControl";
+import type { GroupControl } from "../controls/GroupControl";
+import type { ListControl } from "../controls/ListControl";
 import type { NamePath } from "./paths";
 import type { GroupValue } from "./values";
+
+export type InternalControl<TControl extends BaseControl = BaseControl> = TControl &
+  (TControl extends BaseControl<infer TValue> ? ProtectedControl<TValue> : never);
 
 export type ControlAtGroupPath<
   TControls extends Record<string, BaseControl<any>>,

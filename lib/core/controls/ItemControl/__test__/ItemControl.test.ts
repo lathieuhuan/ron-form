@@ -71,7 +71,7 @@ describe("ItemControl", () => {
     expect(control.getIsError()).toBe(true);
   });
 
-  describe("setValue & getValue", () => {
+  describe("_setValue & getValue", () => {
     test("getValue returns value when value is not empty string", () => {
       // Set up
       const control = new TestItemControl(VALID_VALUE);
@@ -86,31 +86,31 @@ describe("ItemControl", () => {
       expect(control.getValue()).toBeUndefined();
     });
 
-    test("setValue changes value", () => {
+    test("_setValue changes value", () => {
       // Set up
       const control = new TestItemControl("");
       // Act
-      control.setValue(VALID_VALUE);
+      control["_setValue"](VALID_VALUE);
       // Assert
       expect(control.getValue()).toBe(VALID_VALUE);
     });
 
-    test("setValue changes value to undefined if value is empty string", () => {
+    test("_setValue changes value to undefined if value is empty string", () => {
       // Set up
       const control = new TestItemControl("");
       // Act
-      control.setValue("");
+      control["_setValue"]("");
       // Assert
       expect(control.getValue()).toBeUndefined();
     });
   });
 
-  test("resetValue sets value to defaultValue, and notifies value observers", () => {
+  test("_resetValue sets value to defaultValue, and notifies value observers", () => {
     // Set up
     const control = new TestItemControl("defaultValue");
-    control.setValue("newValue");
+    control["_setValue"]("newValue");
     // Act
-    control.resetValue();
+    control["_resetValue"]();
     // Assert
     expect(control.getValue()).toBe("defaultValue");
   });

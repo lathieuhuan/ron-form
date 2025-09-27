@@ -1,13 +1,14 @@
-import { getControl } from "@lib/core/utils/getControl";
 import {
   ControlAtGroupPath,
   DeepPartial,
   GroupPath,
   GroupValue,
+  InternalControl,
   ParentControlOptions,
   ValidateOptions,
   ValidationErrors,
-} from "../../types";
+} from "@lib/core/types";
+import { getControl } from "@lib/core/utils/getControl";
 import { BaseControl } from "../BaseControl";
 import { ParentControl } from "../ParentControl";
 
@@ -57,22 +58,22 @@ export class GroupControl<
     }, {}) as TValue;
   }
 
-  setValue(value: DeepPartial<TValue> | undefined): void {
+  protected _setValue(value: DeepPartial<TValue> | undefined): void {
     if (typeof value === "object" && value !== null) {
       for (const [key, control] of Object.entries(this.controls)) {
-        control.setValue(value[key]);
+        control["_setValue"](value[key]);
       }
     } else {
       this.controlSet.forEach((control) => {
-        control.setValue(undefined);
+        control["_setValue"](undefined);
       });
     }
   }
 
-  patchValue(value: DeepPartial<TValue>): void {
+  protected _patchValue(value: DeepPartial<TValue>): void {
     if (typeof value === "object" && value !== null) {
       for (const [key, _value] of Object.entries(value)) {
-        this.controls[key]?.patchValue(_value);
+        this.controls[key]?.["_patchValue"](_value);
       }
     }
   }
@@ -89,7 +90,9 @@ export class GroupControl<
     path: TPath,
     value: ReturnType<ControlAtGroupPath<TControls, TPath>["getValue"]>,
   ): void {
-    this.getControl(path)?.setValue(value);
+    const control: InternalControl | undefined = this.getControl(path);
+
+    control?.["_setValue"](value);
   }
 
   override validateField<TPath extends GroupPath<TControls>>(
@@ -100,7 +103,9 @@ export class GroupControl<
   }
 
   override resetFieldValue<TPath extends GroupPath<TControls>>(path: TPath): void {
-    this.getControl(path)?.resetValue();
+    const control: InternalControl | undefined = this.getControl(path);
+
+    control?.["_resetValue"]();
   }
 
   override resetField<TPath extends GroupPath<TControls>>(path: TPath): void {

@@ -148,18 +148,18 @@ describe("ParentControl", () => {
     expect(second.getIsTouched()).toBe(true);
   });
 
-  test("resetValue resets all children's values", () => {
+  test("_resetValue resets all children's values", () => {
     // Set up
     const control = new TestParentControl();
     const first = control.getControl([0])!;
     const second = control.getControl([1])!;
     expect(first.getValue()).toEqual(undefined);
     expect(second.getValue()).toEqual(undefined);
-    first.setValue("test");
-    second.setValue("test");
+    first["_setValue"]("test");
+    second["_setValue"]("test");
 
     // Act
-    control.resetValue();
+    control["_resetValue"]();
 
     // Assert
     expect(first.getValue()).toEqual(undefined);

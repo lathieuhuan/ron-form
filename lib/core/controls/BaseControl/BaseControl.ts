@@ -8,10 +8,11 @@ import type {
 } from "@lib/core/types";
 import { createSubject, type Observer } from "@lib/core/utils/createSubject";
 import { mergeErrors } from "@lib/core/utils/mergeErrors";
+import { ProtectedControl } from "./ProtectedControl";
 import { createAsyncValidator } from "./createAsyncValidator";
 import { createValidator } from "./createValidator";
 
-export abstract class BaseControl<TValue = unknown> {
+export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TValue> {
   name = "root";
   parent: BaseControl<any> = this;
   // protected isValid = true;
@@ -24,9 +25,9 @@ export abstract class BaseControl<TValue = unknown> {
   protected asyncErrors: ValidationErrors | null = null;
 
   abstract getValue(): TValue;
-  abstract setValue(value: TValue | undefined): void;
-  abstract patchValue(value: unknown): void;
-  abstract resetValue(): void;
+  // abstract _setValue(value: TValue | undefined): void;
+  // abstract _patchValue(value: unknown): void;
+  // abstract _resetValue(): void;
 
   abstract getIsValid(): boolean;
 
@@ -51,6 +52,8 @@ export abstract class BaseControl<TValue = unknown> {
   abstract clone(): this;
 
   constructor(options: ControlOptions<TValue> = {}) {
+    super();
+
     if (options.validators) {
       this.validator.add(options.validators);
     }

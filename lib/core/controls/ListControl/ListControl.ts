@@ -93,18 +93,18 @@ export class ListControl<
    * - value[i] undefined will set value of item[i] to undefined.
    * - item[n] with n >= values.length will be set value to undefined.
    */
-  setValue(values: (TItemValue | undefined)[] | undefined): void {
-    this.items.forEach((item, index) => item.control.setValue(values?.[index]));
+  protected _setValue(values: (TItemValue | undefined)[] | undefined): void {
+    this.items.forEach((item, index) => item.control["_setValue"](values?.[index]));
   }
 
   /**
    * - if values[i] is undefined, item[i] will keep its value.
    * - item[n] with n >= values.length will keep its value.
    */
-  patchValue(values: (TItemValue | undefined)[]): void {
+  protected _patchValue(values: (TItemValue | undefined)[]): void {
     values.forEach((value, index) => {
       if (value) {
-        this.items[index]?.control.patchValue(value);
+        this.items[index]?.control["_patchValue"](value);
       }
     });
   }
@@ -121,7 +121,7 @@ export class ListControl<
     item.name = this.nextId.toString();
 
     if (value !== undefined) {
-      item.setValue(value);
+      item["_setValue"](value);
     }
 
     return item;

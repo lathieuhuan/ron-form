@@ -32,12 +32,15 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
   getValue() {
     return this.value === "" ? undefined : this.value;
   }
-  setValue(value: TValue): void {
+  protected _setValue(value: TValue): void {
     this.value = value === "" ? undefined : value;
   }
   // To comply with BaseControl.patchValue
-  patchValue(value: TValue): void {
-    this.setValue(value);
+  protected _patchValue(value: TValue): void {
+    this._setValue(value);
+  }
+  protected _resetValue(): void {
+    this.value = this.defaultValue;
   }
 
   getIsValid() {
@@ -67,10 +70,6 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     };
   }
 
-  resetValue(): void {
-    this.value = this.defaultValue;
-  }
-
   resetState(): void {
     this.syncErrors = this.validateSync();
     this.isTouched = false;
@@ -78,7 +77,7 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
   }
 
   reset(): void {
-    this.resetValue();
+    this._resetValue();
     this.resetState();
     this.abortAsyncValidation();
   }

@@ -101,14 +101,14 @@ describe("GroupControl", () => {
     expect(resume.getValue()).toEqual(initialValues);
   });
 
-  describe("patchValue", () => {
+  describe("_patchValue", () => {
     it("changes value of a single independent ItemControl", () => {
       // Set up
       const NEW_ROLE = "new role";
       const { resume, general, role, contact, skills, experiences, initialValues } = setupResume();
 
       // Act
-      resume.patchValue({
+      resume["_patchValue"]({
         role: NEW_ROLE,
       });
 
@@ -132,7 +132,7 @@ describe("GroupControl", () => {
         setupResume();
 
       // Act
-      resume.patchValue({
+      resume["_patchValue"]({
         general: {
           name: NEW_NAME,
         },
@@ -159,7 +159,7 @@ describe("GroupControl", () => {
       const { resume, role, name, contact, skills, experiences, initialValues } = setupResume();
 
       // Act
-      resume.patchValue({
+      resume["_patchValue"]({
         role: NEW_ROLE,
         general: {
           name: NEW_NAME,
@@ -191,13 +191,13 @@ describe("GroupControl", () => {
     });
   });
 
-  test("setValue replaces every value, what not present is undefined", () => {
+  test("_setValue replaces every value, what not present is undefined", () => {
     // Set up
     const NEW_ROLE = "new role";
     const NEW_NAME = "new name";
     const { resume, role, name, contact, skills, experiences } = setupResume();
     // Act
-    resume.setValue({
+    resume["_setValue"]({
       role: NEW_ROLE,
       general: {
         name: NEW_NAME,
