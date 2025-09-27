@@ -10,17 +10,14 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     super(options);
     this.defaultValue = defaultValue;
     this.value = defaultValue;
-
-    const errors = this.validate();
-    if (errors) {
-      this.syncErrors = errors;
-    }
+    this.syncErrors = this.validate();
   }
 
   clone(): this {
     const control = new ItemControl(this.defaultValue);
     control.validator.set(this.validator.validators);
     control.asyncValidator.set(this.asyncValidator.validators);
+
     return control as this;
   }
 
@@ -88,15 +85,11 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     };
   }
 
-  resetState(): void {
-    this.syncErrors = this.validate();
+  reset(): void {
+    this.resetValue();
     this.isTouched = false;
     this.isPending = false;
-  }
-
-  reset(): void {
-    this._resetValue();
-    this.resetState();
+    this.syncErrors = this.validate();
     this.abortAsyncValidation();
   }
 }

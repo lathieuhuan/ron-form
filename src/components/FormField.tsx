@@ -1,17 +1,16 @@
-import clsx from "clsx";
+import { useEffect, useId, useState } from "react";
 
 import { BaseControl, ControlState, NamePath } from "@lib/core";
-import { useFieldState } from "@lib/react";
-import { useId } from "react";
+import { useControl } from "@lib/react";
+import { cn } from "@src/utils";
 
 type ChildrenRenderProps = {
-  itemProps: {
-    name: NamePath;
-  };
-  fieldProps: {
+  control: BaseControl<unknown>;
+  field: {
     id: string;
     "aria-invalid": boolean;
   };
+  state: ControlState;
 };
 
 type FormFieldProps = {
@@ -24,19 +23,26 @@ type FormFieldProps = {
 
 export function FormField({ className = "", label, name = [], control, children }: FormFieldProps) {
   const id = `field${useId()}`;
-  const state = useFieldState(name, control);
+  const _control = useControl(name, control) as BaseControl<unknown>;
+  const [state, setState] = useState<ControlState>(_control.getState());
+
+  useEffect(() => {
+    return _control.subscribeState(setState);
+  }, [_control]);
+
   const error = state.isTouched && state.errors ? Object.values(state.errors)[0] : null;
 
   return (
-    <div className={clsx("relative mb-5", className)}>
+    <div className={cn("relative mb-5", className)}>
       <div className="flex flex-col gap-1">
-        <label htmlFor={id} className="w-fit">{label}</label>
+        <label htmlFor={id} className="w-fit">
+          {label}
+        </label>
         {typeof children === "function"
           ? children({
-              itemProps: {
-                name: name,
-              },
-              fieldProps: {
+              control: _control,
+              state,
+              field: {
                 id,
                 "aria-invalid": !!error,
               },

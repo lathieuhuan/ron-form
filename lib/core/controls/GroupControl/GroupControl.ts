@@ -28,11 +28,9 @@ export class GroupControl<
       this.controlSet.add(control);
     });
 
-    const errors = this.validate();
-
-    if (errors) {
-      this.syncErrors = errors;
-    }
+    this.isAttentive = false;
+    this.syncErrors = this.validate();
+    this.isAttentive = true;
   }
 
   clone(): this {

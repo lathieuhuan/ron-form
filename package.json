@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-select": "2.2.5",
     "class-variance-authority": "0.7.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -29,6 +30,7 @@
     "eslint-plugin-react-hooks": "5.2.0",
     "eslint-plugin-react-refresh": "0.4.19",
     "globals": "16.0.0",
+    "lucide-react": "0.487.0",
     "tailwindcss": "4.1.13",
     "typescript": "5.8.2",
     "typescript-eslint": "8.30.1",

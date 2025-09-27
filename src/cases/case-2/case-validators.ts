@@ -16,18 +16,19 @@ export const roleValidator: AsyncValidatorFn<any> = (control) => {
   });
 };
 
-export const careerValidator: ValidatorFn<FormValues["career"]> = (control) => {
-  const career: FormValues["career"] = control.getValue();
+export const careerValidator: ValidatorFn<FormValues> = (control) => {
+  const career: FormValues = control.getValue();
   const { role, yoe } = career;
 
-  if (!role || !yoe) {
+  if (!role || !yoe || isNaN(+yoe)) {
     return null;
   }
   switch (role) {
     case ERole.DEVELOPER:
-      return yoe < 3 ? { career: "Role Developer must have at least 3 YOE" } : null;
+      console.log("developer", +yoe);
+      return +yoe < 3 ? { career: "Role Developer must have at least 3 YOE" } : null;
     case ERole.MANAGER:
-      return yoe < 5 ? { career: "Role Manager must have at least 5 YOE" } : null;
+      return +yoe < 5 ? { career: "Role Manager must have at least 5 YOE" } : null;
     default:
       return null;
   }

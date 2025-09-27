@@ -15,7 +15,6 @@ import { BaseControl } from "../BaseControl";
 
 export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue> {
   override parent: ParentControl<any> = this;
-  protected isAttentive = true;
   // Child control class needs to populate this set
   controlSet: Set<BaseControl<any>> = new Set();
 
@@ -86,11 +85,6 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
     this.onValueChange(options);
   }
 
-  resetState(): void {
-    this.controlSet.forEach((control) => control.resetState());
-    this.setErrors(null, true);
-  }
-
   reset(): void {
     this.controlSet.forEach((control) => control.reset());
     this.abortAsyncValidation();
@@ -99,20 +93,26 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   // ===== VALIDATION =====
 
   // TODO: handle options
-  validateDescendants(options?: ValidateOptions) {
-    for (const control of this.controlSet) {
-      control.validate();
+  protected validateDescendants(options?: ValidateOptions) {
+    this.isAttentive = false;
 
+    for (const control of this.controlSet) {
       if (control instanceof ParentControl) {
         control.validateDescendants();
       }
+
+      control.validate();
     }
+
+    this.isAttentive = true;
   }
 
   // TODO: handle options
   validateAll(options?: ValidateOptions): boolean {
-    this.validate();
+    console.log("validateAll", this["id"]);
+
     this.validateDescendants();
+    this.validate();
 
     return this.getIsValid();
   }

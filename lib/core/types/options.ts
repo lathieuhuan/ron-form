@@ -1,6 +1,7 @@
 import { ComposableAsyncValidators, ComposableValidators, ValidationErrors } from "./validation";
 
 export type ControlOptions<TValue = unknown> = {
+  id?: string;
   validators?: ComposableValidators<TValue>;
   asyncValidators?: ComposableAsyncValidators<TValue>;
 };

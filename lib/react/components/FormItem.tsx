@@ -1,6 +1,6 @@
 import { cloneElement, SyntheticEvent, useEffect, useState } from "react";
 
-import { BaseControl, NamePath } from "@lib/core";
+import { BaseControl, NamePath, ParentControl } from "@lib/core";
 import { useControl } from "../hooks";
 
 /**
@@ -13,12 +13,14 @@ type FormItemProps = {
   name?: NamePath;
   control?: BaseControl;
   children: JSX.Element;
+  changeEventProp?: string;
 };
 
 export function FormItem<TValue = unknown>({
   name = [],
   control: controlProp,
   children,
+  changeEventProp = "onChange",
 }: FormItemProps) {
   const { props } = children;
   const control = useControl(name, controlProp) as BaseControl<TValue>;
@@ -36,13 +38,9 @@ export function FormItem<TValue = unknown>({
     }
 
     control.validate();
-    control["notifyValueObservers"]();
-    control["notifyStateObservers"]();
   };
 
   const onChange = (change: Event | SyntheticEvent | TValue, ...others: unknown[]) => {
-    // const isBubbling = control.parent instanceof ParentControl && control.parent.isAttentive;
-
     if (change && typeof change === "object" && "target" in change) {
       const target = change.target;
 
@@ -61,6 +59,6 @@ export function FormItem<TValue = unknown>({
   return cloneElement(children, {
     ...props,
     value,
-    onChange,
+    [changeEventProp]: onChange,
   });
 }

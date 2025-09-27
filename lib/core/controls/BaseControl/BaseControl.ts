@@ -14,8 +14,11 @@ import { createAsyncValidator } from "./createAsyncValidator";
 import { createValidator } from "./createValidator";
 
 export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TValue> {
+  private id?: string;
   name = "root";
   parent: BaseControl<any> = this;
+  /** If true, will listen to child controls' changes. */
+  protected isAttentive = true;
   protected isPending = false;
   protected validator = createValidator<TValue>();
   protected asyncValidator = createAsyncValidator<TValue>();
@@ -40,7 +43,6 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
   abstract setIsTouched(isTouched: boolean): void;
 
   abstract getState(): ControlState;
-  abstract resetState(): void;
 
   abstract reset(): void;
   /**
@@ -54,6 +56,7 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
 
   constructor(options: ControlOptions<TValue> = {}) {
     super();
+    this.id = options.id;
 
     if (options.validators) {
       this.validator.add(options.validators);
@@ -66,19 +69,20 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
   //
 
   private notifyParentOfValue() {
-    if (this.parent !== this) {
+    if (this.parent !== this && this.isAttentive) {
       this.parent.onValueChange();
     }
   }
 
   private notifyParentOfState() {
-    if (this.parent !== this) {
+    if (this.parent !== this && this.parent.isAttentive) {
       this.parent.onStateChange();
     }
   }
 
   protected onValueChange(options?: ValueChangeOptions): void {
     if (!options?.muted) {
+      console.log("onValueChange", this.id);
       this.notifyValueObservers();
       this.notifyParentOfValue();
     }
@@ -86,6 +90,7 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
 
   protected onStateChange(options?: { muted?: boolean }): void {
     if (!options?.muted) {
+      console.log("onStateChange", this.id);
       this.notifyStateObservers();
       this.notifyParentOfState();
     }
@@ -124,6 +129,7 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
 
   /** run synchronous validators and return errors */
   validate(options?: ValidateOptions): ValidationErrors | null {
+    console.log("validate", this.id);
     const errors = this.validator.validate(this);
     this.syncErrors = errors;
 
@@ -165,10 +171,12 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
   }
 
   protected notifyValueObservers(): void {
+    console.log("notifyValueObservers", this.id);
     this.valueSubject.next(() => this.getValue());
   }
 
   protected notifyStateObservers(): void {
+    console.log("notifyStateObservers", this.id);
     this.stateSubject.next(() => this.getState());
   }
 }

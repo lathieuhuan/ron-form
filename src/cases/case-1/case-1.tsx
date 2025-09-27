@@ -8,11 +8,17 @@ import { Input } from "@src/components/Input";
 
 export function Case1() {
   const form = useMemo(() => {
-    return r.form({
-      username: r.item<string>("initial", {
-        validators: [REQUIRED],
-      }),
-    });
+    return r.form(
+      {
+        username: r.item<string>("initial", {
+          validators: [REQUIRED],
+          id: "username",
+        }),
+      },
+      {
+        id: "root",
+      },
+    );
   }, []);
 
   useEffect(() => {
@@ -32,8 +38,7 @@ export function Case1() {
         <ul>
           <li>Basic form with 1 simple field.</li>
           <li>Wiring between FormItem and IO elements.</li>
-          <li>Use of useFieldValue & useFieldState in FormField, CaseLayout.</li>
-          <li>Get, set, and reset value (no validation). Reset field.</li>
+          <li>Get, set, and reset field value (no validation). Reset field.</li>
           <li>Required validation. Remove & add validator.</li>
           <li>Submit. Programmatically submit.</li>
         </ul>
@@ -50,10 +55,10 @@ export function Case1() {
       ]}
     >
       <FormField label="Username" name={["username"]}>
-        {({ itemProps, fieldProps }) => {
+        {({ control, field }) => {
           return (
-            <FormItem name={itemProps.name}>
-              <Input type="text" {...fieldProps} />
+            <FormItem control={control}>
+              <Input type="text" {...field} />
             </FormItem>
           );
         }}

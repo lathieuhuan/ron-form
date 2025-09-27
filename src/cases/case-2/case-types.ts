@@ -5,8 +5,6 @@ export enum ERole {
 }
 
 export type FormValues = {
-  career: {
-    role: ERole;
-    yoe: number;
-  };
+  role: ERole;
+  yoe: string;
 };
