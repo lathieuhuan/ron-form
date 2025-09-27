@@ -1,4 +1,4 @@
-import { ComposableAsyncValidators, ComposableValidators } from "./validation";
+import { ComposableAsyncValidators, ComposableValidators, ValidationErrors } from "./validation";
 
 export type ControlOptions<TValue = unknown> = {
   validators?: ComposableValidators<TValue>;
@@ -12,5 +12,18 @@ export type ParentControlOptions<TValue = unknown> = ControlOptions<TValue> & {
 
 export type ValueChangeOptions = {
   /** If true, do not notify the subscribers. Default false. */
-  mute?: boolean;
+  muted?: boolean;
 };
+
+export type ValidateOptions = {
+  // /** Whether to touch the control after validate. Only work on ItemControl. Default true */
+  // shouldTouch?: boolean;
+  /** If true, do not notify the subscribers. Default false. */
+  muted?: boolean;
+  // /** bubbling validation will validate the parent controls. Default false */
+  // isBubbling?: boolean;
+  onError?: (errors: ValidationErrors) => void;
+};
+
+// export type ValidateAllOptions = Pick<ValidateOptions, "isMuted">;
+export type ValidateAllOptions = never;

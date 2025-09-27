@@ -41,7 +41,7 @@ export class FormControl<
 
     this.setIsTouched(true);
 
-    if (this.validateSyncAll()) {
+    if (this.validateAll()) {
       this.submitListeners.forEach((listener) => {
         listener({ status: "success", value: this.getValue() });
       });

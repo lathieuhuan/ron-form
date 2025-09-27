@@ -231,7 +231,7 @@ describe("GroupControl", () => {
     });
   });
 
-  test("validateSyncDescendants", () => {
+  test("validateDescendants", () => {
     // Set up
     const { resume, role, contact, initialValues } = setupResume();
     const email = contact.getControl(["email"]);
@@ -246,7 +246,7 @@ describe("GroupControl", () => {
     expect(email.getIsValid()).toBe(true);
 
     // Act
-    resume.validateSyncDescendants();
+    resume.validateDescendants();
 
     // Assert
     expect(resume.getIsValid()).toBe(false);

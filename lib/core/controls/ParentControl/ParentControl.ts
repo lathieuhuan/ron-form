@@ -26,15 +26,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
 
   abstract getControl(path: NamePath): BaseControl<any> | undefined;
 
-  // protected onValueChange(): void {
-  //   this.validate();
-  //   this.notifyValueObservers();
-  //   this.notifyStateObservers();
-
-  //   if (this.parent !== this && this.parent instanceof ParentControl) {
-  //     this.parent.signalChange();
-  //   }
-  // }
+  // ===== STATE GETTERS & SETTERS =====
 
   getIsValid(): boolean {
     for (const control of this.controlSet) {
@@ -82,18 +74,16 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
     };
   }
 
+  // ===== RESET =====
+
   protected _resetValue(): void {
     this.isAttentive = false;
     this.controlSet.forEach((control) => control["_resetValue"]());
     this.isAttentive = true;
-    // this.onValueChange();
   }
   resetValue(options?: ValueChangeOptions): void {
     this._resetValue();
-
-    if (!options?.mute) {
-      this.notifyValueObservers();
-    }
+    this.onValueChange(options);
   }
 
   resetState(): void {
@@ -106,27 +96,24 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
     this.abortAsyncValidation();
   }
 
-  /** For children to signal a value change to this parent */
-  // signalChange(): void {
-  //   if (this.isAttentive) {
-  //     this.onValueChange();
-  //   }
-  // }
+  // ===== VALIDATION =====
 
-  // run validate on all descendants
-  validateSyncDescendants(options?: ValidateOptions) {
+  // TODO: handle options
+  validateDescendants(options?: ValidateOptions) {
     for (const control of this.controlSet) {
-      control.validate(options);
+      control.validate();
 
       if (control instanceof ParentControl) {
-        control.validateSyncDescendants(options);
+        control.validateDescendants();
       }
     }
   }
 
-  validateSyncAll(): boolean {
+  // TODO: handle options
+  validateAll(options?: ValidateOptions): boolean {
     this.validate();
-    this.validateSyncDescendants();
+    this.validateDescendants();
+
     return this.getIsValid();
   }
 

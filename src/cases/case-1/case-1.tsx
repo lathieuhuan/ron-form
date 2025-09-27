@@ -18,26 +18,23 @@ export function Case1() {
   useEffect(() => {
     return form.subscribeSubmit((result) => {
       if (result.status === "success") {
-        console.log("Success");
         console.log(result.value);
-      } else {
-        console.log("Error");
       }
 
-      alert("Form submitted");
+      alert(`Form submitted: ${result.status}`);
     });
   }, [form]);
 
   return (
     <CaseLayout
-      form={form as any}
+      form={form}
       description={
         <ul>
           <li>Basic form with 1 simple field.</li>
           <li>Wiring between FormItem and IO elements.</li>
           <li>Use of useFieldValue & useFieldState in FormField, CaseLayout.</li>
-          <li>Get, set, and reset value. Reset field.</li>
-          <li>Required validation. Remove & add validation.</li>
+          <li>Get, set, and reset value (no validation). Reset field.</li>
+          <li>Required validation. Remove & add validator.</li>
           <li>Submit. Programmatically submit.</li>
         </ul>
       }
@@ -67,7 +64,7 @@ export function Case1() {
         onClick={() => console.log(form.getFieldValue(["username"]))}
       />
       <CaseAction
-        description="Set value to undefined (no validate)"
+        description="Set value to undefined"
         onClick={() => form.setFieldValue(["username"], undefined)}
       />
       <CaseAction description="Validate" onClick={() => form.validateField(["username"])} />

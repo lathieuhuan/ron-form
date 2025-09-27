@@ -3,7 +3,6 @@ import type {
   ComposableValidators,
   ControlOptions,
   ControlState,
-  NamePath,
   ValidateOptions,
   ValidationErrors,
   ValueChangeOptions,
@@ -17,7 +16,6 @@ import { createValidator } from "./createValidator";
 export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TValue> {
   name = "root";
   parent: BaseControl<any> = this;
-  // protected isValid = true;
   protected isPending = false;
   protected validator = createValidator<TValue>();
   protected asyncValidator = createAsyncValidator<TValue>();
@@ -45,8 +43,6 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
   abstract resetState(): void;
 
   abstract reset(): void;
-  /** for children controls to bubble isValid */
-  // abstract checkIsValid(): void;
   /**
    * Only copy the following:
    * - item: default value
@@ -67,6 +63,36 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
     }
   }
 
+  //
+
+  private notifyParentOfValue() {
+    if (this.parent !== this) {
+      this.parent.onValueChange();
+    }
+  }
+
+  private notifyParentOfState() {
+    if (this.parent !== this) {
+      this.parent.onStateChange();
+    }
+  }
+
+  protected onValueChange(options?: ValueChangeOptions): void {
+    if (!options?.muted) {
+      this.notifyValueObservers();
+      this.notifyParentOfValue();
+    }
+  }
+
+  protected onStateChange(options?: { muted?: boolean }): void {
+    if (!options?.muted) {
+      this.notifyStateObservers();
+      this.notifyParentOfState();
+    }
+  }
+
+  // ===== ERRORS =====
+
   getIsError(): boolean {
     return !this.getIsValid() && this.getIsTouched();
   }
@@ -76,14 +102,6 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
   }
   setErrors(errors: ValidationErrors | null, replace = false): void {
     this.syncErrors = replace ? errors : mergeErrors([this.syncErrors, errors]);
-  }
-
-  // ===== EVENT HANDLERS =====
-
-  protected onValueChange(options?: ValueChangeOptions): void {
-    if (!options?.mute) {
-      this.notifyValueObservers();
-    }
   }
 
   // ===== VALIDATION =====
@@ -112,6 +130,9 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
     if (errors) {
       options?.onError?.(errors);
     }
+
+    this.onStateChange(options);
+
     return errors;
   }
 
@@ -133,24 +154,6 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
     // TODO
   }
 
-  // validate(options?: ValidateOptions) {
-  //   if (this.asyncValidator.isActive) {
-  //     this.validate(options);
-  //     this.validateAsync(options);
-  //   } else {
-  //     this.validate(options);
-  //   }
-  // }
-
-  // handleValidateResult(options?: ValidateOptions): void {
-  //   if (!options?.isMuted) {
-  //     this.notifyStateObservers();
-  //   }
-  //   if (options?.isBubbling && this.parent !== this) {
-  //     this.parent.checkIsValid();
-  //   }
-  // }
-
   // ===== OBSERVERS =====
 
   subscribeValue(subscriber: Observer<TValue | undefined>) {
@@ -161,11 +164,11 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
     return this.stateSubject.subscribe(subscriber);
   }
 
-  notifyValueObservers(): void {
+  protected notifyValueObservers(): void {
     this.valueSubject.next(() => this.getValue());
   }
 
-  notifyStateObservers(): void {
+  protected notifyStateObservers(): void {
     this.stateSubject.next(() => this.getState());
   }
 }

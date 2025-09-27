@@ -23,7 +23,7 @@ export function Form<
   }, [form]);
 
   return (
-    <FormContext.Provider value={form}>
+    <FormContext.Provider value={form as BaseControl<unknown>}>
       <form ref={formRef} className={className}>
         {children}
       </form>

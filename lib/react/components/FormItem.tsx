@@ -36,8 +36,8 @@ export function FormItem<TValue = unknown>({
     }
 
     control.validate();
-    control.notifyValueObservers();
-    control.notifyStateObservers();
+    control["notifyValueObservers"]();
+    control["notifyStateObservers"]();
   };
 
   const onChange = (change: Event | SyntheticEvent | TValue, ...others: unknown[]) => {
