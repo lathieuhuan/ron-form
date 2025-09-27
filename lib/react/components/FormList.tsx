@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { ListControl } from "@lib/core/controls/ListControl/ListControl";
-import { NamePath } from "@lib/core/types";
+import { BaseControl, ListControl, NamePath } from "@lib/core";
 import { useControl } from "../hooks/useControl";
-import { ReactBaseControl } from "../types";
-import { BaseControl } from "@lib/core/BaseControl";
 
 type ReactListItemControl<
   TValue = unknown,
-  TControl extends ReactBaseControl<TValue> = ReactBaseControl<TValue>,
+  TControl extends BaseControl<TValue> = BaseControl<TValue>,
 > = {
   id: number;
   control: TControl;
@@ -16,19 +13,19 @@ type ReactListItemControl<
 
 type ChildrenRenderProps<
   TValue = unknown,
-  TControl extends ReactBaseControl<TValue> = ReactBaseControl<TValue>,
+  TControl extends BaseControl<TValue> = BaseControl<TValue>,
 > = {
   items: ReactListItemControl<TValue, TControl>[];
   insert: ListControl["insertItem"];
   remove: ListControl["removeItem"];
 };
 
-type FormListProps<TValue, TControl extends ReactBaseControl<TValue>> = {
+type FormListProps<TValue, TControl extends BaseControl<TValue>> = {
   name?: NamePath;
   children: (props: ChildrenRenderProps<TValue, TControl>) => JSX.Element;
 };
 
-export function FormList<TValue, TControl extends ReactBaseControl<TValue>>({
+export function FormList<TValue, TControl extends BaseControl<TValue>>({
   name = [],
   children,
 }: FormListProps<TValue, TControl>) {

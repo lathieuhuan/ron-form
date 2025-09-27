@@ -1,6 +1,6 @@
 import { ValidatorFn } from "./types";
 
-export const REQUIRED: ValidatorFn = (control) => {
+export const REQUIRED: ValidatorFn<any> = (control) => {
   const value = control.getValue();
 
   if (value === null || value === undefined) {

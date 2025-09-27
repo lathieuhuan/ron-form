@@ -3,6 +3,7 @@ import type {
   ComposableValidators,
   ControlOptions,
   ControlState,
+  NamePath,
   ValidateOptions,
   ValidationErrors,
   ValueChangeOptions,
@@ -24,6 +25,9 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
   protected stateSubject = createSubject<ControlState>();
   protected syncErrors: ValidationErrors | null = null;
   protected asyncErrors: ValidationErrors | null = null;
+
+  // Cause typescript error circular constraint
+  // abstract getControl(name: NamePath): BaseControl<any> | undefined;
 
   abstract getValue(): TValue;
   abstract setValue(value: TValue | undefined, options?: ValueChangeOptions): void;

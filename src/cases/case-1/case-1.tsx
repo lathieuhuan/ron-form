@@ -2,14 +2,14 @@ import { r, REQUIRED } from "@lib/core";
 import { FormItem } from "@lib/react";
 import { useEffect, useMemo } from "react";
 
-import { CaseAction, CaseLayout } from "@src/components/case-layout";
-import { FormField } from "@src/components/form-field";
-import { Input } from "@src/components/input";
+import { CaseAction, CaseLayout } from "@src/components/CaseLayout";
+import { FormField } from "@src/components/FormField";
+import { Input } from "@src/components/Input";
 
 export function Case1() {
   const form = useMemo(() => {
     return r.form({
-      username: r.item("initial", {
+      username: r.item<string>("initial", {
         validators: [REQUIRED],
       }),
     });
@@ -35,7 +35,7 @@ export function Case1() {
         <ul>
           <li>Basic form with 1 simple field.</li>
           <li>Wiring between FormItem and IO elements.</li>
-          <li>Use of useWatch & useWatchState in FormField, CaseLayout.</li>
+          <li>Use of useFieldValue & useFieldState in FormField, CaseLayout.</li>
           <li>Get, set, and reset value. Reset field.</li>
           <li>Required validation. Remove & add validation.</li>
           <li>Submit. Programmatically submit.</li>
@@ -53,10 +53,10 @@ export function Case1() {
       ]}
     >
       <FormField label="Username" name={["username"]}>
-        {(state) => {
+        {({ itemProps, fieldProps }) => {
           return (
-            <FormItem name={["username"]}>
-              <Input type="text" isError={state.isError} />
+            <FormItem name={itemProps.name}>
+              <Input type="text" {...fieldProps} />
             </FormItem>
           );
         }}
@@ -67,8 +67,8 @@ export function Case1() {
         onClick={() => console.log(form.getFieldValue(["username"]))}
       />
       <CaseAction
-        description="Set value to null"
-        onClick={() => form.setFieldValue(["username"], null)}
+        description="Set value to 'abc'"
+        onClick={() => form.setFieldValue(["username"], "abc")}
       />
       <CaseAction description="Validate" onClick={() => form.validateField(["username"])} />
       <CaseAction

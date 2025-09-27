@@ -1,10 +1,13 @@
-import { Form, ReactBaseControl, ReactFormControl } from "@lib/react";
-import { Button } from "../button";
-import { StateWatcher, ValueWatcher } from "../watchers";
+import { BaseControl, FormControl } from "@lib/core";
+import { Form } from "@lib/react";
+import { Button } from "./Button";
+import { StateWatcher } from "./StateWatcher";
+import { ValueWatcher } from "./ValueWatcher";
+import { Divider } from "./Divider";
 
 export type CaseLayoutWatchConfig = {
   title?: string;
-  control?: ReactBaseControl;
+  control?: BaseControl<any>;
   /** Default: true */
   alsoWatchState?: boolean;
 };
@@ -12,7 +15,7 @@ export type CaseLayoutWatchConfig = {
 export type CaseLayoutProps = {
   description?: React.ReactNode;
   children: React.ReactNode;
-  form: ReactFormControl<any, any>;
+  form: FormControl<any, any>;
   watchConfigs?: CaseLayoutWatchConfig[];
 };
 
@@ -31,11 +34,19 @@ export function CaseLayout({
         {...formProps}
       >
         {description && (
-          <div className="mb-4 text-sm text-muted [&>ul]:list-disc [&>ul]:ml-4">{description}</div>
+          <div className="text-sm text-muted [&>ul]:list-disc [&>ul]:ml-4">{description}</div>
         )}
-        <div className="mt-2 p-3 bg-black rounded-sm flex flex-col gap-2">{children}</div>
-        <div>
-          <Button type="submit">Submit</Button>
+
+        <div className="mt-4 space-y-4 p-3 bg-black rounded-sm">
+          <div className="flex flex-col gap-2">{children}</div>
+
+          <Divider direction="horizontal" />
+
+          <div className="flex justify-end">
+            <Button type="submit" className="bg-primary text-black font-semibold">
+              Submit
+            </Button>
+          </div>
         </div>
       </Form>
 

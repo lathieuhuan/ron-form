@@ -24,7 +24,7 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     return control as this;
   }
 
-  getControl(): BaseControl<any> {
+  getControl() {
     return this;
   }
 

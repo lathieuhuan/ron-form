@@ -2,7 +2,7 @@ import { FormControl, ItemControl, ListControl, REQUIRED } from "@lib/core";
 import { FormItem, FormList } from "@lib/react";
 import { useMemo } from "react";
 
-import { Button } from "@src/components/button";
+import { Button } from "@src/components/Button";
 import { CaseLayout, CaseLayoutWatchConfig } from "@src/components/case-layout";
 import { FormField } from "@src/components/form-field/form-field";
 import { Input } from "@src/components/input";

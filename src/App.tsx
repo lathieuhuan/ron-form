@@ -1,6 +1,6 @@
-import { Outlet } from "./components/outlet";
-import { RouterProvider } from "./components/router-provider";
-import { Sidebar } from "./components/sidebar";
+import { Outlet } from "./components/Outlet";
+import { RouterProvider } from "./components/RouterProvider";
+import { Sidebar } from "./components/Sidebar";
 import { routes } from "./routes";
 
 function App() {

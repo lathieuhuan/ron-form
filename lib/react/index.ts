@@ -1,5 +1,5 @@
 export * from "./components";
-export { useControlState, useWatch } from "./hooks";
+export { useFieldState, useFieldValue } from "./hooks";
 
 export type {
   ReactBaseControl,

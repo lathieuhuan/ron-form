@@ -1,13 +1,16 @@
 @import "tailwindcss";
 
 :root {
+  --foreground: rgba(255, 255, 255, 0.87);
+  --background: #242424;
+
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.25rem;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: var(--foreground);
+  background-color: var(--background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -26,6 +29,8 @@
   --color-border: #828282;
   --color-muted: rgba(255, 255, 255, 0.67);
   --color-primary: #349cfe;
+  --color-secondary: greenyellow;
+  --color-background: var(--background);
 }
 
 .app {

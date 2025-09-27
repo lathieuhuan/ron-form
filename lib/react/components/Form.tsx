@@ -1,17 +1,14 @@
 import { useEffect, useRef } from "react";
 
-import { BaseControl } from "@lib/core/controls/BaseControl";
-import { FormControl } from "@lib/core/form_control";
-import { GroupValue } from "@lib/core/types";
+import { FormControl, BaseControl, GroupValue } from "@lib/core";
 import { FormContext } from "../contexts/form-context";
-import { ReactFormControl } from "../types";
 
 export type FormProps<
   TControls extends Record<string, BaseControl<any>>,
   TValue extends GroupValue<TControls>,
 > = {
   className?: string;
-  form: ReactFormControl<TControls, TValue>;
+  form: FormControl<TControls, TValue>;
   children: React.ReactNode;
 };
 
