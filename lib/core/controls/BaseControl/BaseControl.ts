@@ -68,9 +68,9 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
 
   //
 
-  private notifyParentOfValue() {
+  private notifyParentOfValue(options?: Pick<ValueChangeOptions, "validate">) {
     if (this.parent !== this && this.isAttentive) {
-      this.parent.onValueChange();
+      this.parent.onValueChange(options);
     }
   }
 
@@ -81,10 +81,15 @@ export abstract class BaseControl<TValue = unknown> extends ProtectedControl<TVa
   }
 
   protected onValueChange(options?: ValueChangeOptions): void {
+    console.log("onValueChange", this.id);
+
+    if (options?.validate) {
+      this.syncErrors = this.validator.validate(this);
+    }
     if (!options?.muted) {
-      console.log("onValueChange", this.id);
       this.notifyValueObservers();
-      this.notifyParentOfValue();
+      this.notifyStateObservers();
+      this.notifyParentOfValue(options);
     }
   }
 

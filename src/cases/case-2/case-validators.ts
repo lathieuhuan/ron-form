@@ -1,5 +1,5 @@
 import { ValidatorFn, AsyncValidatorFn } from "@lib/core";
-import { ERole, FormValues } from "./case-types";
+import { ERole, FormValues } from "./case-config";
 
 export const numberValidator: ValidatorFn<any> = (control) => {
   const value = +control.getValue();
@@ -25,7 +25,6 @@ export const careerValidator: ValidatorFn<FormValues> = (control) => {
   }
   switch (role) {
     case ERole.DEVELOPER:
-      console.log("developer", +yoe);
       return +yoe < 3 ? { career: "Role Developer must have at least 3 YOE" } : null;
     case ERole.MANAGER:
       return +yoe < 5 ? { career: "Role Manager must have at least 5 YOE" } : null;

@@ -6,8 +6,7 @@ import { CaseAction, CaseLayout } from "@src/components/CaseLayout";
 import { FormField } from "@src/components/FormField";
 import { Input } from "@src/components/Input";
 import { Select } from "@src/components/Select";
-import { ROLE_OPTIONS } from "./case-constants";
-import { ERole } from "./case-types";
+import { ERole, ROLE_OPTIONS } from "./case-config";
 import { careerValidator, numberValidator, roleValidator } from "./case-validators";
 
 export function Case2() {

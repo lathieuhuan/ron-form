@@ -14,6 +14,8 @@ export type ParentControlOptions<TValue = unknown> = ControlOptions<TValue> & {
 export type ValueChangeOptions = {
   /** If true, do not notify the subscribers. Default false. */
   muted?: boolean;
+  /** If true, validate after value updated. Default false. */
+  validate?: boolean;
 };
 
 export type ValidateOptions = {

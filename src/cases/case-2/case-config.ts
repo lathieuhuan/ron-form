@@ -1,4 +1,13 @@
-import { ERole } from "./case-types";
+export enum ERole {
+  DEVELOPER = "developer",
+  DESIGNER = "designer",
+  MANAGER = "manager",
+}
+
+export type FormValues = {
+  role: ERole;
+  yoe: string;
+};
 
 export const ROLE_OPTIONS = [
   { label: "Developer", value: ERole.DEVELOPER },
