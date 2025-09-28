@@ -166,7 +166,7 @@ describe("ParentControl", () => {
     expect(second.getValue()).toEqual(undefined);
   });
 
-  test("resetState resets parent's and all children's state", () => {
+  test("reset resets parent's and all children", () => {
     // Set up
     const control = new TestParentControl();
     const first = control.getControl([0])!;
@@ -185,7 +185,7 @@ describe("ParentControl", () => {
     expect(second.getErrors()).toEqual(REQUIRED_ERROR);
 
     // Act
-    control.resetState();
+    control.reset();
 
     // After state reset
     expect(first.getIsTouched()).toBe(false);
@@ -196,25 +196,4 @@ describe("ParentControl", () => {
   });
 
   // other methods are tested in GroupControl & ListControl tests
-
-  // test("signalChange runs validate on parent when child ItemControl changes value", () => {
-  //   // Set up
-  //   const control = new TestParentControl();
-  //   control.addValidator((c) => {
-  //     return c.getValue()[0] ? null : { error: "error" };
-  //   });
-  //   const first = control.getControl([0])!;
-
-  //   // Act
-  //   first.setValue("value");
-
-  //   // Assert
-  //   expect(control.getErrors()).toEqual(null);
-
-  //   // Act
-  //   first.setValue(undefined);
-
-  //   // Assert
-  //   expect(control.getErrors()).toEqual({ error: "error" });
-  // });
 });

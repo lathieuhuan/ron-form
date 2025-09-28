@@ -20,7 +20,6 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
 
   constructor(options: ParentControlOptions<TValue> = {}) {
     super(options);
-    // this.isAttentive = options.isAttentive ?? true;
   }
 
   abstract getControl(path: NamePath): BaseControl<any> | undefined;

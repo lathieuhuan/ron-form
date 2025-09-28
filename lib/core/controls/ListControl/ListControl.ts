@@ -48,7 +48,7 @@ export class ListControl<
       this.insertItem(value, index);
     });
 
-    this.validate();
+    this.syncErrors = this.validator.validate(this);
   }
 
   clone(): this {

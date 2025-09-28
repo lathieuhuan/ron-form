@@ -10,7 +10,7 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     super(options);
     this.defaultValue = defaultValue;
     this.value = defaultValue;
-    this.syncErrors = this.validate();
+    this.syncErrors = this.validator.validate(this);
   }
 
   clone(): this {
@@ -85,11 +85,11 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     };
   }
 
-  reset(): void {
-    this.resetValue();
+  reset(options?: ValueChangeOptions): void {
+    this.resetValue(options);
+    this.validate(options);
     this.isTouched = false;
     this.isPending = false;
-    this.syncErrors = this.validate();
     this.abortAsyncValidation();
   }
 }

@@ -11,7 +11,7 @@ export const roleValidator: AsyncValidatorFn<any> = (control) => {
 
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve(value === ERole.MANAGER ? { invalid: "Role Manager is not available" } : null);
+      resolve(value === ERole.DESIGNER ? { invalid: "Role Designer is not available" } : null);
     }, 1000);
   });
 };

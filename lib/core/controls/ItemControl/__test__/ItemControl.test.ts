@@ -115,14 +115,17 @@ describe("ItemControl", () => {
     expect(control.getValue()).toBe("defaultValue");
   });
 
-  test("resetState resets state & errors, does not notify state observers [no validators]", () => {
+  test("reset resets value, state & errors, notify state observers by default, case: no validators ", () => {
     // Set up
-    const control = new TestItemControl();
+    const control = new TestItemControl("defaultValue");
+    control["_setValue"]("newValue");
     const observer = vi.fn();
     control.subscribeValue(observer);
+
     // Act
     control.setIsTouched(true);
-    control.resetState();
+    control.reset();
+
     // Assert
     expect(control.getState()).toEqual({
       isTouched: false,
@@ -131,10 +134,10 @@ describe("ItemControl", () => {
       isError: false,
       errors: null,
     });
-    expect(observer).not.toHaveBeenCalled();
+    expect(observer).toHaveBeenCalledOnce();
   });
 
-  test("resetState resets state & errors, does not notify state observers [validators, valid initial value]", () => {
+  test("reset resets value, state & errors, notify state observers by default, case: validators, valid initial value", () => {
     // Set up
     const control = new TestItemControl(VALID_VALUE, {
       validators: [requiredValidator],
@@ -143,7 +146,7 @@ describe("ItemControl", () => {
     control.subscribeValue(observer);
     // Act
     control.setIsTouched(true);
-    control.resetState();
+    control.reset();
     // Assert
     expect(control.getState()).toEqual({
       isTouched: false,
@@ -152,10 +155,10 @@ describe("ItemControl", () => {
       isError: false,
       errors: null,
     });
-    expect(observer).not.toHaveBeenCalled();
+    expect(observer).toHaveBeenCalledOnce();
   });
 
-  test("resetState resets state & errors, does not notify state observers [validators, invalid initial value]", () => {
+  test("reset resets value, state & errors, notify state observers by default, case: validators, invalid initial value", () => {
     // Set up
     const control = new TestItemControl(undefined, {
       validators: [requiredValidator],
@@ -164,7 +167,7 @@ describe("ItemControl", () => {
     control.subscribeValue(observer);
     // Act
     control.setIsTouched(true);
-    control.resetState();
+    control.reset();
     // Assert
     expect(control.getState()).toEqual({
       isTouched: false,
@@ -173,6 +176,6 @@ describe("ItemControl", () => {
       isError: false,
       errors: REQUIRED_ERROR,
     });
-    expect(observer).not.toHaveBeenCalled();
+    expect(observer).toHaveBeenCalledOnce();
   });
 });

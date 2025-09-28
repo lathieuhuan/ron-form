@@ -31,13 +31,7 @@ export function FormItem<TValue = unknown>({
   }, [control]);
 
   const changeValue = (value: TValue) => {
-    control["_setValue"](value);
-
-    if (!control.getIsTouched()) {
-      control.setIsTouched(true);
-    }
-
-    control["onValueChange"]({ validate: true });
+    control.setValue(value, { validate: true });
   };
 
   const onChange = (change: Event | SyntheticEvent | TValue, ...others: unknown[]) => {

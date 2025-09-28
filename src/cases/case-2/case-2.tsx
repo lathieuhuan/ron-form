@@ -14,7 +14,7 @@ export function Case2() {
   const form = useMemo(() => {
     return r.form(
       {
-        role: r.item(ERole.DESIGNER, {
+        role: r.item(ERole.DEVELOPER, {
           validators: [REQUIRED],
           asyncValidators: [roleValidator],
           id: "role",
@@ -47,7 +47,7 @@ export function Case2() {
       control: form.getControl(["role"]),
     },
     {
-      title: "YOE",
+      title: "YoE",
       control: form.getControl(["yoe"]),
     },
     {
@@ -61,11 +61,11 @@ export function Case2() {
       form={form}
       description={
         <ul>
-          <li>Form with 2 fields, YOE starts with invalid value.</li>
-          <li>Async validation on "role": Manager is not available.</li>
+          <li>Form with 2 fields, YoE starts with invalid value.</li>
+          <li>Async validation on "role": Designer is not available.</li>
           <li>
-            Validation on the whole form: Role Developer requires at least 3 YOE. Role Manager
-            requires at least 5 YOE.
+            Validation on the whole form: Role Developer requires at least 3 YoE. Role Manager
+            requires at least 5 YoE.
           </li>
         </ul>
       }
@@ -82,7 +82,7 @@ export function Case2() {
           }}
         </FormField>
 
-        <FormField label="YOE" name={["yoe"]}>
+        <FormField label="YoE" name={["yoe"]}>
           {({ control, field }) => {
             return (
               <FormItem control={control}>
@@ -93,23 +93,16 @@ export function Case2() {
         </FormField>
       </div>
 
-      {/* <CaseAction
-        description="Set invalid value to YOE"
-        onClick={() => form.setFieldValue(["career", "yoe"], "abc")}
+      <CaseAction
+        description="Set invalid value to YoE and validate"
+        onClick={() => form.setFieldValue(["yoe"], "abc", { validate: true })}
       />
       <CaseAction
-        description="Set value to career: Manager, 3 YOE"
-        onClick={() => form.setFieldValue(["career"], { role: ERole.MANAGER, yoe: 3 })}
+        description="Set form values to: Manager, 3 YoE"
+        onClick={() => form.setValue({ role: ERole.MANAGER, yoe: "3" })}
       />
-      <CaseAction
-        description="Validate YOE"
-        onClick={() => form.validateField(["career", "yoe"])}
-      />
-      <CaseAction
-        description="Reset career value"
-        onClick={() => form.resetFieldValue(["career"])}
-      />
-      <CaseAction description="Reset career" onClick={() => form.resetField(["career"])} /> */}
+      <CaseAction description="Validate YoE" onClick={() => form.validateField(["yoe"])} />
+      <CaseAction description="Reset form" onClick={() => form.reset()} />
     </CaseLayout>
   );
 }

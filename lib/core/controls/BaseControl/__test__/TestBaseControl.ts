@@ -3,6 +3,7 @@ import { BaseControl } from "../BaseControl";
 
 export class TestBaseControl<TValue = unknown> extends BaseControl<TValue> {
   value = null as unknown as TValue;
+  isTouched = false;
 
   get _validator() {
     return this.validator;
@@ -34,9 +35,11 @@ export class TestBaseControl<TValue = unknown> extends BaseControl<TValue> {
     return this.isPending;
   }
   getIsTouched(): boolean {
-    return false;
+    return this.isTouched;
   }
-  setIsTouched(): void {}
+  setIsTouched(isTouched: boolean): void {
+    this.isTouched = isTouched;
+  }
   getState(): ControlState {
     return {
       isTouched: this.getIsTouched(),
@@ -49,4 +52,7 @@ export class TestBaseControl<TValue = unknown> extends BaseControl<TValue> {
   resetValue(): void {}
   resetState(): void {}
   reset(): void {}
+  _setValue(value: TValue): void {}
+  _patchValue(value: unknown): void {}
+  _resetValue(): void {}
 }

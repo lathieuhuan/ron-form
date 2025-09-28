@@ -3,7 +3,6 @@ import {
   DeepPartial,
   GroupPath,
   GroupValue,
-  InternalControl,
   ParentControlOptions,
   ValidateOptions,
   ValidationErrors,
@@ -28,9 +27,7 @@ export class GroupControl<
       this.controlSet.add(control);
     });
 
-    this.isAttentive = false;
-    this.syncErrors = this.validate();
-    this.isAttentive = true;
+    this.syncErrors = this.validator.validate(this);
   }
 
   clone(): this {
@@ -102,7 +99,7 @@ export class GroupControl<
     value: ReturnType<ControlAtGroupPath<TControls, TPath>["getValue"]>,
     options?: ValueChangeOptions,
   ): void {
-    const control: InternalControl | undefined = this.getControl(path);
+    const control: BaseControl<any> | undefined = this.getControl(path);
 
     control?.setValue(value, options);
   }
@@ -118,7 +115,7 @@ export class GroupControl<
     path: TPath,
     options?: ValueChangeOptions,
   ): void {
-    const control: InternalControl | undefined = this.getControl(path);
+    const control: BaseControl<any> | undefined = this.getControl(path);
 
     control?.resetValue(options);
   }

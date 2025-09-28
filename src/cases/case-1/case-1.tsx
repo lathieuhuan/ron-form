@@ -1,6 +1,6 @@
 import { r, REQUIRED } from "@lib/core";
 import { FormItem } from "@lib/react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CaseAction, CaseLayout } from "@src/components/CaseLayout";
 import { FormField } from "@src/components/FormField";
@@ -21,6 +21,10 @@ export function Case1() {
     );
   }, []);
 
+  const [validate, setValidate] = useState(false);
+
+  const validateStatus = validate ? "true" : "false";
+
   useEffect(() => {
     return form.subscribeSubmit((result) => {
       if (result.status === "success") {
@@ -38,7 +42,7 @@ export function Case1() {
         <ul>
           <li>Basic form with 1 simple field.</li>
           <li>Wiring between FormItem and IO elements.</li>
-          <li>Get, set, and reset field value (no validation). Reset field.</li>
+          <li>Get, set, and reset field value. Reset field.</li>
           <li>Required validation. Remove & add validator.</li>
           <li>Submit. Programmatically submit.</li>
         </ul>
@@ -65,12 +69,16 @@ export function Case1() {
       </FormField>
 
       <CaseAction
-        description="Get and log value"
-        onClick={() => console.log(form.getFieldValue(["username"]))}
+        description="Get and alert value"
+        onClick={() => alert(form.getFieldValue(["username"]))}
       />
       <CaseAction
-        description="Set value to undefined"
-        onClick={() => form.setFieldValue(["username"], undefined)}
+        description="Toggle validate on set value & reset"
+        onClick={() => setValidate(!validate)}
+      />
+      <CaseAction
+        description={`Set value to undefined (validate: ${validateStatus})`}
+        onClick={() => form.setFieldValue(["username"], undefined, { validate })}
       />
       <CaseAction description="Validate" onClick={() => form.validateField(["username"])} />
       <CaseAction
@@ -81,8 +89,15 @@ export function Case1() {
         description="Add validation"
         onClick={() => form.getControl(["username"]).addValidator(REQUIRED)}
       />
-      <CaseAction description="Reset value" onClick={() => form.resetFieldValue(["username"])} />
-      <CaseAction description="Reset" onClick={() => form.resetField(["username"])} />
+      {/* Check resetValue and reset again and write tests for them */}
+      {/* <CaseAction
+        description={`Reset value (validate: ${validateStatus})`}
+        onClick={() => form.resetFieldValue(["username"], { validate })}
+      /> */}
+      {/* <CaseAction
+        description={`Reset (validate: ${validateStatus})`}
+        onClick={() => form.resetField(["username"])}
+      /> */}
       <CaseAction description="Programmatically submit" onClick={() => form.submit()} />
     </CaseLayout>
   );
