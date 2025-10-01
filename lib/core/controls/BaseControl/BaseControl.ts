@@ -13,7 +13,7 @@ import { createAsyncValidator } from "./createAsyncValidator";
 import { createValidator } from "./createValidator";
 
 export abstract class BaseControl<TValue = unknown> {
-  // private id?: string;
+  protected id?: string;
   name = "root";
   parent: BaseControl<any> = this;
   /** If true, will listen to child controls' changes. */
@@ -57,7 +57,7 @@ export abstract class BaseControl<TValue = unknown> {
   abstract clone(): this;
 
   constructor(options: ControlOptions<TValue> = {}) {
-    // this.id = options.id;
+    this.id = options.id;
 
     if (options.validators) {
       this.validator.add(options.validators);
@@ -68,6 +68,12 @@ export abstract class BaseControl<TValue = unknown> {
   }
 
   //
+
+  protected actToChildren(callback: () => void) {
+    this.isAttentive = false;
+    callback();
+    this.isAttentive = true;
+  }
 
   private notifyParentOfValue(options?: Pick<ValueChangeOptions, "validate">) {
     if (this.parent !== this && this.parent.isAttentive) {
@@ -82,7 +88,7 @@ export abstract class BaseControl<TValue = unknown> {
       this.syncErrors = this.validator.validate(this);
 
       if (!this.getIsTouched()) {
-        this.setIsTouched(true);
+        this.actToChildren(() => this.setIsTouched(true));
       }
 
       if (this.asyncValidator.isActive) {

@@ -80,7 +80,10 @@ export function Case1() {
         description={`Set value to undefined (validate: ${validateStatus})`}
         onClick={() => form.setFieldValue(["username"], undefined, { validate })}
       />
-      <CaseAction description="Validate" onClick={() => form.validateField(["username"])} />
+      <CaseAction
+        description="Validate and log errors"
+        onClick={() => console.log(form.validateField(["username"]))}
+      />
       <CaseAction
         description="Remove validation"
         onClick={() => form.getControl(["username"]).removeValidator(REQUIRED)}

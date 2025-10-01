@@ -246,7 +246,7 @@ describe("GroupControl", () => {
     expect(email.getIsValid()).toBe(true);
 
     // Act
-    resume.validateDescendants();
+    resume["validateDescendants"]();
 
     // Assert
     expect(resume.getIsValid()).toBe(false);

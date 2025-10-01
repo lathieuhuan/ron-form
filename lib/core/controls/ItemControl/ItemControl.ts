@@ -28,11 +28,11 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
   // ↓↓↓ VALUE ↓↓↓
 
   getValue() {
-    return this.value === "" ? undefined : this.value;
+    return this.value;
   }
 
   protected _setValue(value: TValue | undefined): void {
-    this.value = value === "" ? undefined : value;
+    this.value = value;
   }
   setValue(value: TValue | undefined, options?: ValueChangeOptions): void {
     this._setValue(value);

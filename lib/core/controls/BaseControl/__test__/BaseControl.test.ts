@@ -202,7 +202,7 @@ describe("BaseControl", () => {
   });
 
   describe("onValueChange", () => {
-    test("DEFAULT: notifies value observers and calls onValueChange on parent if parent is attentive", () => {
+    it("by default, notifies value observers and calls onValueChange of parent if parent is attentive", () => {
       // Set up
       const control = new TestBaseControl();
       const parent = new TestBaseControl();
@@ -227,7 +227,7 @@ describe("BaseControl", () => {
       expect(onParentValueChange).toHaveBeenCalledOnce();
     });
 
-    test("DEFAULT: does not call onValueChange on parent if parent is not attentive", () => {
+    it("by default, does not call onValueChange of parent if parent is not attentive", () => {
       // Set up
       const control = new TestBaseControl();
       const parent = new TestBaseControl();
@@ -244,7 +244,7 @@ describe("BaseControl", () => {
       expect(onParentValueChange).not.toHaveBeenCalled();
     });
 
-    test("MUTED: does not notify value observers or call onValueChange on parent", () => {
+    it("when muted, does not notify value observers or call onValueChange of parent", () => {
       // Set up
       const control = new TestBaseControl();
       const parent = new TestBaseControl();
@@ -252,8 +252,8 @@ describe("BaseControl", () => {
       parent["isAttentive"] = true;
 
       const valueObs = vi.fn();
-      control.subscribeValue(valueObs);
       const stateObs = vi.fn();
+      control.subscribeValue(valueObs);
       control.subscribeState(stateObs);
 
       const onParentValueChange = vi.fn();
@@ -268,7 +268,7 @@ describe("BaseControl", () => {
       expect(onParentValueChange).not.toHaveBeenCalled();
     });
 
-    test("VALIDATE: validates, set isTouched to true, and (default) notifies state observers", () => {
+    it("when validate is true, validates value, set isTouched to true, and notifies state observers", () => {
       // Set up
       const control = new TestBaseControl({
         validators: [requiredValidator],
@@ -302,7 +302,7 @@ describe("BaseControl", () => {
       expect(onParentValueChange).toHaveBeenCalledWith({ validate: true });
     });
 
-    test("VALIDATE: validates, does not notify state observers or call onValueChange on parent if muted", () => {
+    it("when validate and muted, does not notify value or state observers or call onValueChange of parent", () => {
       // Set up
       const control = new TestBaseControl({
         validators: [requiredValidator],
@@ -333,7 +333,7 @@ describe("BaseControl", () => {
   });
 
   describe("onStateChange", () => {
-    test("DEFAULT: notifies state observers and calls onStateChange on parent if parent is attentive", () => {
+    it("by default, notifies state observers and calls onStateChange of parent if parent is attentive", () => {
       // Set up
       const control = new TestBaseControl();
       const parent = new TestBaseControl();
@@ -356,7 +356,7 @@ describe("BaseControl", () => {
       expect(onParentStateChange).toHaveBeenCalledWith();
     });
 
-    test("DEFAULT: does not call onStateChange on parent if parent is not attentive", () => {
+    it("by default, does not call onStateChange of parent if parent is not attentive", () => {
       // Set up
       const control = new TestBaseControl();
       const parent = new TestBaseControl();
@@ -378,7 +378,7 @@ describe("BaseControl", () => {
       expect(onParentStateChange).not.toHaveBeenCalled();
     });
 
-    test("MUTED: does not notify state observers or call onStateChange on parent", () => {
+    it("when muted, does not notify state observers or call onStateChange of parent", () => {
       // Set up
       const control = new TestBaseControl();
       const parent = new TestBaseControl();
