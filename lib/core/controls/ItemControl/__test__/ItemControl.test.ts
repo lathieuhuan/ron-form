@@ -10,7 +10,7 @@ describe("ItemControl", () => {
       // Set up
       const control = new TestItemControl("");
       // Assert
-      expect(control.getValue()).toBeUndefined();
+      expect(control.getValue()).toBe("");
       expect(control.getIsTouched()).toBe(false);
       expect(control.getIsPending()).toBe(false);
       expect(control.getIsValid()).toBe(true);

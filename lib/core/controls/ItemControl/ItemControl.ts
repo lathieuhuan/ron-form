@@ -31,28 +31,18 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     return this.value;
   }
 
-  protected _setValue(value: TValue | undefined): void {
-    this.value = value;
-  }
   setValue(value: TValue | undefined, options?: ValueChangeOptions): void {
-    this._setValue(value);
+    this.value = value;
     this.onValueChange(options);
   }
 
   // To comply with patchValue on BaseControl
-  protected _patchValue(value: TValue | undefined): void {
-    this._setValue(value);
-  }
   patchValue(value: TValue | undefined, options?: ValueChangeOptions): void {
-    this._patchValue(value);
-    this.onValueChange(options);
+    this.setValue(value, options);
   }
 
-  protected _resetValue(): void {
-    this.value = this.defaultValue;
-  }
   resetValue(options?: ValueChangeOptions): void {
-    this._resetValue();
+    this.value = this.defaultValue;
     this.onValueChange(options);
   }
 

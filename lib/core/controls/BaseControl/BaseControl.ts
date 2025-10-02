@@ -33,9 +33,6 @@ export abstract class BaseControl<TValue = unknown> {
   abstract setValue(value: TValue | undefined, options?: ValueChangeOptions): void;
   abstract patchValue(value: unknown, options?: ValueChangeOptions): void;
   abstract resetValue(options?: ValueChangeOptions): void;
-  protected abstract _setValue(value: TValue | undefined): void;
-  protected abstract _patchValue(value: unknown): void;
-  protected abstract _resetValue(): void;
 
   abstract getIsValid(): boolean;
 

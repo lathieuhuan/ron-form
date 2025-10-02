@@ -74,13 +74,10 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
 
   // ===== RESET =====
 
-  protected _resetValue(): void {
-    this.isAttentive = false;
-    this.controlSet.forEach((control) => control["_resetValue"]());
-    this.isAttentive = true;
-  }
   resetValue(options?: ValueChangeOptions): void {
-    this._resetValue();
+    this.actToChildren(() => {
+      this.controlSet.forEach((control) => control.resetValue());
+    });
     this.onValueChange(options);
   }
 
@@ -122,9 +119,8 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
     return this.getControl(path)?.getValue();
   }
 
-  /** No validate */
   setFieldValue(path: NamePath, value: any): void {
-    this.getControl(path)?.["_setValue"](value);
+    this.getControl(path)?.setValue(value);
   }
 
   validateField(path: NamePath, options?: ValidateOptions): ValidationErrors | null {
@@ -132,7 +128,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   }
 
   resetFieldValue(path: NamePath): void {
-    this.getControl(path)?.["_resetValue"]();
+    this.getControl(path)?.resetValue();
   }
 
   resetField(path: NamePath): void {

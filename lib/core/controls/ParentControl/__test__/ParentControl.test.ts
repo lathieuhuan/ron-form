@@ -61,13 +61,12 @@ describe("ParentControl", () => {
         asyncValidators: [requiredAsyncValidator],
       });
 
-      // From true to false
       // Act
-      control.validateAsync();
+      const result = control.validateAsync();
 
       // Assert
       expect(control.getIsPending()).toBe(true);
-      await control.validateAsync();
+      await result;
       expect(control.getIsPending()).toBe(false);
     });
 
@@ -78,13 +77,12 @@ describe("ParentControl", () => {
       first.addAsyncValidator(requiredAsyncValidator);
 
       // Act
-      first.validateAsync();
+      const result = first.validateAsync();
+
       // Assert
       expect(first.getIsPending()).toBe(true);
       expect(control.getIsPending()).toBe(true);
-
-      await first.validateAsync();
-      // Assert
+      await result;
       expect(first.getIsPending()).toBe(false);
       expect(control.getIsPending()).toBe(false);
     });
@@ -92,10 +90,10 @@ describe("ParentControl", () => {
     it("returns false if parent and all children are not pending validateAsync", () => {
       // Set up
       const control = new TestParentControl();
-      expect(control.getControl([0]).getIsPending()).toBe(false);
-      expect(control.getControl([1]).getIsPending()).toBe(false);
 
       // Assert
+      expect(control.getControl([0]).getIsPending()).toBe(false);
+      expect(control.getControl([1]).getIsPending()).toBe(false);
       expect(control.getIsPending()).toBe(false);
     });
   });
@@ -105,8 +103,10 @@ describe("ParentControl", () => {
       // Set up
       const control = new TestParentControl();
       expect(control.getIsTouched()).toBe(false);
+
       // Act
       control.setIsTouched(true);
+
       // Assert
       expect(control.getIsTouched()).toBe(true);
     });
@@ -130,6 +130,7 @@ describe("ParentControl", () => {
       // Set up
       const control = new TestParentControl();
       expect(control.getIsTouched()).toBe(false);
+
       // Assert
       expect(control.getIsTouched()).toBe(false);
     });
@@ -141,25 +142,27 @@ describe("ParentControl", () => {
     const first = control.getControl([0]);
     const second = control.getControl([1]);
     expect(control.getIsTouched()).toBe(false);
+
     // Act
     control.setIsTouched(true);
+
     // Assert
     expect(first.getIsTouched()).toBe(true);
     expect(second.getIsTouched()).toBe(true);
   });
 
-  test("_resetValue resets all children's values", () => {
+  test("resetValue resets all children's values", () => {
     // Set up
     const control = new TestParentControl();
-    const first = control.getControl([0])!;
+    const first = control.getControl([0]);
     const second = control.getControl([1])!;
     expect(first.getValue()).toEqual(undefined);
     expect(second.getValue()).toEqual(undefined);
-    first["_setValue"]("test");
-    second["_setValue"]("test");
+    first.setValue("test");
+    second.setValue("test");
 
     // Act
-    control["_resetValue"]();
+    control.resetValue();
 
     // Assert
     expect(first.getValue()).toEqual(undefined);
