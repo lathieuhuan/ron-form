@@ -75,14 +75,20 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   // ===== RESET =====
 
   resetValue(options?: ValueChangeOptions): void {
-    this.actToChildren(() => {
-      this.controlSet.forEach((control) => control.resetValue());
+    this.actStealthily(() => {
+      this.controlSet.forEach((control) => control.resetValue(options));
     });
     this.onValueChange(options);
+    this.abortAsyncValidation();
   }
 
   reset(): void {
-    this.controlSet.forEach((control) => control.reset());
+    this.actStealthily(() => {
+      this.controlSet.forEach((control) => control.reset());
+    });
+    this.syncErrors = this.validator.validate(this);
+    this.isPending = false;
+    this.onValueChange({ validate: false });
     this.abortAsyncValidation();
   }
 

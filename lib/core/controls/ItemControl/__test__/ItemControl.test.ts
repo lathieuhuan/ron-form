@@ -121,7 +121,7 @@ describe("ItemControl", () => {
     expect(onValueChange).toHaveBeenCalledOnce();
   });
 
-  test("reset resets value & state, and calls onValueChange", () => {
+  test("reset resets value & state, and calls onValueChange with validate false", () => {
     // Set up
     const control = new TestItemControl(VALID_VALUE, {
       validators: [requiredValidator],
@@ -149,5 +149,6 @@ describe("ItemControl", () => {
       errors: null,
     });
     expect(onValueChange).toHaveBeenCalledOnce();
+    expect(onValueChange).toHaveBeenCalledWith({ validate: false });
   });
 });

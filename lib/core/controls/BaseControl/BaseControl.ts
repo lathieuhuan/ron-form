@@ -66,7 +66,7 @@ export abstract class BaseControl<TValue = unknown> {
 
   //
 
-  protected actToChildren(callback: () => void) {
+  protected actStealthily(callback: () => void) {
     this.isAttentive = false;
     callback();
     this.isAttentive = true;
@@ -85,7 +85,7 @@ export abstract class BaseControl<TValue = unknown> {
       this.syncErrors = this.validator.validate(this);
 
       if (!this.getIsTouched()) {
-        this.actToChildren(() => this.setIsTouched(true));
+        this.actStealthily(() => this.setIsTouched(true));
       }
 
       if (this.asyncValidator.isActive) {

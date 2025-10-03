@@ -3,8 +3,16 @@ import {
   requiredAsyncValidator,
   requiredValidator,
 } from "@lib/core/test-utils/validation-utils";
-import { describe, expect, it, test } from "vitest";
-import { TestParentControl } from "./TestParentControl";
+import { describe, expect, it, test, vi } from "vitest";
+import { ItemControlValue, TestParentControl } from "./TestParentControl";
+import { ValidatorFn } from "@lib/core/types";
+
+const FIRST_VALUE_REQUIRED_ERROR = { error: "required first value" };
+
+const firstValueRequired: ValidatorFn<ItemControlValue[]> = (ctrl) => {
+  const firstValue = ctrl.getValue().at(0);
+  return firstValue === undefined ? FIRST_VALUE_REQUIRED_ERROR : null;
+};
 
 describe("ParentControl", () => {
   describe("getIsValid", () => {
@@ -137,6 +145,7 @@ describe("ParentControl", () => {
   });
 
   test("setIsTouched changes all children to touched", () => {
+    // TODO: test nofify state observers
     // Set up
     const control = new TestParentControl();
     const first = control.getControl([0]);
@@ -151,51 +160,114 @@ describe("ParentControl", () => {
     expect(second.getIsTouched()).toBe(true);
   });
 
-  test("resetValue resets all children's values", () => {
-    // Set up
-    const control = new TestParentControl();
-    const first = control.getControl([0]);
-    const second = control.getControl([1])!;
-    expect(first.getValue()).toEqual(undefined);
-    expect(second.getValue()).toEqual(undefined);
-    first.setValue("test");
-    second.setValue("test");
+  describe("resetValue", () => {
+    it("resets all children's values, notifies their value observers, and calls onValueChange of parent", () => {
+      // Set up
+      const control = new TestParentControl();
+      const first = control.getControl([0]);
+      const second = control.getControl([1])!;
+      expect(first.getValue()).toEqual(undefined);
+      expect(second.getValue()).toEqual(undefined);
+      first.setValue("test");
+      second.setValue("test");
 
-    // Act
-    control.resetValue();
+      const firstValueObs = vi.fn();
+      const secondValueObs = vi.fn();
+      first.subscribeValue(firstValueObs);
+      second.subscribeValue(secondValueObs);
+      const onValueChange = vi.fn();
+      control["onValueChange"] = onValueChange;
 
-    // Assert
-    expect(first.getValue()).toEqual(undefined);
-    expect(second.getValue()).toEqual(undefined);
+      // Act
+      control.resetValue();
+
+      // Assert
+      expect(first.getValue()).toEqual(undefined);
+      expect(second.getValue()).toEqual(undefined);
+      expect(firstValueObs).toHaveBeenCalledOnce();
+      expect(secondValueObs).toHaveBeenCalledOnce();
+      expect(onValueChange).toHaveBeenCalledOnce();
+    });
+
+    // Performance test
+    it("by default, notify value observers of parent once", () => {
+      // Set up
+      const control = new TestParentControl();
+      const onValueChange = vi.fn();
+      control.subscribeValue(onValueChange);
+
+      // Act
+      control.resetValue();
+
+      // Assert
+      expect(onValueChange).toHaveBeenCalledOnce();
+    });
+
+    // Also test performance
+    it("when validate is true, validates all children and parent, and notifies their state observers once", () => {
+      // Set up
+      const control = new TestParentControl({
+        validators: [firstValueRequired],
+      });
+      const second = control.getControl([1]);
+      second.addValidator(requiredValidator);
+
+      const child2StateObs = vi.fn();
+      second.subscribeState(child2StateObs);
+      const stateObs = vi.fn();
+      control.subscribeState(stateObs);
+
+      // Act
+      control.resetValue({ validate: true });
+
+      // Assert
+      expect(second.getErrors()).toEqual(REQUIRED_ERROR);
+      expect(control.getErrors()).toEqual(FIRST_VALUE_REQUIRED_ERROR);
+      expect(child2StateObs).toHaveBeenCalledOnce();
+      expect(stateObs).toHaveBeenCalledOnce();
+    });
   });
 
-  test("reset resets parent's and all children", () => {
+  test("reset calls reset on all children, and calls onValueChange on parent with validate false", () => {
     // Set up
-    const control = new TestParentControl();
-    const first = control.getControl([0])!;
-    const second = control.getControl([1])!;
-    first.setIsTouched(true);
-    second.setIsTouched(true);
-    control.setErrors(REQUIRED_ERROR);
-    first.setErrors(REQUIRED_ERROR);
-    second.setErrors(REQUIRED_ERROR);
+    const control = new TestParentControl({
+      validators: [firstValueRequired],
+    });
+    const first = control.getControl([0]);
+    const second = control.getControl([1]);
 
-    // Before state reset
-    expect(first.getIsTouched()).toBe(true);
-    expect(second.getIsTouched()).toBe(true);
-    expect(control.getErrors()).toEqual(REQUIRED_ERROR);
-    expect(first.getErrors()).toEqual(REQUIRED_ERROR);
+    // second child before reset
+    second.addValidator(requiredValidator);
+    second.validate();
     expect(second.getErrors()).toEqual(REQUIRED_ERROR);
+    expect(second.getIsTouched()).toBe(true);
+
+    // parent before reset
+    control.validate();
+    expect(control.getErrors()).toEqual(FIRST_VALUE_REQUIRED_ERROR);
+    expect(control.getIsTouched()).toBe(true);
+
+    const child1Reset = vi.fn();
+    first["reset"] = child1Reset;
+    const child2Reset = vi.fn();
+    second["reset"] = child2Reset;
+    const onValueChange = vi.fn();
+    control["onValueChange"] = onValueChange;
 
     // Act
     control.reset();
 
-    // After state reset
-    expect(first.getIsTouched()).toBe(false);
-    expect(second.getIsTouched()).toBe(false);
+    // Assert
+    expect(child1Reset).toHaveBeenCalledOnce();
+    expect(child2Reset).toHaveBeenCalledOnce();
+    expect(onValueChange).toHaveBeenCalledOnce();
+    expect(onValueChange).toHaveBeenCalledWith({ validate: false });
+
+    // after reset
     expect(control.getErrors()).toEqual(null);
-    expect(first.getErrors()).toEqual(null);
+    expect(control.getIsTouched()).toBe(false);
     expect(second.getErrors()).toEqual(null);
+    expect(second.getIsTouched()).toBe(false);
   });
 
   // other methods are tested in GroupControl & ListControl tests

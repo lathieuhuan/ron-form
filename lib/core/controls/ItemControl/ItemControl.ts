@@ -75,11 +75,12 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     };
   }
 
-  reset(options?: ValueChangeOptions): void {
-    this.resetValue(options);
-    this.validate(options);
+  reset(): void {
+    this.value = this.defaultValue;
+    this.syncErrors = this.validator.validate(this);
     this.isTouched = false;
     this.isPending = false;
+    this.onValueChange({ validate: false });
     this.abortAsyncValidation();
   }
 }

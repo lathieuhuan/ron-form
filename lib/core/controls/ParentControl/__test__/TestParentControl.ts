@@ -2,7 +2,7 @@ import { ItemControl } from "@lib/core/controls/ItemControl";
 import { ParentControl } from "../ParentControl";
 import { ParentControlOptions } from "@lib/core/types";
 
-type ItemControlValue = string | undefined;
+export type ItemControlValue = string | undefined;
 
 export class TestParentControl extends ParentControl<ItemControlValue[]> {
   controlSet: Set<ItemControl<ItemControlValue>> = new Set();
