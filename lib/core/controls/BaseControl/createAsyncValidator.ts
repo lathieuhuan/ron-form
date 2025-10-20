@@ -1,16 +1,20 @@
-import type { AsyncValidatorFn, ComposableAsyncValidators } from "@lib/core/types";
+import type {
+  AsyncValidatorFn,
+  ComposableAsyncValidators,
+  ValidationErrors,
+} from "@lib/core/types";
 import type { BaseControl } from "./BaseControl";
 
 import { mergeErrors } from "@lib/core/utils/mergeErrors";
 import { trueArray } from "@lib/core/utils/trueArray";
 
-type AsyncValidator<TValue = unknown> = {
+export type AsyncValidator<TValue = unknown> = {
   isActive: boolean;
   readonly validators: Set<AsyncValidatorFn<TValue>>;
   add: (validators: ComposableAsyncValidators<TValue>) => void;
   set: (validators: Set<AsyncValidatorFn<TValue>>) => void;
   remove: (validators: ComposableAsyncValidators<TValue>) => void;
-  validate: AsyncValidatorFn<TValue>;
+  validate: () => Promise<ValidationErrors | null>;
 };
 
 function composeAsyncValidator<TValue = unknown>(
@@ -24,7 +28,9 @@ function composeAsyncValidator<TValue = unknown>(
   };
 }
 
-export function createAsyncValidator<TValue = unknown>(): AsyncValidator<TValue> {
+export function createAsyncValidator<TValue = unknown>(
+  control: BaseControl<TValue>,
+): AsyncValidator<TValue> {
   let _validators: Set<AsyncValidatorFn<TValue>> = new Set();
   let _validator: AsyncValidatorFn<TValue> | null = null;
 
@@ -47,8 +53,8 @@ export function createAsyncValidator<TValue = unknown>(): AsyncValidator<TValue>
       trueArray(validators).forEach((v) => _validators.delete(v));
       _validator = composeAsyncValidator(_validators);
     },
-    validate: (value) => {
-      return _validator?.(value) ?? Promise.resolve(null);
+    validate: () => {
+      return _validator?.(control) ?? Promise.resolve(null);
     },
   };
 }

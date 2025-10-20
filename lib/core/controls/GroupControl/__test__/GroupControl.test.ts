@@ -108,7 +108,7 @@ describe("GroupControl", () => {
       const { resume, general, role, contact, skills, experiences, initialValues } = setupResume();
 
       // Act
-      resume["_patchValue"]({
+      resume.patchValue({
         role: NEW_ROLE,
       });
 
@@ -132,7 +132,7 @@ describe("GroupControl", () => {
         setupResume();
 
       // Act
-      resume["_patchValue"]({
+      resume.patchValue({
         general: {
           name: NEW_NAME,
         },
@@ -159,7 +159,7 @@ describe("GroupControl", () => {
       const { resume, role, name, contact, skills, experiences, initialValues } = setupResume();
 
       // Act
-      resume["_patchValue"]({
+      resume.patchValue({
         role: NEW_ROLE,
         general: {
           name: NEW_NAME,
@@ -191,13 +191,13 @@ describe("GroupControl", () => {
     });
   });
 
-  test("_setValue replaces every value, what not present is undefined", () => {
+  test("setValue replaces every value, what not present is undefined", () => {
     // Set up
     const NEW_ROLE = "new role";
     const NEW_NAME = "new name";
     const { resume, role, name, contact, skills, experiences } = setupResume();
     // Act
-    resume["_setValue"]({
+    resume.setValue({
       role: NEW_ROLE,
       general: {
         name: NEW_NAME,

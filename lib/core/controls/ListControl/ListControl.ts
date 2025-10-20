@@ -48,7 +48,7 @@ export class ListControl<
       this.insertItem(value, index);
     });
 
-    this.syncErrors = this.validator.validate(this);
+    this.syncErrors = this.validator.validate();
   }
 
   clone(): this {
@@ -96,11 +96,8 @@ export class ListControl<
    * - value[i] undefined will set value of item[i] to undefined.
    * - item[n] with n >= values.length will be set value to undefined.
    */
-  protected _setValue(values: (TItemValue | undefined)[] | undefined): void {
-    this.items.forEach((item, index) => item.control["_setValue"](values?.[index]));
-  }
   setValue(values: (TItemValue | undefined)[] | undefined, options?: ValueChangeOptions): void {
-    this._setValue(values);
+    this.items.forEach((item, index) => item.control.setValue(values?.[index]));
     this.onValueChange(options);
   }
 
@@ -108,15 +105,13 @@ export class ListControl<
    * - if values[i] is undefined, item[i] will keep its value.
    * - item[n] with n >= values.length will keep its value.
    */
-  protected _patchValue(values: (TItemValue | undefined)[]): void {
+  patchValue(values: (TItemValue | undefined)[], options?: ValueChangeOptions): void {
     values.forEach((value, index) => {
       if (value) {
-        this.items[index]?.control["_patchValue"](value);
+        this.items[index]?.control.patchValue(value);
       }
     });
-  }
-  patchValue(values: (TItemValue | undefined)[], options?: ValueChangeOptions): void {
-    this._patchValue(values);
+
     this.onValueChange(options);
   }
 
@@ -134,7 +129,7 @@ export class ListControl<
     item.name = this.nextId.toString();
 
     if (value !== undefined) {
-      item["_setValue"](value);
+      item.setValue(value);
     }
 
     return item;

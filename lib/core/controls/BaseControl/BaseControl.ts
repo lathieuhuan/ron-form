@@ -9,8 +9,8 @@ import type {
 } from "@lib/core/types";
 import { createSubject, type Observer } from "@lib/core/utils/createSubject";
 import { mergeErrors } from "@lib/core/utils/mergeErrors";
-import { createAsyncValidator } from "./createAsyncValidator";
-import { createValidator } from "./createValidator";
+import { AsyncValidator, createAsyncValidator } from "./createAsyncValidator";
+import { createValidator, Validator } from "./createValidator";
 
 export abstract class BaseControl<TValue = unknown> {
   protected id?: string;
@@ -19,8 +19,8 @@ export abstract class BaseControl<TValue = unknown> {
   /** If true, will listen to child controls' changes. */
   protected isAttentive = true;
   protected isPending = false;
-  protected validator = createValidator<TValue>();
-  protected asyncValidator = createAsyncValidator<TValue>();
+  protected validator: Validator<TValue>;
+  protected asyncValidator: AsyncValidator<TValue>;
   protected valueSubject = createSubject<TValue | undefined>();
   protected stateSubject = createSubject<ControlState>();
   protected syncErrors: ValidationErrors | null = null;
@@ -55,6 +55,8 @@ export abstract class BaseControl<TValue = unknown> {
 
   constructor(options: ControlOptions<TValue> = {}) {
     this.id = options.id;
+    this.validator = createValidator<TValue>(this);
+    this.asyncValidator = createAsyncValidator<TValue>(this);
 
     if (options.validators) {
       this.validator.add(options.validators);
@@ -66,7 +68,7 @@ export abstract class BaseControl<TValue = unknown> {
 
   //
 
-  protected actStealthily(callback: () => void) {
+  protected actSilently(callback: () => void) {
     this.isAttentive = false;
     callback();
     this.isAttentive = true;
@@ -82,16 +84,16 @@ export abstract class BaseControl<TValue = unknown> {
     // console.log("onValueChange", this.id);
 
     if (options?.validate) {
-      this.syncErrors = this.validator.validate(this);
+      this.syncErrors = this.validator.validate();
 
       if (!this.getIsTouched()) {
-        this.actStealthily(() => this.setIsTouched(true));
+        this.actSilently(() => this.setIsTouched(true));
       }
 
       if (this.asyncValidator.isActive) {
         this.isPending = true;
         this.asyncValidator
-          .validate(this)
+          .validate()
           .then((errors) => {
             this.asyncErrors = errors;
           })
@@ -160,7 +162,7 @@ export abstract class BaseControl<TValue = unknown> {
   /** run synchronous validators and return errors, set isTouched to true */
   validate(options?: ValidateOptions): ValidationErrors | null {
     // console.log("validate", this.id);
-    const errors = this.validator.validate(this);
+    const errors = this.validator.validate();
     this.syncErrors = errors;
 
     if (errors) {
@@ -179,7 +181,7 @@ export abstract class BaseControl<TValue = unknown> {
   /** run asynchronous validators and return errors */
   async validateAsync(options?: ValidateOptions): Promise<ValidationErrors | null> {
     this.isPending = true;
-    const errors = await this.asyncValidator.validate(this);
+    const errors = await this.asyncValidator.validate();
 
     this.asyncErrors = errors;
     this.isPending = false;

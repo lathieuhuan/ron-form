@@ -248,9 +248,9 @@ describe("ParentControl", () => {
     expect(control.getIsTouched()).toBe(true);
 
     const child1Reset = vi.fn();
-    first["reset"] = child1Reset;
+    first.reset = child1Reset;
     const child2Reset = vi.fn();
-    second["reset"] = child2Reset;
+    second.reset = child2Reset;
     const onValueChange = vi.fn();
     control["onValueChange"] = onValueChange;
 
@@ -264,7 +264,7 @@ describe("ParentControl", () => {
     expect(onValueChange).toHaveBeenCalledWith({ validate: false });
 
     // after reset
-    expect(control.getErrors()).toEqual(null);
+    expect(control.getErrors()).toEqual(FIRST_VALUE_REQUIRED_ERROR);
     expect(control.getIsTouched()).toBe(false);
     expect(second.getErrors()).toEqual(null);
     expect(second.getIsTouched()).toBe(false);

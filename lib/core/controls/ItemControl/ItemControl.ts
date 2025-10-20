@@ -10,7 +10,7 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     super(options);
     this.defaultValue = defaultValue;
     this.value = defaultValue;
-    this.syncErrors = this.validator.validate(this);
+    this.syncErrors = this.validator.validate();
   }
 
   clone(): this {
@@ -77,10 +77,12 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
 
   reset(): void {
     this.value = this.defaultValue;
-    this.syncErrors = this.validator.validate(this);
+    this.syncErrors = this.validator.validate();
     this.isTouched = false;
     this.isPending = false;
     this.onValueChange({ validate: false });
     this.abortAsyncValidation();
+
+    console.log("reset", this.id, this.isTouched);
   }
 }

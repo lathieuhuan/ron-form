@@ -9,6 +9,7 @@ import {
   ValueChangeOptions,
 } from "@lib/core/types";
 import { getControl } from "@lib/core/utils/getControl";
+import { isObject } from "@lib/core/utils/isObject";
 import { BaseControl } from "../BaseControl";
 import { ParentControl } from "../ParentControl";
 
@@ -27,7 +28,7 @@ export class GroupControl<
       this.controlSet.add(control);
     });
 
-    this.syncErrors = this.validator.validate(this);
+    this.syncErrors = this.validator.validate();
   }
 
   clone(): this {
@@ -56,32 +57,28 @@ export class GroupControl<
     }, {}) as TValue;
   }
 
-  protected _setValue(value: DeepPartial<TValue> | undefined): void {
-    if (typeof value === "object" && value !== null) {
+  setValue(value: DeepPartial<TValue> | undefined, options?: ValueChangeOptions): void {
+    if (isObject(value)) {
       for (const [key, control] of Object.entries(this.controls)) {
-        control["_setValue"](value[key]);
+        control.setValue(value[key]);
       }
     } else {
       this.controlSet.forEach((control) => {
-        control["_setValue"](undefined);
+        control.setValue(undefined);
       });
     }
-  }
-  setValue(value: DeepPartial<TValue> | undefined, options?: ValueChangeOptions): void {
-    this._setValue(value);
+
     this.onValueChange(options);
   }
 
-  protected _patchValue(value: DeepPartial<TValue>): void {
-    if (typeof value === "object" && value !== null) {
-      for (const [key, _value] of Object.entries(value)) {
-        this.controls[key]?.["_patchValue"](_value);
-      }
-    }
-  }
   patchValue(value: DeepPartial<TValue>, options?: ValueChangeOptions): void {
-    this._patchValue(value);
-    this.onValueChange(options);
+    if (isObject(value)) {
+      for (const [key, _value] of Object.entries(value)) {
+        this.controls[key]?.patchValue(_value, options);
+      }
+
+      this.onValueChange(options);
+    }
   }
 
   // ↑↑↑ VALUE ↑↑↑

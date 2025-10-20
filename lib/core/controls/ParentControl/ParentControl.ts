@@ -75,7 +75,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   // ===== RESET =====
 
   resetValue(options?: ValueChangeOptions): void {
-    this.actStealthily(() => {
+    this.actSilently(() => {
       this.controlSet.forEach((control) => control.resetValue(options));
     });
     this.onValueChange(options);
@@ -83,10 +83,14 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   }
 
   reset(): void {
-    this.actStealthily(() => {
-      this.controlSet.forEach((control) => control.reset());
+    this.actSilently(() => {
+      this.controlSet.forEach((control) => {
+        control.reset();
+        console.log(control.getIsTouched());
+        
+      });
     });
-    this.syncErrors = this.validator.validate(this);
+    this.syncErrors = this.validator.validate();
     this.isPending = false;
     this.onValueChange({ validate: false });
     this.abortAsyncValidation();

@@ -1,15 +1,15 @@
-import type { ComposableValidators, ValidatorFn } from "@lib/core/types";
+import type { ComposableValidators, ValidationErrors, ValidatorFn } from "@lib/core/types";
 import type { BaseControl } from "./BaseControl";
 
 import { mergeErrors } from "@lib/core/utils/mergeErrors";
 import { trueArray } from "@lib/core/utils/trueArray";
 
-type Validator<TValue = unknown> = {
+export type Validator<TValue = unknown> = {
   readonly validators: Set<ValidatorFn<TValue>>;
   add: (validators: ComposableValidators<TValue>) => void;
   set: (validators: Set<ValidatorFn<TValue>>) => void;
   remove: (validators: ComposableValidators<TValue>) => void;
-  validate: ValidatorFn<TValue>;
+  validate: () => ValidationErrors | null;
 };
 
 function composeValidator<TValue = unknown>(
@@ -22,7 +22,7 @@ function composeValidator<TValue = unknown>(
   };
 }
 
-export function createValidator<TValue = unknown>(): Validator<TValue> {
+export function createValidator<TValue = unknown>(control: BaseControl<TValue>): Validator<TValue> {
   let _validators: Set<ValidatorFn<TValue>> = new Set();
   let _validator: ValidatorFn<TValue> | null = null;
 
@@ -42,8 +42,8 @@ export function createValidator<TValue = unknown>(): Validator<TValue> {
       trueArray(validators).forEach((v) => _validators.delete(v));
       _validator = composeValidator(_validators);
     },
-    validate: (value) => {
-      return _validator?.(value) ?? null;
+    validate: () => {
+      return _validator?.(control) ?? null;
     },
   };
 }
