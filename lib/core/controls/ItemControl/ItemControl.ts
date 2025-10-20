@@ -82,7 +82,5 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
     this.isPending = false;
     this.onValueChange({ validate: false });
     this.abortAsyncValidation();
-
-    console.log("reset", this.id, this.isTouched);
   }
 }

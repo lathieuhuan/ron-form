@@ -236,17 +236,6 @@ describe("ParentControl", () => {
     const first = control.getControl([0]);
     const second = control.getControl([1]);
 
-    // second child before reset
-    second.addValidator(requiredValidator);
-    second.validate();
-    expect(second.getErrors()).toEqual(REQUIRED_ERROR);
-    expect(second.getIsTouched()).toBe(true);
-
-    // parent before reset
-    control.validate();
-    expect(control.getErrors()).toEqual(FIRST_VALUE_REQUIRED_ERROR);
-    expect(control.getIsTouched()).toBe(true);
-
     const child1Reset = vi.fn();
     first.reset = child1Reset;
     const child2Reset = vi.fn();
@@ -268,6 +257,36 @@ describe("ParentControl", () => {
     expect(control.getIsTouched()).toBe(false);
     expect(second.getErrors()).toEqual(null);
     expect(second.getIsTouched()).toBe(false);
+  });
+
+  test("state after reset is correct", () => {
+    // Set up
+    const control = new TestParentControl({
+      validators: [firstValueRequired],
+    });
+    const second = control.getControl([1]);
+
+    // second child before reset
+    second.addValidator(requiredValidator);
+    second.validate();
+    expect(second.getErrors()).toEqual(REQUIRED_ERROR);
+    expect(second.getIsTouched()).toBe(true);
+
+    // parent before reset
+    control.validate();
+    expect(control.getErrors()).toEqual(FIRST_VALUE_REQUIRED_ERROR);
+    expect(control.getIsTouched()).toBe(true);
+
+    // Act
+    control.reset();
+
+    // Assert
+    expect(second.getErrors()).toEqual(REQUIRED_ERROR);
+    expect(second.getIsTouched()).toBe(false);
+    expect(control.getIsError()).toBe(false);
+    expect(control.getErrors()).toEqual(FIRST_VALUE_REQUIRED_ERROR);
+    expect(control.getIsTouched()).toBe(false);
+    expect(control.getIsError()).toBe(false);
   });
 
   // other methods are tested in GroupControl & ListControl tests

@@ -84,11 +84,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
 
   reset(): void {
     this.actSilently(() => {
-      this.controlSet.forEach((control) => {
-        control.reset();
-        console.log(control.getIsTouched());
-        
-      });
+      this.controlSet.forEach((control) => control.reset());
     });
     this.syncErrors = this.validator.validate();
     this.isPending = false;
