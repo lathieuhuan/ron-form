@@ -249,6 +249,7 @@ describe("GroupControl", () => {
     resume["validateDescendants"]();
 
     // Assert
+    expect(resume.getIsTouched()).toBe(true);
     expect(resume.getIsValid()).toBe(false);
     expect(role.getErrors()).toEqual({ error: "role error" });
     expect(email.getErrors()).toEqual({ error: "email error" });

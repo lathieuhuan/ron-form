@@ -1,4 +1,4 @@
-import { r, REQUIRED } from "@lib/core";
+import { makeRequiredValidator, r } from "@lib/core";
 import { FormItem } from "@lib/react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -6,12 +6,14 @@ import { CaseAction, CaseLayout } from "@src/components/CaseLayout";
 import { FormField } from "@src/components/FormField";
 import { Input } from "@src/components/Input";
 
+const requiredValidator = makeRequiredValidator<string>();
+
 export function Case1() {
   const form = useMemo(() => {
     return r.form(
       {
-        username: r.item<string>("initial", {
-          validators: [REQUIRED],
+        username: r.item("initial", {
+          validators: [requiredValidator],
           id: "username",
         }),
       },
@@ -78,19 +80,27 @@ export function Case1() {
       />
       <CaseAction
         description={`Set value to undefined (validate: ${validateStatus})`}
-        onClick={() => form.setFieldValue(["username"], undefined, { validate })}
+        onClick={() => {
+          form.setFieldValue(["username"], undefined, { validate });
+        }}
       />
       <CaseAction
         description="Validate and log errors"
-        onClick={() => console.log(form.validateField(["username"]))}
+        onClick={() => {
+          console.log(form.validateField(["username"]));
+        }}
       />
       <CaseAction
         description="Remove validation"
-        onClick={() => form.getControl(["username"]).removeValidator(REQUIRED)}
+        onClick={() => {
+          form.getControl(["username"]).removeValidator(requiredValidator);
+        }}
       />
       <CaseAction
         description="Add validation"
-        onClick={() => form.getControl(["username"]).addValidator(REQUIRED)}
+        onClick={() => {
+          form.getControl(["username"]).addValidator(requiredValidator);
+        }}
       />
       {/* Check resetValue and reset again and write tests for them */}
       {/* <CaseAction

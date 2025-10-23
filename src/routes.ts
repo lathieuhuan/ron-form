@@ -1,6 +1,6 @@
 import { Case1 } from "./cases/case-1";
 import { Case2 } from "./cases/case-2";
-// import { Case3 } from "./cases/case-3";
+import { Case3 } from "./cases/case-3";
 import { Route } from "./types";
 
 export const routes: Route[] = [
@@ -14,9 +14,9 @@ export const routes: Route[] = [
     path: "/case-2",
     Component: Case2,
   },
-  // {
-  //   label: "Case 3",
-  //   path: "/case-3",
-  //   Component: Case3,
-  // },
+  {
+    label: "Case 3",
+    path: "/case-3",
+    Component: Case3,
+  },
 ];

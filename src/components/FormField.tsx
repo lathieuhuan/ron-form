@@ -4,8 +4,8 @@ import { BaseControl, ControlState, NamePath } from "@lib/core";
 import { useControl } from "@lib/react";
 import { cn } from "@src/utils";
 
-type ChildrenRenderProps = {
-  control: BaseControl<unknown>;
+type ChildrenRenderProps<TValue = unknown> = {
+  control: BaseControl<TValue>;
   field: {
     id: string;
     "aria-invalid": boolean;
@@ -13,17 +13,23 @@ type ChildrenRenderProps = {
   state: ControlState;
 };
 
-type FormFieldProps = {
+type FormFieldProps<TValue = unknown> = {
   className?: string;
   label: string;
   name?: NamePath;
-  control?: BaseControl;
-  children: React.ReactNode | ((props: ChildrenRenderProps) => React.ReactNode);
+  control?: BaseControl<TValue>;
+  children: React.ReactNode | ((props: ChildrenRenderProps<TValue>) => React.ReactNode);
 };
 
-export function FormField({ className = "", label, name = [], control, children }: FormFieldProps) {
+export function FormField<TValue = unknown>({
+  className,
+  label,
+  name = [],
+  control,
+  children,
+}: FormFieldProps<TValue>) {
   const id = `field${useId()}`;
-  const _control = useControl(name, control) as BaseControl<unknown>;
+  const _control = useControl(name, control) as BaseControl<TValue>;
   const [state, setState] = useState<ControlState>(_control.getState());
 
   useEffect(() => {

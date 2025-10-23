@@ -1,6 +1,6 @@
 import { cloneElement, SyntheticEvent, useEffect, useState } from "react";
 
-import { BaseControl, NamePath, ParentControl } from "@lib/core";
+import { BaseControl, NamePath } from "@lib/core";
 import { useControl } from "../hooks";
 
 /**
@@ -9,9 +9,9 @@ import { useControl } from "../hooks";
  *   - If name is empty, the inner control is the provided control.
  * - If control is not provided, the nearest control in the context will be used, follow the above rules.
  */
-type FormItemProps = {
+type FormItemProps<TValue = unknown> = {
   name?: NamePath;
-  control?: BaseControl;
+  control?: BaseControl<TValue>;
   children: JSX.Element;
   changeEventProp?: string;
 };
@@ -21,7 +21,7 @@ export function FormItem<TValue = unknown>({
   control: controlProp,
   children,
   changeEventProp = "onChange",
-}: FormItemProps) {
+}: FormItemProps<TValue>) {
   const { props } = children;
   const control = useControl(name, controlProp) as BaseControl<TValue>;
   const [value, setValue] = useState<TValue | undefined>(control.getValue());

@@ -1,4 +1,4 @@
-import { describe, expect, it, test } from "vitest";
+import { describe, expect, it, test, vi } from "vitest";
 import { ItemControl } from "../../ItemControl";
 import { ListControl } from "../ListControl";
 import { setupResume } from "@lib/core/test-utils/parent-utils";
@@ -105,7 +105,7 @@ describe("ListControl", () => {
     });
   });
 
-  describe("_setValue", () => {
+  describe("setValue", () => {
     it("should set each child's value to the passed value respectively", () => {
       // Set up
       const control = new ListControl(new ItemControl<string>(), {
@@ -245,6 +245,26 @@ describe("ListControl", () => {
   });
 
   describe("insertItem", () => {
+    it("should set the list control's isTouched to true and notify the value & state observers", () => {
+      // Set up
+      const control = new ListControl(new ItemControl<string>("value"));
+      const valueObs = vi.fn();
+      const stateObs = vi.fn();
+      control.subscribeValue(valueObs);
+      control.subscribeState(stateObs);
+      expect(control["isTouched"]).toBe(false);
+
+      // Act
+      control.insertItem();
+
+      // Assert
+      expect(control["isTouched"]).toBe(true);
+      expect(valueObs).toHaveBeenCalledOnce();
+      expect(valueObs).toHaveBeenCalledWith(control.getValue());
+      expect(stateObs).toHaveBeenCalledOnce();
+      expect(stateObs).toHaveBeenCalledWith(control.getState());
+    });
+
     it("should insert new item at the end of the list by default and return the inserted item", () => {
       // Set up
       const control = new ListControl(new ItemControl<string>("value"), {
@@ -314,6 +334,26 @@ describe("ListControl", () => {
   });
 
   describe("insertItems", () => {
+    it("should set the list control's isTouched to true and notify the value & state observers", () => {
+      // Set up
+      const control = new ListControl(new ItemControl<string>("value"));
+      const valueObs = vi.fn();
+      const stateObs = vi.fn();
+      control.subscribeValue(valueObs);
+      control.subscribeState(stateObs);
+      expect(control["isTouched"]).toBe(false);
+
+      // Act
+      control.insertItems(2);
+
+      // Assert
+      expect(control["isTouched"]).toBe(true);
+      expect(valueObs).toHaveBeenCalledOnce();
+      expect(valueObs).toHaveBeenCalledWith(control.getValue());
+      expect(stateObs).toHaveBeenCalledOnce();
+      expect(stateObs).toHaveBeenCalledWith(control.getState());
+    });
+
     it("should insert n new items at the end of the list and return the inserted items when n is passed as the first argument", () => {
       // Set up
       const control = new ListControl(new ItemControl<string>("value"), {
@@ -383,6 +423,28 @@ describe("ListControl", () => {
   });
 
   describe("removeItem", () => {
+    it("should set the list control's isTouched to true and notify the value & state observers", () => {
+      // Set up
+      const control = new ListControl(new ItemControl<string>("value"), {
+        initialValues: ["abc"],
+      });
+      const valueObs = vi.fn();
+      const stateObs = vi.fn();
+      control.subscribeValue(valueObs);
+      control.subscribeState(stateObs);
+      expect(control["isTouched"]).toBe(false);
+
+      // Act
+      control.removeItem(control.getItems()[0].id);
+
+      // Assert
+      expect(control["isTouched"]).toBe(true);
+      expect(valueObs).toHaveBeenCalledOnce();
+      expect(valueObs).toHaveBeenCalledWith(control.getValue());
+      expect(stateObs).toHaveBeenCalledOnce();
+      expect(stateObs).toHaveBeenCalledWith(control.getState());
+    });
+
     test("removeItem should remove the item with the specified id and return the removed item", () => {
       // Set up
       const control = new ListControl(new ItemControl<string>(), {

@@ -45,7 +45,7 @@ export class ListControl<
     this.sampleControl = sampleControl.clone();
 
     options.initialValues?.forEach((value, index) => {
-      this.insertItem(value, index);
+      this._insertItem(value, index);
     });
 
     this.syncErrors = this.validator.validate();
@@ -135,12 +135,7 @@ export class ListControl<
     return item;
   }
 
-  /**
-   * - If value is provided (not undefined), it will override the item's initial value.
-   * - If index is undefined, it will be inserted at the end of the list.
-   * - If index < 0 || index > items.length, this operation will fail and return undefined.
-   */
-  insertItem(value?: TItemValue, index?: number): TListItem | undefined {
+  private _insertItem(value?: TItemValue, index?: number): TListItem | undefined {
     if (index !== undefined && (index < 0 || index > this.items.length)) {
       return undefined;
     }
@@ -157,9 +152,22 @@ export class ListControl<
     this.controlSet.add(itemControl);
     this.nextId++;
     this.listSubject.next(this.items);
-    // this.isTouched = true;
-    // this.notifyValueObservers();
-    // item.validate();
+
+    return item;
+  }
+
+  /**
+   * - If value is provided (not undefined), it will override the item's initial value.
+   * - If index is undefined, it will be inserted at the end of the list.
+   * - If index < 0 || index > items.length, this operation will fail and return undefined.
+   */
+  insertItem(value?: TItemValue, index?: number): TListItem | undefined {
+    const item = this._insertItem(value, index);
+    item?.control.setErrors(item?.control["validator"].validate());
+
+    this.isTouched = true;
+    this.notifyValueObservers();
+    this.notifyStateObservers();
 
     return item;
   }
@@ -194,6 +202,10 @@ export class ListControl<
 
     this.listSubject.next(this.items);
 
+    this.isTouched = true;
+    this.notifyValueObservers();
+    this.notifyStateObservers();
+
     return newItems;
   }
 
@@ -209,9 +221,10 @@ export class ListControl<
     if (removedItem) {
       this.controlSet.delete(removedItem.control);
       this.listSubject.next(this.items);
-      // this.isTouched = true;
-      // this.notifyValueObservers();
-      // this.validate();
+
+      this.isTouched = true;
+      this.notifyValueObservers();
+      this.validate();
 
       return removedItem;
     }

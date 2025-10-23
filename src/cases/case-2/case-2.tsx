@@ -1,4 +1,4 @@
-import { r, REQUIRED } from "@lib/core";
+import { makeRequiredValidator, r } from "@lib/core";
 import { FormItem } from "@lib/react";
 import { useEffect, useMemo } from "react";
 
@@ -15,12 +15,12 @@ export function Case2() {
     return r.form(
       {
         role: r.item(ERole.DEVELOPER, {
-          validators: [REQUIRED],
+          validators: [makeRequiredValidator()],
           asyncValidators: [roleValidator],
           id: "role",
         }),
-        yoe: r.item<string>("", {
-          validators: [REQUIRED, numberValidator],
+        yoe: r.item("", {
+          validators: [makeRequiredValidator(), numberValidator],
           id: "yoe",
         }),
       },

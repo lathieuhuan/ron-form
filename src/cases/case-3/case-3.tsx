@@ -1,22 +1,27 @@
-import { FormControl, ItemControl, ListControl, REQUIRED } from "@lib/core";
-import { FormItem, FormList } from "@lib/react";
+import { FormControl, ItemControl, ListControl, makeRequiredValidator } from "@lib/core";
 import { useMemo } from "react";
 
-import { Button } from "@src/components/Button";
-import { CaseLayout, CaseLayoutWatchConfig } from "@src/components/case-layout";
-import { FormField } from "@src/components/form-field/form-field";
-import { Input } from "@src/components/input";
-
-import "./case-styles.css";
+import { CaseLayout, CaseLayoutWatchConfig } from "@src/components/CaseLayout";
+import { NameList } from "./name-list";
+import { RoleList } from "./role-list";
 
 export function Case3() {
   const form = useMemo(() => {
+    const namesControl = new ListControl(
+      new ItemControl<string>(undefined, {
+        validators: [makeRequiredValidator()],
+      }),
+    );
+
+    const rolesControl = new ListControl(
+      new ItemControl<string>(undefined, {
+        validators: [makeRequiredValidator()],
+      }),
+    );
+
     return new FormControl({
-      names: new ListControl(
-        new ItemControl("", {
-          validators: [REQUIRED],
-        }),
-      ),
+      names: namesControl,
+      roles: rolesControl,
     });
   }, []);
 
@@ -26,6 +31,10 @@ export function Case3() {
       control: form.getControl(["names"]),
     },
     {
+      title: "Role",
+      control: form.getControl(["roles"]),
+    },
+    {
       title: "Form root",
       control: form,
     },
@@ -33,53 +42,20 @@ export function Case3() {
 
   return (
     <CaseLayout
-      form={form as any}
+      form={form}
       description={
         <ul>
           <li>Simple form list with required string fields.</li>
+          {/* <li>Items can be rendered in 2 ways: with NamePath or with Control.</li> */}
         </ul>
       }
       watchConfigs={watchConfigs}
     >
-      <FormList<string, ItemControl<string>> name={["names"]}>
-        {({ items, insert, remove }) => {
-          return (
-            <div className="case-3">
-              {items.length ? (
-                <div>
-                  {items.map((item, index) => {
-                    return (
-                      <div key={item.id} className="name-control">
-                        <FormField
-                          key={item.id}
-                          label={`Name ${index + 1}`}
-                          control={item.control}
-                          className="name-field"
-                        >
-                          {(state) => {
-                            return (
-                              <FormItem control={item.control}>
-                                <Input isError={state.isError} />
-                              </FormItem>
-                            );
-                          }}
-                        </FormField>
-                        <Button onClick={() => remove(item.id)}>Remove</Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : null}
-
-              <div>
-                <Button className="add-button" onClick={() => insert(items.length)}>
-                  Add
-                </Button>
-              </div>
-            </div>
-          );
-        }}
-      </FormList>
+      <div className="space-y-4">
+        <NameList />
+        <div className="bg-border opacity-50 w-full h-px" />
+        <RoleList />
+      </div>
     </CaseLayout>
   );
 }

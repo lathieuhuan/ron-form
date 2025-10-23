@@ -94,27 +94,21 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
 
   // ===== VALIDATION =====
 
-  // TODO: handle options
-  protected validateDescendants(options?: ValidateOptions) {
-    this.isAttentive = false;
+  protected validateDescendants(options?: Pick<ValidateOptions, "muted">) {
+    this.actSilently(() => {
+      for (const control of this.controlSet) {
+        control.validate(options);
 
-    for (const control of this.controlSet) {
-      if (control instanceof ParentControl) {
-        control.validateDescendants();
+        if (control instanceof ParentControl) {
+          control.validateDescendants(options);
+        }
       }
-
-      control.validate();
-    }
-
-    this.isAttentive = true;
+    });
   }
 
-  // TODO: handle options
-  validateAll(options?: ValidateOptions): boolean {
-    console.log("validateAll", this["id"]);
-
-    this.validateDescendants();
-    this.validate();
+  validateAll(options?: Pick<ValidateOptions, "muted">): boolean {
+    this.validateDescendants(options);
+    this.validate(options);
 
     return this.getIsValid();
   }

@@ -1,51 +1,47 @@
 import { useEffect, useState } from "react";
 
-import { BaseControl, ListControl, NamePath } from "@lib/core";
+import { BaseControl, ListControl, ListItemValue, NamePath } from "@lib/core";
+import { ListControlItem } from "@lib/core/controls/ListControl";
+import { FormContext } from "../contexts/form-context";
 import { useControl } from "../hooks/useControl";
 
-type ReactListItemControl<
-  TValue = unknown,
-  TControl extends BaseControl<TValue> = BaseControl<TValue>,
-> = {
-  id: number;
-  control: TControl;
-};
+type ListControlOperations<TValue = unknown> = Pick<
+  ListControl<BaseControl<TValue>>,
+  "insertItem" | "insertItems" | "removeItem" | "clearItems"
+>;
 
-type ChildrenRenderProps<
-  TValue = unknown,
-  TControl extends BaseControl<TValue> = BaseControl<TValue>,
-> = {
-  items: ReactListItemControl<TValue, TControl>[];
-  insert: ListControl["insertItem"];
-  remove: ListControl["removeItem"];
-};
-
-type FormListProps<TValue, TControl extends BaseControl<TValue>> = {
+type FormListProps<TValue, TControl extends BaseControl<TValue> = BaseControl<TValue>> = {
   name?: NamePath;
-  children: (props: ChildrenRenderProps<TValue, TControl>) => JSX.Element;
+  control?: ListControl<TControl>;
+  children: (
+    items: ListControlItem<TValue, TControl>[],
+    operations: ListControlOperations<TValue>,
+  ) => JSX.Element;
 };
 
-export function FormList<TValue, TControl extends BaseControl<TValue>>({
-  name = [],
-  children,
-}: FormListProps<TValue, TControl>) {
-  const control = useControl(name) as ListControl<TValue, BaseControl<TValue>>;
-  const [items, setItems] = useState(control.items);
+export function FormList<
+  TChildControl extends BaseControl<any> = BaseControl<any>,
+  TValue extends ListItemValue<TChildControl> = ListItemValue<TChildControl>,
+>({ name = [], control: controlProp, children }: FormListProps<TValue, TChildControl>) {
+  const control = useControl(name, controlProp) as ListControl<TChildControl, TValue>;
+  const [items, setItems] = useState(control.getItems());
+
+  if (!(control instanceof ListControl)) {
+    throw new Error("FormList control must be a ListControl");
+  }
 
   useEffect(() => {
-    if (control instanceof ListControl) {
-      return control.subscribeList((items) => setItems(items.concat()));
-    }
-    return () => {};
+    return control.subscribeList((items) => setItems(items.concat()));
   }, [control]);
 
-  return children({
-    items: items as unknown as ReactListItemControl<TValue, TControl>[],
-    insert: (index: number) => {
-      control.insertItem(index);
-    },
-    remove: (index: number) => {
-      control.removeItem(index);
-    },
-  });
+  return (
+    <FormContext.Provider value={control as BaseControl<unknown>}>
+      {children(items, {
+        insertItem: control.insertItem.bind(control),
+        insertItems: control.insertItems.bind(control),
+        removeItem: control.removeItem.bind(control),
+        clearItems: control.clearItems.bind(control),
+      })}
+    </FormContext.Provider>
+  );
 }
