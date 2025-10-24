@@ -90,19 +90,6 @@ export abstract class BaseControl<TValue = unknown> {
         this.actSilently(() => this.setIsTouched(true));
       }
 
-      if (this.asyncValidator.isActive) {
-        this.isPending = true;
-        this.asyncValidator
-          .validate()
-          .then((errors) => {
-            this.asyncErrors = errors;
-          })
-          .finally(() => {
-            this.isPending = false;
-            this.onStateChange(options);
-          });
-      }
-
       if (!options?.muted) {
         this.notifyStateObservers();
       }
@@ -207,12 +194,10 @@ export abstract class BaseControl<TValue = unknown> {
   }
 
   protected notifyValueObservers(): void {
-    // console.log("notifyValueObservers", this.id);
-    this.valueSubject.next(() => this.getValue());
+      this.valueSubject.next(() => this.getValue());
   }
 
   protected notifyStateObservers(): void {
-    // console.log("notifyStateObservers", this.id);
-    this.stateSubject.next(() => this.getState());
+      this.stateSubject.next(() => this.getState());
   }
 }

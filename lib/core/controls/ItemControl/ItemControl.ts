@@ -1,5 +1,6 @@
 import { ControlOptions, ControlState, ValueChangeOptions } from "@lib/core/types";
 import { BaseControl } from "../BaseControl";
+import { Transaction } from "../Transaction";
 
 export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefined> {
   readonly defaultValue: TValue | undefined;
@@ -44,6 +45,33 @@ export class ItemControl<TValue = unknown> extends BaseControl<TValue | undefine
   resetValue(options?: ValueChangeOptions): void {
     this.value = this.defaultValue;
     this.onValueChange(options);
+  }
+
+  onTransaction(transaction: Transaction<ItemControl<TValue>>): void {}
+
+  handleValueChangeByUser(value: TValue) {
+    const transaction = new Transaction<ItemControl<TValue>>(this);
+
+    transaction.setValue(value);
+
+    transaction.continue = () => {
+      this.value = transaction.value;
+      this.syncErrors = this.validator.validate();
+
+      if (!this.isTouched) {
+        this.isTouched = true;
+      }
+
+      this.notifyValueObservers();
+      this.notifyStateObservers();
+      this["notifyParentOfValue"]({ validate: true });
+    };
+
+    this.onTransaction(transaction);
+
+    if (!transaction.paused) {
+      transaction.continue();
+    }
   }
 
   // ↑↑↑ VALUE ↑↑↑

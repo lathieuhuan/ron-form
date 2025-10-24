@@ -1,6 +1,6 @@
 import { cloneElement, SyntheticEvent, useEffect, useState } from "react";
 
-import { BaseControl, NamePath } from "@lib/core";
+import { BaseControl, ItemControl, NamePath } from "@lib/core";
 import { useControl } from "../hooks";
 
 /**
@@ -16,6 +16,7 @@ type FormItemProps<TValue = unknown> = {
   changeEventProp?: string;
 };
 
+/** Work on ItemControl */
 export function FormItem<TValue = unknown>({
   name = [],
   control: controlProp,
@@ -26,15 +27,19 @@ export function FormItem<TValue = unknown>({
   const control = useControl<BaseControl<TValue>>(name, controlProp);
   const [value, setValue] = useState<TValue | undefined>(control.getValue());
 
+  if (!(control instanceof ItemControl)) {
+    throw new Error("FormItem control must be an ItemControl");
+  }
+
   useEffect(() => {
     return control.subscribeValue((value) => setValue(value));
   }, [control]);
 
   const changeValue = (value: TValue) => {
-    control.setValue(value, { validate: true });
+    control["handleValueChangeByUser"](value);
   };
 
-  const onChange = (change: Event | SyntheticEvent | TValue, ...others: unknown[]) => {
+  const handleChange = (change: Event | SyntheticEvent | TValue, ...others: unknown[]) => {
     if (change && typeof change === "object" && "target" in change) {
       const target = change.target;
 
@@ -45,14 +50,14 @@ export function FormItem<TValue = unknown>({
       changeValue(change);
     }
 
-    if (typeof props.onChange === "function") {
-      props.onChange(change, ...others);
+    if (typeof props[changeEventProp] === "function") {
+      props[changeEventProp](change, ...others);
     }
   };
 
   return cloneElement(children, {
     ...props,
     value,
-    [changeEventProp]: onChange,
+    [changeEventProp]: handleChange,
   });
 }
