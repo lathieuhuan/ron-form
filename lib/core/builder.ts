@@ -2,7 +2,7 @@ import { BaseControl } from "./controls/BaseControl";
 import { FormControl } from "./controls/FormControl";
 import { GroupControl } from "./controls/GroupControl";
 import { ItemControl } from "./controls/ItemControl";
-import { ListControl, ListControlItem } from "./controls/ListControl";
+import { ListControl } from "./controls/ListControl";
 import { GroupValue, ListItemValue } from "./types";
 
 function item<TValue = unknown>(...args: ConstructorParameters<typeof ItemControl<TValue>>) {
@@ -27,13 +27,7 @@ function list<
   TChildControl extends BaseControl<any> = BaseControl<any>,
   TItemValue extends ListItemValue<TChildControl> = ListItemValue<TChildControl>,
   TValue extends (TItemValue | undefined)[] = (TItemValue | undefined)[],
-  TListItem extends ListControlItem<TItemValue, TChildControl> = ListControlItem<
-    TItemValue,
-    TChildControl
-  >,
->(
-  ...args: ConstructorParameters<typeof ListControl<TChildControl, TItemValue, TValue, TListItem>>
-) {
+>(...args: ConstructorParameters<typeof ListControl<TChildControl, TItemValue, TValue>>) {
   return new ListControl(...args);
 }
 

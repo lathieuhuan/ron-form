@@ -15,8 +15,8 @@ import { BaseControl } from "../BaseControl";
 
 export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue> {
   override parent: ParentControl<any> = this;
-  // Child control class needs to populate this set
-  controlSet: Set<BaseControl<any>> = new Set();
+  // Child control class needs to populate this list
+  controlList: BaseControl<any>[] = [];
 
   constructor(options: ParentControlOptions<TValue> = {}) {
     super(options);
@@ -27,7 +27,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   // ===== STATE GETTERS & SETTERS =====
 
   getIsValid(): boolean {
-    for (const control of this.controlSet) {
+    for (const control of this.controlList) {
       if (!control.getIsValid()) {
         return false;
       }
@@ -36,7 +36,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   }
 
   getIsPending(): boolean {
-    for (const control of this.controlSet) {
+    for (const control of this.controlList) {
       if (control.getIsPending()) {
         return true;
       }
@@ -45,7 +45,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   }
 
   getIsTouched(): boolean {
-    for (const control of this.controlSet) {
+    for (const control of this.controlList) {
       if (control.getIsTouched()) {
         return true;
       }
@@ -54,7 +54,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
   }
 
   setIsTouched(isTouched: boolean): void {
-    this.controlSet.forEach((control) => {
+    this.controlList.forEach((control) => {
       control.setIsTouched(isTouched);
     });
   }
@@ -76,7 +76,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
 
   resetValue(options?: ValueChangeOptions): void {
     this.actSilently(() => {
-      this.controlSet.forEach((control) => control.resetValue(options));
+      this.controlList.forEach((control) => control.resetValue(options));
     });
     this.onValueChange(options);
     this.abortAsyncValidation();
@@ -84,7 +84,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
 
   reset(): void {
     this.actSilently(() => {
-      this.controlSet.forEach((control) => control.reset());
+      this.controlList.forEach((control) => control.reset());
     });
     this.syncErrors = this.validator.validate();
     this.isPending = false;
@@ -96,7 +96,7 @@ export abstract class ParentControl<TValue = unknown> extends BaseControl<TValue
 
   protected validateDescendants(options?: Pick<ValidateOptions, "muted">) {
     this.actSilently(() => {
-      for (const control of this.controlSet) {
+      for (const control of this.controlList) {
         control.validate(options);
 
         if (control instanceof ParentControl) {

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
 import { BaseControl, ListControl, ListItemValue, NamePath } from "@lib/core";
-import { ListControlItem } from "@lib/core/controls/ListControl";
 import { FormContext } from "../contexts/form-context";
 import { useControl } from "../hooks/useControl";
 
@@ -13,10 +12,7 @@ type ListControlOperations<TValue = unknown> = Pick<
 type FormListProps<TValue, TControl extends BaseControl<TValue> = BaseControl<TValue>> = {
   name?: NamePath;
   control?: ListControl<TControl>;
-  children: (
-    items: ListControlItem<TValue, TControl>[],
-    operations: ListControlOperations<TValue>,
-  ) => JSX.Element;
+  children: (controls: TControl[], operations: ListControlOperations<TValue>) => JSX.Element;
 };
 
 export function FormList<
@@ -24,19 +20,19 @@ export function FormList<
   TValue extends ListItemValue<TChildControl> = ListItemValue<TChildControl>,
 >({ name = [], control: controlProp, children }: FormListProps<TValue, TChildControl>) {
   const control = useControl<ListControl<TChildControl, TValue>>(name, controlProp);
-  const [items, setItems] = useState(control.getItems());
+  const [controls, setControls] = useState(control.getControls());
 
   if (!(control instanceof ListControl)) {
     throw new Error("FormList control must be a ListControl");
   }
 
   useEffect(() => {
-    return control.subscribeList((items) => setItems(items.concat()));
+    return control.subscribeList((controls) => setControls(controls.concat()));
   }, [control]);
 
   return (
     <FormContext.Provider value={control as BaseControl<unknown>}>
-      {children(items, {
+      {children(controls, {
         insertItem: control.insertItem.bind(control),
         insertItems: control.insertItems.bind(control),
         removeItem: control.removeItem.bind(control),

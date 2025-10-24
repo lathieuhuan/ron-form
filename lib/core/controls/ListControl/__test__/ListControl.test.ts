@@ -10,7 +10,7 @@ describe("ListControl", () => {
       const control = new ListControl(new ItemControl<string>());
 
       // Assert
-      expect(control.getItems().length).toBe(0);
+      expect(control.getControls().length).toBe(0);
       expect(control.getValue()).toEqual(undefined);
       expect(control["isTouched"]).toBe(false);
       expect(control.getIsValid()).toBe(true);
@@ -25,17 +25,17 @@ describe("ListControl", () => {
         const control = new ListControl(new ItemControl<string>(), {
           initialValues: ["111", "222", "333"],
         });
-        const [item0, item1, item2] = control.getItems();
+        const [item0, item1, item2] = control.getControls();
 
         // Assert
-        expect(control.getItems().length).toBe(3);
-        expect(item0.control.getValue()).toBe("111");
-        expect(item1.control.getValue()).toBe("222");
-        expect(item2.control.getValue()).toBe("333");
+        expect(control.getControls().length).toBe(3);
+        expect(item0.getValue()).toBe("111");
+        expect(item1.getValue()).toBe("222");
+        expect(item2.getValue()).toBe("333");
         expect(control.getValue()).toEqual(["111", "222", "333"]);
-        expect(item0.control.getIsTouched()).toBe(false);
-        expect(item1.control.getIsTouched()).toBe(false);
-        expect(item2.control.getIsTouched()).toBe(false);
+        expect(item0.getIsTouched()).toBe(false);
+        expect(item1.getIsTouched()).toBe(false);
+        expect(item2.getIsTouched()).toBe(false);
         expect(control["isTouched"]).toBe(false);
         expect(control.getIsValid()).toBe(true);
         expect(control.getIsError()).toBe(false);
@@ -49,7 +49,7 @@ describe("ListControl", () => {
         });
 
         // Assert
-        expect(control.getItems().length).toBe(2);
+        expect(control.getControls().length).toBe(2);
         expect(control.getControl([0])?.getValue()).toBe("abc");
         expect(control.getControl([1])?.getValue()).toBe("item");
         expect(control.getValue()).toEqual(["abc", "item"]);
@@ -111,18 +111,18 @@ describe("ListControl", () => {
       const control = new ListControl(new ItemControl<string>(), {
         initialValues: ["111", "222", "333"],
       });
-      const [item0, item1, item2] = control.getItems();
-      expect(item0.control.getValue()).toBe("111");
-      expect(item1.control.getValue()).toBe("222");
-      expect(item2.control.getValue()).toBe("333");
+      const [item0, item1, item2] = control.getControls();
+      expect(item0.getValue()).toBe("111");
+      expect(item1.getValue()).toBe("222");
+      expect(item2.getValue()).toBe("333");
 
       // Act
       control.setValue(["abc", undefined, "xyz"]);
 
       // Assert
-      expect(item0.control.getValue()).toBe("abc");
-      expect(item1.control.getValue()).toBeUndefined();
-      expect(item2.control.getValue()).toBe("xyz");
+      expect(item0.getValue()).toBe("abc");
+      expect(item1.getValue()).toBeUndefined();
+      expect(item2.getValue()).toBe("xyz");
     });
 
     it("should set values of the children that are out of the passed array's range to undefined", () => {
@@ -130,14 +130,14 @@ describe("ListControl", () => {
       const control = new ListControl(new ItemControl<string>(), {
         initialValues: ["111", "222"],
       });
-      const [item0, item1] = control.getItems();
+      const [item0, item1] = control.getControls();
 
       // Act
       control.setValue(["333"]);
 
       // Assert
-      expect(item0.control.getValue()).toBe("333");
-      expect(item1.control.getValue()).toBeUndefined();
+      expect(item0.getValue()).toBe("333");
+      expect(item1.getValue()).toBeUndefined();
     });
 
     it("should set all children's value to undefined when passed undefined", () => {
@@ -145,16 +145,16 @@ describe("ListControl", () => {
       const control = new ListControl(new ItemControl<string>(), {
         initialValues: ["111", "222"],
       });
-      const [item0, item1] = control.getItems();
-      expect(item0.control.getValue()).toBe("111");
-      expect(item1.control.getValue()).toBe("222");
+      const [item0, item1] = control.getControls();
+      expect(item0.getValue()).toBe("111");
+      expect(item1.getValue()).toBe("222");
 
       // Act
       control.setValue(undefined);
 
       // Assert
-      expect(item0.control.getValue()).toBeUndefined();
-      expect(item1.control.getValue()).toBeUndefined();
+      expect(item0.getValue()).toBeUndefined();
+      expect(item1.getValue()).toBeUndefined();
     });
   });
 
@@ -165,19 +165,19 @@ describe("ListControl", () => {
     const control = new ListControl(new ItemControl<string>(), {
       initialValues: ["111", "222", "333", "444"],
     });
-    const [item0, item1, item2, item3] = control.getItems();
-    expect(item0.control.getValue()).toBe("111");
-    expect(item1.control.getValue()).toBe("222");
-    expect(item2.control.getValue()).toBe("333");
+    const [item0, item1, item2, item3] = control.getControls();
+    expect(item0.getValue()).toBe("111");
+    expect(item1.getValue()).toBe("222");
+    expect(item2.getValue()).toBe("333");
 
     // Act
     control.patchValue(["abc", undefined, "xyz"]);
 
     // Assert
-    expect(item0.control.getValue()).toBe("abc");
-    expect(item1.control.getValue()).toBe("222");
-    expect(item2.control.getValue()).toBe("xyz");
-    expect(item3.control.getValue()).toBe("444");
+    expect(item0.getValue()).toBe("abc");
+    expect(item1.getValue()).toBe("222");
+    expect(item2.getValue()).toBe("xyz");
+    expect(item3.getValue()).toBe("444");
   });
 
   describe("getIsTouched & setIsTouched", () => {
@@ -277,11 +277,11 @@ describe("ListControl", () => {
       // Assert
       const insertedItem = control.getControl([2]);
 
-      expect(control.getItems().length).toBe(3);
+      expect(control.getControls().length).toBe(3);
       expect(item).toBeDefined();
       expect(insertedItem).toBeDefined();
-      expect(insertedItem).toBe(item?.control);
-      expect(item?.control.getValue()).toBe("value");
+      expect(insertedItem).toBe(item);
+      expect(item?.getValue()).toBe("value");
     });
 
     it("should insert new item to the specified index", () => {
@@ -294,7 +294,7 @@ describe("ListControl", () => {
       control.insertItem("222", 1);
 
       // Assert
-      expect(control.getItems().length).toBe(3);
+      expect(control.getControls().length).toBe(3);
       expect(control.getControl([1])?.getValue()).toBe("222");
     });
 
@@ -321,14 +321,14 @@ describe("ListControl", () => {
       const item1 = control.insertItem(undefined, 3);
 
       // Assert
-      expect(control.getItems().length).toBe(2);
+      expect(control.getControls().length).toBe(2);
       expect(item1).toBeUndefined();
 
       // Act
       const item2 = control.insertItem(undefined, -1);
 
       // Assert
-      expect(control.getItems().length).toBe(2);
+      expect(control.getControls().length).toBe(2);
       expect(item2).toBeUndefined();
     });
   });
@@ -364,17 +364,17 @@ describe("ListControl", () => {
       const insertedItems = control.insertItems(2);
 
       // Assert
-      expect(control.getItems().length).toBe(3);
+      expect(control.getControls().length).toBe(3);
       expect(insertedItems).toBeDefined();
 
       const [item1, item2] = insertedItems ?? [];
 
-      expect(item1.control).toBeDefined();
-      expect(item2.control).toBeDefined();
-      expect(item1.control).toBe(control.getControl([1]));
-      expect(item2.control).toBe(control.getControl([2]));
-      expect(item1.control.getValue()).toBe("value");
-      expect(item2.control.getValue()).toBe("value");
+      expect(item1).toBeDefined();
+      expect(item2).toBeDefined();
+      expect(item1).toBe(control.getControl([1]));
+      expect(item2).toBe(control.getControl([2]));
+      expect(item1?.getValue()).toBe("value");
+      expect(item2?.getValue()).toBe("value");
     });
 
     it("should insert n new items with specified values at the specified index when passed an array of values", () => {
@@ -387,17 +387,17 @@ describe("ListControl", () => {
       const insertedItems = control.insertItems(["222", "333"], 1);
 
       // Assert
-      expect(control.getItems().length).toBe(4);
+      expect(control.getControls().length).toBe(4);
       expect(insertedItems).toBeDefined();
 
       const [item1, item2] = insertedItems ?? [];
 
-      expect(item1.control).toBeDefined();
-      expect(item2.control).toBeDefined();
-      expect(item1.control).toBe(control.getControl([1]));
-      expect(item2.control).toBe(control.getControl([2]));
-      expect(item1.control.getValue()).toBe("222");
-      expect(item2.control.getValue()).toBe("333");
+      expect(item1).toBeDefined();
+      expect(item2).toBeDefined();
+      expect(item1).toBe(control.getControl([1]));
+      expect(item2).toBe(control.getControl([2]));
+      expect(item1?.getValue()).toBe("222");
+      expect(item2?.getValue()).toBe("333");
     });
 
     it("should return undefined when index is out of range", () => {
@@ -410,14 +410,14 @@ describe("ListControl", () => {
       const insertedItems = control.insertItems(2, 3);
 
       // Assert
-      expect(control.getItems().length).toBe(2);
+      expect(control.getControls().length).toBe(2);
       expect(insertedItems).toBeUndefined();
 
       // Act
       const insertedItems2 = control.insertItems(2, -1);
 
       // Assert
-      expect(control.getItems().length).toBe(2);
+      expect(control.getControls().length).toBe(2);
       expect(insertedItems2).toBeUndefined();
     });
   });
@@ -435,7 +435,7 @@ describe("ListControl", () => {
       expect(control["isTouched"]).toBe(false);
 
       // Act
-      control.removeItem(control.getItems()[0].id);
+      control.removeItem(control.getControls()[0].name);
 
       // Assert
       expect(control["isTouched"]).toBe(true);
@@ -455,14 +455,14 @@ describe("ListControl", () => {
 
       if (insertedItem) {
         // Act
-        const removedItem = control.removeItem(insertedItem.id);
+        const removedItem = control.removeItem(insertedItem.name);
 
         // Assert
-        expect(control.getItems().length).toBe(2);
+        expect(control.getControls().length).toBe(2);
         expect(control.getValue()).toEqual(["111", "333"]);
         expect(removedItem).toBeDefined();
-        expect(removedItem?.id).toBe(insertedItem.id);
-        expect(removedItem?.control).toBe(insertedItem.control);
+        expect(removedItem?.name).toBe(insertedItem.name);
+        expect(removedItem).toBe(insertedItem);
       }
     });
 
@@ -473,10 +473,10 @@ describe("ListControl", () => {
       });
 
       // Act
-      const removedItem = control.removeItem(100);
+      const removedItem = control.removeItem("100");
 
       // Assert
-      expect(control.getItems().length).toBe(2);
+      expect(control.getControls().length).toBe(2);
       expect(removedItem).toBeUndefined();
     });
   });
@@ -486,15 +486,13 @@ describe("ListControl", () => {
     const control = new ListControl(new ItemControl<string>(), {
       initialValues: ["111", "_222", "333", "_444", "555"],
     });
-    const [_, item1, __, item3] = control.getItems();
+    const [_, item1, __, item3] = control.getControls();
 
     // Act
-    const removedItems = control.removeItems(
-      (item) => item.control.getValue()?.startsWith("_") ?? false,
-    );
+    const removedItems = control.removeItems((item) => item.getValue()?.startsWith("_") ?? false);
 
     // Assert
-    expect(control.getItems().length).toBe(3);
+    expect(control.getControls().length).toBe(3);
     expect(control.getValue()).toEqual(["111", "333", "555"]);
     expect(removedItems).toBeDefined();
     expect(removedItems.length).toBe(2);
@@ -512,8 +510,8 @@ describe("ListControl", () => {
     control.clearItems();
 
     // Assert
-    expect(control.getItems().length).toBe(0);
-    expect(control.getValue()).toEqual(undefined);
+    expect(control.getControls().length).toBe(0);
+    expect(control.getValue()).toEqual([]);
   });
 
   // Methods that delegate to child controls

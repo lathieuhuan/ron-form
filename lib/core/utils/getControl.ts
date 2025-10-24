@@ -14,8 +14,8 @@ export function getControl<TValue = any>(
       return getControl(parent.controls[first], rest);
     }
     if (parent instanceof ListControl) {
-      const item = parent["items"].at(+first);
-      return getControl(item?.control, rest);
+      const control = (parent as ListControl<BaseControl<any>>).getControls().at(+first);
+      return getControl(control, rest);
     }
   }
   return parent;

@@ -5,8 +5,6 @@ import { ParentControlOptions } from "@lib/core/types";
 export type ItemControlValue = string | undefined;
 
 export class TestParentControl extends ParentControl<ItemControlValue[]> {
-  controlSet: Set<ItemControl<ItemControlValue>> = new Set();
-
   constructor(options: ParentControlOptions<ItemControlValue[]> = {}) {
     super(options);
     const control1 = new ItemControl<ItemControlValue>();
@@ -15,16 +13,16 @@ export class TestParentControl extends ParentControl<ItemControlValue[]> {
     control1.name = "control-1";
     control2.parent = this;
     control2.name = "control-2";
-    this.controlSet.add(control1);
-    this.controlSet.add(control2);
+    this.controlList.push(control1);
+    this.controlList.push(control2);
   }
 
   getControl(path: [0 | 1]) {
-    return Array.from(this.controlSet).at(path[0])!;
+    return this.controlList.at(path[0])!;
   }
 
   getValue() {
-    return Array.from(this.controlSet).map((control) => control.getValue());
+    return this.controlList.map((control) => control.getValue());
   }
   setValue() {}
   patchValue() {}

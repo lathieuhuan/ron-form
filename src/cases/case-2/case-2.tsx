@@ -101,7 +101,7 @@ export function Case2() {
         description="Set form values to: Manager, 3 YoE"
         onClick={() => form.setValue({ role: ERole.MANAGER, yoe: "3" })}
       />
-      <CaseAction description="Validate YoE" onClick={() => form.validateField(["yoe"])} />
+      <CaseAction description="Validate form" onClick={() => form.validate()} />
       <CaseAction description="Reset form" onClick={() => form.reset()} />
     </CaseLayout>
   );

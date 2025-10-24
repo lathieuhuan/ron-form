@@ -25,7 +25,7 @@ export class GroupControl<
     Object.entries(controls).forEach(([name, control]) => {
       control.parent = this;
       control.name = name;
-      this.controlSet.add(control);
+      this.controlList.push(control);
     });
 
     this.syncErrors = this.validator.validate();
@@ -58,15 +58,17 @@ export class GroupControl<
   }
 
   setValue(value: DeepPartial<TValue> | undefined, options?: ValueChangeOptions): void {
-    if (isObject(value)) {
-      for (const [key, control] of Object.entries(this.controls)) {
-        control.setValue(value[key]);
+    this.actSilently(() => {
+      if (isObject(value)) {
+        for (const [key, control] of Object.entries(this.controls)) {
+          control.setValue(value[key], options);
+        }
+      } else {
+        this.controlList.forEach((control) => {
+          control.setValue(undefined, options);
+        });
       }
-    } else {
-      this.controlSet.forEach((control) => {
-        control.setValue(undefined);
-      });
-    }
+    });
 
     this.onValueChange(options);
   }

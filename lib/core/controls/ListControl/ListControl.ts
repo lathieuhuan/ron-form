@@ -14,11 +14,6 @@ import { toArray } from "@lib/core/utils/toArray";
 import { BaseControl } from "../BaseControl";
 import { ParentControl } from "../ParentControl";
 
-export type ListControlItem<TValue, TControl = BaseControl<TValue>> = {
-  id: number;
-  control: TControl;
-};
-
 type ListControlOptions<TValue> = ParentControlOptions<TValue | undefined> & {
   /** initialValues[i] undefined will not override the item's initial value. */
   initialValues?: TValue;
@@ -28,24 +23,19 @@ export class ListControl<
   TChildControl extends BaseControl<any> = BaseControl<any>,
   TItemValue extends ListItemValue<TChildControl> = ListItemValue<TChildControl>,
   TValue extends (TItemValue | undefined)[] = (TItemValue | undefined)[],
-  TListItem extends ListControlItem<TItemValue, TChildControl> = ListControlItem<
-    TItemValue,
-    TChildControl
-  >,
 > extends ParentControl<TValue | undefined> {
   //
-  private items: TListItem[] = [];
   private sampleControl: TChildControl;
   private nextId = 1;
-  private listSubject = createSubject<TListItem[]>();
+  private listSubject = createSubject<TChildControl[]>();
   private isTouched = false;
 
   constructor(sampleControl: TChildControl, options: ListControlOptions<TValue> = {}) {
     super(options);
     this.sampleControl = sampleControl.clone();
 
-    options.initialValues?.forEach((value, index) => {
-      this._insertItem(value, index);
+    options.initialValues?.forEach((value) => {
+      this._insertItem(value);
     });
 
     this.syncErrors = this.validator.validate();
@@ -67,8 +57,8 @@ export class ListControl<
     >;
   }
 
-  getItems(): TListItem[] {
-    return this.items;
+  getControls() {
+    return this.controlList as TChildControl[];
   }
 
   override getIsTouched(): boolean {
@@ -83,7 +73,7 @@ export class ListControl<
   // ↓↓↓ VALUE ↓↓↓
 
   getValue(): TValue | undefined {
-    const value = this.items.map((item) => item.control.getValue());
+    const value = this.controlList.map((control) => control.getValue());
     return value.length
       ? (value as TValue)
       : this.isTouched
@@ -97,7 +87,7 @@ export class ListControl<
    * - item[n] with n >= values.length will be set value to undefined.
    */
   setValue(values: (TItemValue | undefined)[] | undefined, options?: ValueChangeOptions): void {
-    this.items.forEach((item, index) => item.control.setValue(values?.[index]));
+    this.controlList.forEach((control, index) => control.setValue(values?.[index], options));
     this.onValueChange(options);
   }
 
@@ -108,7 +98,7 @@ export class ListControl<
   patchValue(values: (TItemValue | undefined)[], options?: ValueChangeOptions): void {
     values.forEach((value, index) => {
       if (value) {
-        this.items[index]?.control.patchValue(value);
+        this.controlList[index]?.patchValue(value, options);
       }
     });
 
@@ -119,7 +109,7 @@ export class ListControl<
 
   // LIST ONLY
 
-  subscribeList(callback: (items: TListItem[]) => void) {
+  subscribeList(callback: (controls: TChildControl[]) => void) {
     return this.listSubject.subscribe(callback);
   }
 
@@ -135,25 +125,23 @@ export class ListControl<
     return item;
   }
 
-  private _insertItem(value?: TItemValue, index?: number): TListItem | undefined {
-    if (index !== undefined && (index < 0 || index > this.items.length)) {
+  private _insertItem(value?: TItemValue, index?: number): TChildControl | undefined {
+    if (index !== undefined && (index < 0 || index > this.controlList.length)) {
       return undefined;
     }
 
     const itemControl = this.createItemControl(value);
-    const item = { id: this.nextId, control: itemControl } as TListItem;
 
     if (index === undefined) {
-      this.items.push(item);
+      this.controlList.push(itemControl);
     } else {
-      this.items.splice(index, 0, item);
+      this.controlList.splice(index, 0, itemControl);
     }
 
-    this.controlSet.add(itemControl);
     this.nextId++;
-    this.listSubject.next(this.items);
+    this.listSubject.next(this.controlList as TChildControl[]);
 
-    return item;
+    return itemControl;
   }
 
   /**
@@ -161,15 +149,18 @@ export class ListControl<
    * - If index is undefined, it will be inserted at the end of the list.
    * - If index < 0 || index > items.length, this operation will fail and return undefined.
    */
-  insertItem(value?: TItemValue, index?: number): TListItem | undefined {
-    const item = this._insertItem(value, index);
-    item?.control.setErrors(item?.control["validator"].validate());
+  insertItem(value?: TItemValue, index?: number): TChildControl | undefined {
+    const control = this._insertItem(value, index);
 
-    this.isTouched = true;
-    this.notifyValueObservers();
-    this.notifyStateObservers();
+    if (control) {
+      control.setErrors(control["validator"].validate());
 
-    return item;
+      this.isTouched = true;
+      this.notifyValueObservers();
+      this.notifyStateObservers();
+    }
+
+    return control;
   }
 
   /**
@@ -177,82 +168,83 @@ export class ListControl<
    * - If index < 0 || index > items.length, this operation will fail and return undefined.
    * @returns new items.
    */
-  insertItems(countOrValues: number | TItemValue[], index?: number): TListItem[] | undefined {
-    if (index !== undefined && (index < 0 || index > this.items.length)) {
+  insertItems(countOrValues: number | TItemValue[], index?: number): TChildControl[] | undefined {
+    if (index !== undefined && (index < 0 || index > this.controlList.length)) {
       return undefined;
     }
 
-    const newItems: TListItem[] = [];
+    const newControls: TChildControl[] = [];
     const count = typeof countOrValues === "number" ? countOrValues : countOrValues.length;
     const values = typeof countOrValues === "number" ? undefined : countOrValues;
 
     for (let i = 0; i < count; i++) {
-      const item = this.createItemControl(values?.[i]);
+      const control = this.createItemControl(values?.[i]);
 
-      newItems.push({ id: this.nextId, control: item } as TListItem);
-      this.controlSet.add(item);
+      newControls.push(control);
       this.nextId++;
     }
 
     if (index === undefined) {
-      this.items.push(...newItems);
+      this.controlList.push(...newControls);
     } else {
-      this.items.splice(index, 0, ...newItems);
+      this.controlList.splice(index, 0, ...newControls);
     }
 
-    this.listSubject.next(this.items);
+    this.listSubject.next(this.controlList as TChildControl[]);
 
     this.isTouched = true;
     this.notifyValueObservers();
     this.notifyStateObservers();
 
-    return newItems;
+    return newControls;
   }
 
-  removeItem(id: number): TListItem | undefined {
-    const index = this.items.findIndex((item) => item.id === id);
+  removeItem(nameOrControl: string | TChildControl): TChildControl | undefined {
+    const name = typeof nameOrControl === "string" ? nameOrControl : nameOrControl.name;
+    const index = this.controlList.findIndex((control) => control.name === name);
 
     if (index === -1) {
       return undefined;
     }
 
-    const [removedItem] = this.items.splice(index, 1);
+    const [removedControl] = this.controlList.splice(index, 1);
 
-    if (removedItem) {
-      this.controlSet.delete(removedItem.control);
-      this.listSubject.next(this.items);
+    if (removedControl) {
+      this.listSubject.next(this.controlList as TChildControl[]);
 
       this.isTouched = true;
       this.notifyValueObservers();
       this.validate();
 
-      return removedItem;
+      return removedControl as TChildControl;
     }
 
     return undefined;
   }
 
-  removeItems(shouldRemove: (item: TListItem) => boolean): TListItem[] {
-    const removedItems: TListItem[] = [];
+  removeItems(shouldRemove: (control: TChildControl) => boolean): TChildControl[] {
+    const removedControls: TChildControl[] = [];
 
-    this.items = this.items.filter((item) => {
-      const removed = shouldRemove(item);
+    this.controlList = this.controlList.filter((control) => {
+      const removed = shouldRemove(control as TChildControl);
 
       if (removed) {
-        removedItems.push(item);
+        removedControls.push(control as TChildControl);
       }
       return !removed;
     });
 
-    return removedItems;
+    return removedControls;
   }
 
   clearItems(): void {
-    this.items = [];
+    this.controlList = [];
     this.nextId = 1;
-    this.listSubject.next(this.items);
-    // this.notifyValueObservers();
-    // this.validate();
+    this.listSubject.next(this.controlList as TChildControl[]);
+
+    this.isTouched = true;
+    this.notifyValueObservers();
+    this.notifyStateObservers();
   }
 
   // ===== DELEGATE to child controls =====

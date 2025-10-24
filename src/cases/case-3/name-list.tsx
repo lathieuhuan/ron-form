@@ -6,18 +6,18 @@ import { Item } from "./item";
 export function NameList() {
   return (
     <FormList<ItemControl<string>> name={["names"]}>
-      {(items, { removeItem, insertItem }) => (
+      {(controls, { removeItem, insertItem }) => (
         <div className="flex flex-col gap-4">
           <p>Names</p>
 
           <div className="space-y-2 empty:hidden">
-            {items.map(({ id, control }, index) => {
+            {controls.map((control, index) => {
               return (
                 <Item
-                  key={id}
+                  key={control.name}
                   label={`Name ${index + 1}`}
                   control={control}
-                  onRemove={() => removeItem(id)}
+                  onRemove={() => removeItem(control)}
                 />
               );
             })}
