@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { BaseControl, ControlState, NamePath } from "@lib/core";
+import { BaseControl, NamePath } from "@lib/core";
 import { useControl } from "./useControl";
 
-export function useFieldState(name: NamePath, control?: BaseControl<unknown>) {
-  const _control = useControl(name, control) as BaseControl<unknown>;
-  const [state, setState] = useState<ControlState>(_control.getState());
+export function useFieldState(name: NamePath, control?: BaseControl<any>) {
+  const _control = useControl(name, control);
+  const [state, setState] = useState(_control.getState());
 
   useEffect(() => {
     return _control.subscribeState(setState);

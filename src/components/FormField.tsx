@@ -29,8 +29,8 @@ export function FormField<TValue = unknown>({
   children,
 }: FormFieldProps<TValue>) {
   const id = `field${useId()}`;
-  const _control = useControl(name, control) as BaseControl<TValue>;
-  const [state, setState] = useState<ControlState>(_control.getState());
+  const _control = useControl<BaseControl<TValue>>(name, control);
+  const [state, setState] = useState(_control.getState());
 
   useEffect(() => {
     return _control.subscribeState(setState);

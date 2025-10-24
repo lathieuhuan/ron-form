@@ -1,12 +1,10 @@
 import { useContext } from "react";
 
-import { BaseControl, NamePath } from "@lib/core";
+import { BaseControl, NamePath, ParentControl } from "@lib/core";
 import { FormContext } from "../contexts/form-context";
 
-function getControl(parent: BaseControl<any>, name: NamePath): BaseControl {
-  return "getControl" in parent && typeof parent.getControl === "function" && name.length
-    ? parent.getControl(name)
-    : parent;
+function getControl(parent: BaseControl<any>, name: NamePath): BaseControl<any> | undefined {
+  return parent instanceof ParentControl && name.length ? parent.getControl(name) : parent;
 }
 
 /**
@@ -15,7 +13,16 @@ function getControl(parent: BaseControl<any>, name: NamePath): BaseControl {
  *   - If name is empty, returns the provided control.
  * - If control is not provided, the nearest control in the context will be used as control, then follow the above rules.
  */
-export function useControl<TValue = unknown>(name: NamePath, control?: BaseControl<TValue>) {
+export function useControl<TControl extends BaseControl<any> = BaseControl>(
+  name: NamePath,
+  control?: BaseControl<any>,
+): TControl {
   const higherControl = useContext(FormContext);
-  return getControl(control ?? higherControl, name);
+  const _control = getControl(control ?? higherControl, name);
+
+  if (!_control) {
+    throw new Error(`Control not found for name: ${name.join(".")}`);
+  }
+
+  return _control as TControl;
 }

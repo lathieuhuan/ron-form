@@ -23,7 +23,7 @@ export function FormList<
   TChildControl extends BaseControl<any> = BaseControl<any>,
   TValue extends ListItemValue<TChildControl> = ListItemValue<TChildControl>,
 >({ name = [], control: controlProp, children }: FormListProps<TValue, TChildControl>) {
-  const control = useControl(name, controlProp) as ListControl<TChildControl, TValue>;
+  const control = useControl<ListControl<TChildControl, TValue>>(name, controlProp);
   const [items, setItems] = useState(control.getItems());
 
   if (!(control instanceof ListControl)) {

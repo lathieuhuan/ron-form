@@ -23,7 +23,7 @@ export function FormItem<TValue = unknown>({
   changeEventProp = "onChange",
 }: FormItemProps<TValue>) {
   const { props } = children;
-  const control = useControl(name, controlProp) as BaseControl<TValue>;
+  const control = useControl<BaseControl<TValue>>(name, controlProp);
   const [value, setValue] = useState<TValue | undefined>(control.getValue());
 
   useEffect(() => {
