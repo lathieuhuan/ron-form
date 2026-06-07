@@ -1,32 +1,12 @@
-import { useEffect, useRef } from "react";
+import { AnyObject } from "@lib/core/types";
+import { FormControl } from "@lib/core/FormControl";
+import { FormContext } from "../contexts/FormContext";
 
-import { FormControl, BaseControl, GroupValue } from "@lib/core";
-import { FormContext } from "../contexts/form-context";
-
-export type FormProps<
-  TControls extends Record<string, BaseControl<any>>,
-  TValue extends GroupValue<TControls>,
-> = {
-  className?: string;
-  form: FormControl<TControls, TValue>;
+export type FormProps<TValue extends AnyObject> = {
+  form: FormControl<TValue>;
   children: React.ReactNode;
 };
 
-export function Form<
-  TControls extends Record<string, BaseControl<any>>,
-  TValue extends GroupValue<TControls>,
->({ form, children, className }: FormProps<TControls, TValue>) {
-  const formRef = useRef<HTMLFormElement>(null);
-
-  useEffect(() => {
-    return form.connectForm(formRef.current);
-  }, [form]);
-
-  return (
-    <FormContext.Provider value={form as BaseControl<unknown>}>
-      <form ref={formRef} className={className}>
-        {children}
-      </form>
-    </FormContext.Provider>
-  );
+export function Form<TValue extends AnyObject>({ form, children }: FormProps<TValue>) {
+  return <FormContext.Provider value={form}>{children}</FormContext.Provider>;
 }

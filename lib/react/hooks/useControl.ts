@@ -1,7 +1,7 @@
 import { useContext } from "react";
 
 import { BaseControl, NamePath, ParentControl } from "@lib/core";
-import { FormContext } from "../contexts/form-context";
+import { FormContext } from "../contexts/FormContext";
 
 function getControl(parent: BaseControl<any>, name: NamePath): BaseControl<any> | undefined {
   return parent instanceof ParentControl && name.length ? parent.getControl(name) : parent;

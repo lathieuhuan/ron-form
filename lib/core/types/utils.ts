@@ -1,3 +1,5 @@
+export type AnyObject = Record<string, unknown>;
+
 export type Noop = () => void;
 
 export type Writable<T> = {

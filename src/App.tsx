@@ -1,6 +1,6 @@
 import { Outlet } from "./components/Outlet";
 import { RouterProvider } from "./components/RouterProvider";
-import { Sidebar } from "./components/Sidebar";
+import { Sidebar } from "./features/layout/Sidebar";
 import { routes } from "./routes";
 
 function App() {
@@ -8,7 +8,9 @@ function App() {
     <div className="app">
       <RouterProvider routes={routes}>
         <Sidebar items={routes} />
-        <Outlet />
+        <div className="grow">
+          <Outlet />
+        </div>
       </RouterProvider>
     </div>
   );
