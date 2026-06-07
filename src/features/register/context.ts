@@ -1,7 +1,10 @@
 import { createContexts } from "@lib/react";
 
 export interface RegisterFormValues {
-  username: string;
+  email: string;
+  username?: string;
+  profession?: string;
+  age: number | null;
   password: string;
   confirmPassword: string;
 }

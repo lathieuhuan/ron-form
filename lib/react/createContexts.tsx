@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 import { DeepKeys, DeepValue } from "@lib/core";
-import { Field, FormControl } from "@lib/core/FormControl";
+import { Field, FormControl, FormError } from "@lib/core/FormControl";
 import { useForm } from "./hooks";
 
 export function createContexts<TFormValues>() {
@@ -11,25 +11,36 @@ export function createContexts<TFormValues>() {
     return <FormContext.Provider value={props.form}>{props.children}</FormContext.Provider>;
   }
 
-  type FieldProps<TKey extends DeepKeys<TFormValues>> = {
+  interface FieldChildrenProps<TFormValues, TKey extends DeepKeys<TFormValues>> extends Field<
+    TFormValues,
+    TKey
+  > {
+    id: string;
     name: TKey;
-    children?: (props: {
-      name: TKey;
-      value: DeepValue<TFormValues, TKey>;
-      onChange: (value: DeepValue<TFormValues, TKey>) => void;
-    }) => React.ReactElement;
-  };
+    errors: FormError<TKey>[];
+    onChange: (value: DeepValue<TFormValues, TKey>) => void;
+  }
+
+  interface FieldProps<TKey extends DeepKeys<TFormValues>> {
+    name: TKey;
+    children?: (props: FieldChildrenProps<TFormValues, TKey>) => React.ReactElement;
+  }
 
   function Field<TKey extends DeepKeys<TFormValues>>({ name, children }: FieldProps<TKey>) {
     const form = useContext(FormContext);
-    const [field, setField] = useState<Field<DeepValue<TFormValues, TKey>>>(() => ({
-      value: form.getFieldValue(name),
-      meta: form.getFieldMeta(name),
-    }));
+    const [state, setState] = useState<Field<TFormValues, TKey>>(() => {
+      const errorMap = form.getFieldErrorMap(name);
+
+      return {
+        value: form.getFieldValue(name),
+        meta: form.getFieldMeta(name),
+        errorMap,
+      };
+    });
 
     useEffect(() => {
       const unsubscribe = form.subscribe(name)((newField) => {
-        setField(newField);
+        setState(newField);
       });
 
       return () => {
@@ -41,13 +52,28 @@ export function createContexts<TFormValues>() {
       form.setFieldValue(name, value);
     };
 
-    return children == null
-      ? null
-      : children({
-          name,
-          value: field.value,
-          onChange,
-        });
+    if (children == null) {
+      return null;
+    }
+
+    return children({
+      id: name,
+      name,
+      value: state.value,
+      meta: state.meta,
+      errorMap: state.errorMap,
+      get errors() {
+        const { errorMap } = state;
+
+        return [
+          ...errorMap.change,
+          ...errorMap.blur,
+          ...errorMap.changeAsync,
+          ...errorMap.blurAsync,
+        ];
+      },
+      onChange,
+    });
   }
 
   function useFormInstance() {

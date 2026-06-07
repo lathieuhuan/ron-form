@@ -184,6 +184,7 @@ function SelectScrollDownButton({
 
 type SelectProps = React.ComponentProps<typeof SelectContainer> &
   AriaAttributes & {
+    id?: string;
     options?: {
       label: string;
       value: string;
@@ -191,10 +192,15 @@ type SelectProps = React.ComponentProps<typeof SelectContainer> &
     isLoading?: boolean;
   };
 
-function Select({ isLoading, ...props }: SelectProps) {
+function Select({ id, isLoading, ...props }: SelectProps) {
   return (
     <SelectContainer {...props}>
-      <SelectTrigger className="w-full" aria-invalid={props["aria-invalid"]} isLoading={isLoading}>
+      <SelectTrigger
+        id={id}
+        className="w-full"
+        aria-invalid={props["aria-invalid"]}
+        isLoading={isLoading}
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
