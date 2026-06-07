@@ -1,21 +1,45 @@
-import type { BaseControl } from "../controls/BaseControl";
+import type { DeepKeys, DeepValue } from "./key-value";
 
-export type ValidationErrors = {
-  [key: string]: string;
+export type ValidationCause = "change" | "blur";
+
+export type ErrorCauseType = ValidationCause | `${ValidationCause}Async`;
+
+// ===== ERRORS =====
+
+export interface ErrorMeta {}
+
+export interface FieldError<TKey> {
+  path: TKey;
+  type: ErrorCauseType;
+  message: string;
+  meta: ErrorMeta;
+}
+
+export type FieldErrors<TKey> = {
+  [type in ErrorCauseType]?: FieldError<TKey>[];
 };
 
-export type ValidatorFn<TValue = unknown> = (
-  control: BaseControl<TValue>,
-) => ValidationErrors | null;
+// ===== VALIDATORS =====
 
-export type AsyncValidatorFn<TValue = unknown> = (
-  control: BaseControl<TValue>,
-) => Promise<ValidationErrors | null>;
+type Validator<TValues, TDeepKey extends DeepKeys<TValues>> = (args: {
+  value: DeepValue<TValues, TDeepKey>;
+}) => string | string[] | null | undefined;
 
-export type ComposableValidators<TValue = unknown> =
-  | ValidatorFn<TValue>
-  | (ValidatorFn<TValue> | null | undefined)[];
+export type FormValidators<TFormValues> = {
+  [K in DeepKeys<TFormValues>]?: Validator<TFormValues, K>;
+};
 
-export type ComposableAsyncValidators<TValue = unknown> =
-  | AsyncValidatorFn<TValue>
-  | (AsyncValidatorFn<TValue> | null | undefined)[];
+export type AsyncValidator<TValues, TDeepKey> = (args: {
+  value: DeepValue<TValues, TDeepKey>;
+}) => Promise<string | string[] | null | undefined>;
+
+export type FormAsyncValidators<TFormValues> = {
+  [K in DeepKeys<TFormValues>]?: AsyncValidator<TFormValues, K>;
+};
+
+export type ValidatorMap<TFormValues> = Record<ValidationCause, FormValidators<TFormValues>>;
+
+export type AsyncValidatorMap<TFormValues> = Record<
+  ValidationCause,
+  FormAsyncValidators<TFormValues>
+>;
