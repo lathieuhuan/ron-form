@@ -1,7 +1,6 @@
-import { Outlet } from "./components/Outlet";
-import { RouterProvider } from "./components/RouterProvider";
-import { Sidebar } from "./features/layout/Sidebar";
-import { routes } from "./routes";
+import { Sidebar } from "@src/features/layout/Sidebar";
+import { Outlet, RouterProvider } from "@src/lib/router";
+import { routes } from "@src/routes";
 
 function App() {
   return (

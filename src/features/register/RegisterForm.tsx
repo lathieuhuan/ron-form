@@ -1,7 +1,8 @@
+import { type FieldError } from "@lib/core";
 import { Field, Form, useForm } from "./context";
 
 import { Button } from "@src/components/Button";
-import { FieldLabel, FormError } from "@src/components/Form";
+import { FieldLabel, FieldError as Error } from "@src/components/Field";
 import { Input } from "@src/components/Input";
 import { InputNumber } from "@src/components/InputNumber";
 import { Select } from "@src/components/Select";
@@ -47,9 +48,13 @@ export function RegisterForm() {
     },
   });
 
+  const formatErrors = (errors: FieldError<string>[]) => {
+    return errors.map((error) => error.message).join(", ");
+  };
+
   const handleLog = () => {
     console.log(form.values);
-    console.log(form['fieldMetaMap']);
+    console.log(form["fieldMetaMap"]);
   };
 
   return (
@@ -63,7 +68,8 @@ export function RegisterForm() {
               <div>
                 <FieldLabel htmlFor={field.id}>Email</FieldLabel>
                 <Input id={field.id} value={field.value} onChange={field.onChange} />
-                <FormError>{field.errors.map((error) => error.message).join(", ")}</FormError>
+                {field.meta.isValidating && <div>Validating...</div>}
+                <Error>{formatErrors(field.errors)}</Error>
               </div>
             )}
           </Field>
@@ -72,7 +78,7 @@ export function RegisterForm() {
               <div>
                 <FieldLabel htmlFor={field.id}>Username</FieldLabel>
                 <Input id={field.id} value={field.value} onChange={field.onChange} />
-                <FormError>{field.errors.map((error) => error.message).join(", ")}</FormError>
+                <Error>{formatErrors(field.errors)}</Error>
               </div>
             )}
           </Field>
@@ -82,7 +88,7 @@ export function RegisterForm() {
               <div>
                 <FieldLabel htmlFor={field.id}>Profession</FieldLabel>
                 <Select id={field.id} value={field.value} onValueChange={field.onChange} />
-                <FormError>{field.errors.map((error) => error.message).join(", ")}</FormError>
+                <Error>{formatErrors(field.errors)}</Error>
               </div>
             )}
           </Field>
@@ -91,7 +97,7 @@ export function RegisterForm() {
               <div>
                 <FieldLabel htmlFor={field.id}>Age</FieldLabel>
                 <InputNumber id={field.id} value={field.value} onChange={field.onChange} />
-                <FormError>{field.errors.map((error) => error.message).join(", ")}</FormError>
+                <Error>{formatErrors(field.errors)}</Error>
               </div>
             )}
           </Field>
@@ -101,6 +107,7 @@ export function RegisterForm() {
               <div>
                 <FieldLabel htmlFor={field.id}>Password</FieldLabel>
                 <Input id={field.id} value={field.value} onChange={field.onChange} />
+                <Error>{formatErrors(field.errors)}</Error>
               </div>
             )}
           </Field>
@@ -110,6 +117,7 @@ export function RegisterForm() {
               <div>
                 <FieldLabel htmlFor={field.id}>Confirm Password</FieldLabel>
                 <Input id={field.id} value={field.value} onChange={field.onChange} />
+                <Error>{formatErrors(field.errors)}</Error>
               </div>
             )}
           </Field>

@@ -1,4 +1,4 @@
-import { useActivePath } from "@src/hooks/useActivePath";
+import { useLocation } from "@src/lib/router";
 import { Route } from "@src/types";
 
 type SidebarProps = {
@@ -6,7 +6,7 @@ type SidebarProps = {
 };
 
 export function Sidebar({ items }: SidebarProps) {
-  const activePath = useActivePath();
+  const location = useLocation();
 
   return (
     <div className="w-40 p-4 flex flex-col gap-1 bg-black shrink-0">
@@ -14,7 +14,7 @@ export function Sidebar({ items }: SidebarProps) {
         <a
           href={item.path}
           key={item.path}
-          data-active={activePath === item.path}
+          data-active={item.path === location.pathname}
           className="p-2 rounded font-semibold hover:bg-background data-[active=true]:text-primary"
           onClick={(e) => {
             e.preventDefault();

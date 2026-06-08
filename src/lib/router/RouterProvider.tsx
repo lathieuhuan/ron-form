@@ -1,6 +1,7 @@
-import { RouterContext } from "@src/contexts/RouterContext";
-import { Route } from "@src/types";
 import { useEffect, useState } from "react";
+
+import { Route } from "@src/types";
+import { RouterContext } from "./context";
 import { NotFound } from "./NotFound";
 
 type RouterProviderProps = {

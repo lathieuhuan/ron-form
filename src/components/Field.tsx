@@ -21,6 +21,6 @@ export function FieldLabel({ className, htmlFor, children, ...rest }: FieldLabel
 
 type FormErrorProps = HTMLAttributes<HTMLDivElement>;
 
-export function FormError({ className, ...rest }: FormErrorProps) {
+export function FieldError({ className, ...rest }: FormErrorProps) {
   return <div className={cn("mt-1 text-sm text-destructive", className)} {...rest} />;
 }

@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { RouterContext } from "@src/contexts/RouterContext";
+import { RouterContext } from "./context";
 
 export function Outlet() {
   const { Component } = useContext(RouterContext);

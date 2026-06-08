@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { DeepKeys, DeepValue, Field, FormControl, FieldError } from "@lib/core";
 import { useForm } from "./hooks";
 
-interface FieldChildrenProps<TFormValues, TKey extends DeepKeys<TFormValues>> extends Field<
+export interface FieldChildrenProps<TFormValues, TKey extends DeepKeys<TFormValues>> extends Field<
   TFormValues,
   TKey
 > {
@@ -13,7 +13,7 @@ interface FieldChildrenProps<TFormValues, TKey extends DeepKeys<TFormValues>> ex
   onChange: (value: DeepValue<TFormValues, TKey>) => void;
 }
 
-interface FieldProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
+export interface FieldProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
   name: TKey;
   children?: (props: FieldChildrenProps<TFormValues, TKey>) => React.ReactElement;
 }
