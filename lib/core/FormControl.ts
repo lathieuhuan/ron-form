@@ -25,7 +25,13 @@ type FieldSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
   Subject<Field<TFormValues, TKey>>
 >;
 
-type TimeoutIDs<TKey> = Map<TKey, NodeJS.Timeout>;
+type TimeoutIDMapByCause<TFormValues> = {
+  [key in ValidationCause]: Map<DeepKeys<TFormValues>, NodeJS.Timeout>;
+};
+
+type AbortControllerMapByCause<TFormValues> = {
+  [key in ValidationCause]: Map<DeepKeys<TFormValues>, AbortController>;
+};
 
 export interface FormControlOptions<TFormValues> {
   defaultValues?: TFormValues;
@@ -46,6 +52,15 @@ export class FormControl<TFormValues> {
 
   private validatorMap: ValidatorMap<TFormValues>;
   private asyncValidatorMap: AsyncValidatorMap<TFormValues>;
+
+  private timeoutIdMap: TimeoutIDMapByCause<TFormValues> = {
+    change: new Map(),
+    blur: new Map(),
+  };
+  private abortCtrlMap: AbortControllerMapByCause<TFormValues> = {
+    change: new Map(),
+    blur: new Map(),
+  };
 
   private fieldSubjects: FieldSubjects<TFormValues, DeepKeys<TFormValues>> = new Map();
 
@@ -107,6 +122,7 @@ export class FormControl<TFormValues> {
     messages: string | string[] | null | undefined,
   ) {
     const errors = typeof messages === "string" ? [messages] : messages == null ? [] : messages;
+
     return errors.map<FieldError<TField>>((error) => ({
       path: field,
       type,
@@ -116,15 +132,44 @@ export class FormControl<TFormValues> {
   }
 
   private async validateAsync<TField extends DeepKeys<TFormValues>>(
-    cause: ValidationCause,
     field: TField,
+    cause: ValidationCause,
+    validator: NonNullable<FormAsyncValidators<TFormValues>[TField]>,
+    abortCtrl: AbortController,
   ) {
+    if (abortCtrl.signal.aborted) return;
+
     const value = this.getFieldValue(field);
-    const errors = await this.asyncValidatorMap[cause][field]?.({ value });
+    let errors: FieldError<TField>[] | undefined;
 
-    const error = this.transformErrors(field, `${cause}Async`, errors);
+    try {
+      const rawErrors = await validator({ value });
 
+      if (abortCtrl.signal.aborted) return;
 
+      errors = this.transformErrors(field, `${cause}Async`, rawErrors);
+    } catch (e) {
+      // TODO handle error
+      console.error(e);
+    }
+
+    const newErrorMap: FieldErrors<TField> = {
+      ...this.getFieldErrorMap(field),
+      changeAsync: errors,
+    };
+    const newMeta: FieldMeta = {
+      ...this.getFieldMeta(field),
+      isValidating: false,
+    };
+
+    this.fieldErrorMap.set(field, newErrorMap);
+    this.fieldMetaMap.set(field, newMeta);
+
+    this.fieldSubjects.get(field)?.next({
+      value,
+      meta: newMeta,
+      errorMap: newErrorMap,
+    });
   }
 
   setFieldValue<TField extends DeepKeys<TFormValues>>(
@@ -139,51 +184,80 @@ export class FormControl<TFormValues> {
     const sucess = set(this._values as AnyObject, field, value);
 
     if (!sucess) {
+      console.error(`Field ${field} not found in values`);
       return false;
     }
 
-    const changeAsyncValidator = this.asyncValidatorMap.change[field];
+    // ===== CLEANUP =====
 
-    // ===== ERRORS =====
+    this.abortCtrlMap.change.get(field)?.abort();
 
-    const errors = this.validatorMap.change[field]?.({ value });
-    const newErrorMap: FieldErrors<TField> = {
-      ...this.getFieldErrorMap(field),
-      change: this.transformErrors(field, "change", errors),
-    };
+    let timeoutId = this.timeoutIdMap.change.get(field);
 
-    this.fieldErrorMap.set(field, newErrorMap);
-
-    if (changeAsyncValidator != null) {
-      // clearTimeout(this.changeTimeoutIDs.get(field));
-
-      // const timeout = setTimeout(() => {
-      //   const errors = changeAsyncValidator({ value });
-      //   const newErrorMap: FieldErrors<TField> = {
-      //     ...this.getFieldErrorMap(field),
-      //     changeAsync: this.transformErrors(field, "changeAsync", errors),
-      //   };
-      //   this.fieldErrorMap.set(field, newErrorMap);
-      // }, this.asyncDebounceMs);
-
-      // this.changeTimeoutIDs.set(field, timeout);
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
     }
 
     // ===== META =====
 
     const { dontTouch = false, dontDirty = false, dontValidate = false } = options;
+
     const meta = this.getFieldMeta(field);
     const newMeta: FieldMeta = {
       isTouched: dontTouch ? meta.isTouched : true,
       isDirty: dontDirty ? meta.isDirty : true,
-      // isValidating: changeAsyncValidator !== undefined,
+      isValidating: false,
     };
 
-    this.fieldMetaMap.set(field, newMeta);
-
     if (dontValidate) {
+      this.fieldMetaMap.set(field, newMeta);
+
+      this.fieldSubjects.get(field)?.next({
+        value,
+        meta: newMeta,
+        errorMap: this.getFieldErrorMap(field),
+      });
       return true;
     }
+
+    // ===== ERRORS =====
+
+    const errors = this.transformErrors(
+      field,
+      "change",
+      this.validatorMap.change[field]?.({
+        value,
+      }),
+    );
+
+    const newErrorMap: FieldErrors<TField> = {
+      ...this.getFieldErrorMap(field),
+      change: errors,
+    };
+
+    this.fieldErrorMap.set(field, newErrorMap);
+
+    // ===== ASYNC VALIDATE =====
+
+    const changeAsyncValidator = this.asyncValidatorMap.change[field];
+
+    // TODO add an option to validate async even if there are sync errors
+    if (errors.length === 0 && changeAsyncValidator != null) {
+      const abortCtrl = new AbortController();
+
+      newMeta.isValidating = true;
+      this.abortCtrlMap.change.set(field, abortCtrl);
+
+      timeoutId = setTimeout(() => {
+        this.validateAsync(field, "change", changeAsyncValidator, abortCtrl);
+      }, this.asyncDebounceMs);
+
+      this.timeoutIdMap.change.set(field, timeoutId);
+    }
+
+    // ===== CONCLUSION =====
+
+    this.fieldMetaMap.set(field, newMeta);
 
     this.fieldSubjects.get(field)?.next({
       value,

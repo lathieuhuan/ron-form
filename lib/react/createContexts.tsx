@@ -66,13 +66,9 @@ export function createContexts<TFormValues>() {
       errorMap: state.errorMap,
       get errors() {
         const { errorMap } = state;
+        const { change = [], blur = [], changeAsync = [], blurAsync = [] } = errorMap;
 
-        return [
-          ...(errorMap.change ?? []),
-          ...(errorMap.blur ?? []),
-          ...(errorMap.changeAsync ?? []),
-          ...(errorMap.blurAsync ?? []),
-        ];
+        return change.concat(blur, changeAsync, blurAsync);
       },
       onChange,
     });

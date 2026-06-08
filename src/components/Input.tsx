@@ -19,6 +19,7 @@ export function Input({ className, value, defaultValue, onChange, ...props }: In
       )}
       value={value ?? undefined}
       defaultValue={value == null && defaultValue != null ? defaultValue : undefined}
+      autoComplete="off"
       onChange={(e) => {
         onChange?.(e.target.value, e);
       }}

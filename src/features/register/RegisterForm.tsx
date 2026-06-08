@@ -49,11 +49,11 @@ export function RegisterForm() {
 
   const handleLog = () => {
     console.log(form.values);
-    console.log(form.meta);
+    console.log(form['fieldMetaMap']);
   };
 
   return (
-    <div className="max-w-72 p-4 space-y-4">
+    <div className="max-w-120 p-4 space-y-4">
       <h1 className="text-2xl font-bold">Register Form</h1>
 
       <Form form={form}>
@@ -80,7 +80,7 @@ export function RegisterForm() {
           <Field name="profession">
             {(field) => (
               <div>
-                <FieldLabel htmlFor={field.id}>Age</FieldLabel>
+                <FieldLabel htmlFor={field.id}>Profession</FieldLabel>
                 <Select id={field.id} value={field.value} onValueChange={field.onChange} />
                 <FormError>{field.errors.map((error) => error.message).join(", ")}</FormError>
               </div>

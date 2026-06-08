@@ -13,7 +13,7 @@ export function FieldLabel({ className, htmlFor, children, ...rest }: FieldLabel
   }
 
   return (
-    <label className={cn("mb-1 text-sm inline-block", className)} htmlFor={htmlFor} {...rest}>
+    <label className={cn("mb-1.5 block text-sm", className)} htmlFor={htmlFor} {...rest}>
       {children}
     </label>
   );
@@ -22,5 +22,5 @@ export function FieldLabel({ className, htmlFor, children, ...rest }: FieldLabel
 type FormErrorProps = HTMLAttributes<HTMLDivElement>;
 
 export function FormError({ className, ...rest }: FormErrorProps) {
-  return <div className={cn("text-sm text-destructive", className)} {...rest} />;
+  return <div className={cn("mt-1 text-sm text-destructive", className)} {...rest} />;
 }
