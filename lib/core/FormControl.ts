@@ -1,11 +1,10 @@
 import type {
   AnyObject,
-  AsyncValidator,
   AsyncValidatorMap,
   DeepKeys,
   DeepValue,
   ErrorCauseType,
-  Field,
+  FieldApi,
   FieldError,
   FieldErrors,
   FieldMeta,
@@ -19,10 +18,11 @@ import { clone } from "./utils/clone";
 import { createSubject, Subject } from "./utils/createSubject";
 import { get } from "./utils/get";
 import { set } from "./utils/set";
+import { transformErrors } from "./utils/transformErrors";
 
 type FieldSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
   TKey,
-  Subject<Field<TFormValues, TKey>>
+  Subject<FieldApi<TFormValues, TKey>>
 >;
 
 type TimeoutIDMapByCause<TFormValues> = {
@@ -31,6 +31,10 @@ type TimeoutIDMapByCause<TFormValues> = {
 
 type AbortControllerMapByCause<TFormValues> = {
   [key in ValidationCause]: Map<DeepKeys<TFormValues>, AbortController>;
+};
+
+type ActiveAsyncValidatorMap<TFormValues> = {
+  [key in DeepKeys<TFormValues>]?: ValidationCause[];
 };
 
 export interface FormControlOptions<TFormValues> {
@@ -61,6 +65,7 @@ export class FormControl<TFormValues> {
     change: new Map(),
     blur: new Map(),
   };
+  private activeAsyncValidatorMap: ActiveAsyncValidatorMap<TFormValues> = {};
 
   private fieldSubjects: FieldSubjects<TFormValues, DeepKeys<TFormValues>> = new Map();
 
@@ -113,22 +118,25 @@ export class FormControl<TFormValues> {
 
       this.fieldSubjects.set(key, subject);
     }
-    return (subject as Subject<Field<TFormValues, TField>>).subscribe;
+
+    return (subject as Subject<FieldApi<TFormValues, TField>>).subscribe;
   }
 
-  private transformErrors<TField extends DeepKeys<TFormValues>>(
+  private nextFieldState<TField extends DeepKeys<TFormValues>>(
     field: TField,
-    type: ErrorCauseType,
-    messages: string | string[] | null | undefined,
+    newState: Partial<FieldApi<TFormValues, TField>>,
   ) {
-    const errors = typeof messages === "string" ? [messages] : messages == null ? [] : messages;
+    const {
+      value = this.getFieldValue(field),
+      meta = this.getFieldMeta(field),
+      errorMap = this.getFieldErrorMap(field),
+    } = newState;
 
-    return errors.map<FieldError<TField>>((error) => ({
-      path: field,
-      type,
-      message: error,
-      meta: {},
-    }));
+    this.fieldSubjects.get(field)?.next({
+      value,
+      meta,
+      errorMap,
+    });
   }
 
   private async validateAsync<TField extends DeepKeys<TFormValues>>(
@@ -143,11 +151,29 @@ export class FormControl<TFormValues> {
     let errors: FieldError<TField>[] | undefined;
 
     try {
+      const activeValidators = this.activeAsyncValidatorMap[field] || [];
+
+      activeValidators.push(cause);
+      this.activeAsyncValidatorMap[field] = activeValidators;
+
+      const currentMeta = this.getFieldMeta(field);
+
+      if (!currentMeta.isValidating) {
+        const newMeta: FieldMeta = {
+          ...currentMeta,
+          isValidating: true,
+        };
+
+        this.fieldMetaMap.set(field, newMeta);
+
+        this.nextFieldState(field, { meta: newMeta });
+      }
+
       const rawErrors = await validator({ value });
 
       if (abortCtrl.signal.aborted) return;
 
-      errors = this.transformErrors(field, `${cause}Async`, rawErrors);
+      errors = transformErrors(field, `${cause}Async`, rawErrors);
     } catch (e) {
       // TODO handle error
       console.error(e);
@@ -165,8 +191,7 @@ export class FormControl<TFormValues> {
     this.fieldErrorMap.set(field, newErrorMap);
     this.fieldMetaMap.set(field, newMeta);
 
-    this.fieldSubjects.get(field)?.next({
-      value,
+    this.nextFieldState(field, {
       meta: newMeta,
       errorMap: newErrorMap,
     });
@@ -222,7 +247,7 @@ export class FormControl<TFormValues> {
 
     // ===== ERRORS =====
 
-    const errors = this.transformErrors(
+    const errors = transformErrors(
       field,
       "change",
       this.validatorMap.change[field]?.({
@@ -245,7 +270,6 @@ export class FormControl<TFormValues> {
     if (errors.length === 0 && changeAsyncValidator != null) {
       const abortCtrl = new AbortController();
 
-      newMeta.isValidating = true;
       this.abortCtrlMap.change.set(field, abortCtrl);
 
       timeoutId = setTimeout(() => {

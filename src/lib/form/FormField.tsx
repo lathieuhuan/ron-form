@@ -1,10 +1,10 @@
-import { FieldChildrenProps } from "@lib/react";
+import { ReactFieldApi } from "@lib/react";
 import { FieldError, FieldLabel } from "@src/components/Field";
 import { cloneElement } from "react";
 
 type FormFieldProps = {
   label: string;
-  field: FieldChildrenProps<object, string>;
+  field: ReactFieldApi<object, string>;
   children: React.ReactElement;
 };
 
@@ -16,7 +16,7 @@ export function FormField({ label, field, children }: FormFieldProps) {
         id: field.id,
         name: field.name,
         value: field.value,
-        onChange: field.onChange,
+        onChange: field.handleChange,
       })}
       <FieldError>{field.errors.map((error) => error.message).join(", ")}</FieldError>
     </div>

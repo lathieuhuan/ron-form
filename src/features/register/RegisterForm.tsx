@@ -67,7 +67,7 @@ export function RegisterForm() {
             {(field) => (
               <div>
                 <FieldLabel htmlFor={field.id}>Email</FieldLabel>
-                <Input id={field.id} value={field.value} onChange={field.onChange} />
+                <Input id={field.id} value={field.value} onChange={field.handleChange} />
                 {field.meta.isValidating && <div>Validating...</div>}
                 <Error>{formatErrors(field.errors)}</Error>
               </div>
@@ -77,7 +77,7 @@ export function RegisterForm() {
             {(field) => (
               <div>
                 <FieldLabel htmlFor={field.id}>Username</FieldLabel>
-                <Input id={field.id} value={field.value} onChange={field.onChange} />
+                <Input id={field.id} value={field.value} onChange={field.handleChange} />
                 <Error>{formatErrors(field.errors)}</Error>
               </div>
             )}
@@ -87,7 +87,7 @@ export function RegisterForm() {
             {(field) => (
               <div>
                 <FieldLabel htmlFor={field.id}>Profession</FieldLabel>
-                <Select id={field.id} value={field.value} onValueChange={field.onChange} />
+                <Select id={field.id} value={field.value} onValueChange={field.handleChange} />
                 <Error>{formatErrors(field.errors)}</Error>
               </div>
             )}
@@ -96,7 +96,7 @@ export function RegisterForm() {
             {(field) => (
               <div>
                 <FieldLabel htmlFor={field.id}>Age</FieldLabel>
-                <InputNumber id={field.id} value={field.value} onChange={field.onChange} />
+                <InputNumber id={field.id} value={field.value} onChange={field.handleChange} />
                 <Error>{formatErrors(field.errors)}</Error>
               </div>
             )}
@@ -106,7 +106,7 @@ export function RegisterForm() {
             {(field) => (
               <div>
                 <FieldLabel htmlFor={field.id}>Password</FieldLabel>
-                <Input id={field.id} value={field.value} onChange={field.onChange} />
+                <Input id={field.id} value={field.value} onChange={field.handleChange} />
                 <Error>{formatErrors(field.errors)}</Error>
               </div>
             )}
@@ -116,7 +116,7 @@ export function RegisterForm() {
             {(field) => (
               <div>
                 <FieldLabel htmlFor={field.id}>Confirm Password</FieldLabel>
-                <Input id={field.id} value={field.value} onChange={field.onChange} />
+                <Input id={field.id} value={field.value} onChange={field.handleChange} />
                 <Error>{formatErrors(field.errors)}</Error>
               </div>
             )}

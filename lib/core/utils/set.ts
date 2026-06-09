@@ -1,29 +1,44 @@
-import type { AnyObject } from "../types/utils";
 import { isObject } from "./isObject";
 
 const indexRegex = /^\d+$/;
 
-export function set<T extends AnyObject>(obj: T, path: string, value: any) {
-  const segments = path.split(".");
-  let current: any = obj;
+export function set(obj: Record<string, unknown>, path: string, value: unknown) {
+  if (obj == null) {
+    return false;
+  }
 
-  for (let i = 0; i < segments.length; i++) {
-    const segment = segments[i];
+  try {
+    const keys = path.split(".");
+    let parent: Record<string, unknown> = obj;
+    let current: unknown = obj;
 
-    if (current == null) {
-      current = indexRegex.test(segment) ? [] : {};
-    }
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i];
 
-    if (i === segments.length - 1) {
+      if (current == null) {
+        const prevKey = keys[i - 1];
+
+        parent[prevKey] = indexRegex.test(key) ? [] : {};
+        current = parent[prevKey];
+      }
+
       if (!isObject(current)) {
         return false;
       }
 
-      current[segment] = value;
-    } else {
-      current = current[segment];
-    }
-  }
+      if (i === keys.length - 1) {
+        current[key] = value;
+      } else {
+        parent = current;
+        current = current[key];
+      }
 
-  return true;
+    }
+
+    return true;
+  } catch (e) {
+    console.info("Error occurred while setting value to", path);
+    console.error(e);
+    return false;
+  }
 }

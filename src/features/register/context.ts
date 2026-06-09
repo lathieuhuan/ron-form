@@ -9,5 +9,5 @@ export interface RegisterFormValues {
   confirmPassword: string;
 }
 
-export const { FormContext, Form, Field, useForm, useFormInstance } =
+export const { FormContext, Form, Field, useForm, useFormInstance, useFormField } =
   createContexts<RegisterFormValues>();

@@ -1,36 +1,45 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-import { DeepKeys, DeepValue, Field, FormControl, FieldError } from "@lib/core";
+import { DeepKeys, DeepValue, FieldApi, FormControl, FieldError } from "@lib/core";
 import { useForm } from "./hooks";
 
-export interface FieldChildrenProps<TFormValues, TKey extends DeepKeys<TFormValues>> extends Field<
+export interface UseFormFieldProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
+  name: TKey;
+}
+
+export interface ReactFieldApi<TFormValues, TKey extends DeepKeys<TFormValues>> extends FieldApi<
   TFormValues,
   TKey
 > {
   id: string;
   name: TKey;
   errors: FieldError<TKey>[];
-  onChange: (value: DeepValue<TFormValues, TKey>) => void;
+  form: FormControl<TFormValues>;
+  handleChange: (value: DeepValue<TFormValues, TKey>) => void;
 }
 
 export interface FieldProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
   name: TKey;
-  children?: (props: FieldChildrenProps<TFormValues, TKey>) => React.ReactElement;
+  children?: (props: ReactFieldApi<TFormValues, TKey>) => React.ReactElement;
 }
 
 export function createContexts<TFormValues>() {
   const FormContext = createContext<FormControl<TFormValues>>(new FormControl<TFormValues>());
 
+  function useFormInstance() {
+    return useContext(FormContext);
+  }
+
   function Form(props: { form: FormControl<TFormValues>; children?: React.ReactNode }) {
     return <FormContext.Provider value={props.form}>{props.children}</FormContext.Provider>;
   }
 
-  function Field<TKey extends DeepKeys<TFormValues>>({
+  function useFormField<TKey extends DeepKeys<TFormValues>>({
     name,
-    children,
-  }: FieldProps<TFormValues, TKey>) {
+  }: UseFormFieldProps<TFormValues, TKey>): ReactFieldApi<TFormValues, TKey> {
     const form = useContext(FormContext);
-    const [state, setState] = useState<Field<TFormValues, TKey>>(() => {
+
+    const [state, setState] = useState<FieldApi<TFormValues, TKey>>(() => {
       const errorMap = form.getFieldErrorMap(name);
 
       return {
@@ -50,32 +59,38 @@ export function createContexts<TFormValues>() {
       };
     }, [form, name]);
 
-    const onChange = (value: DeepValue<TFormValues, TKey>) => {
+    const handleChange = (value: DeepValue<TFormValues, TKey>) => {
       form.setFieldValue(name, value);
     };
 
-    if (children == null) {
-      return null;
-    }
-
-    return children({
+    return {
       id: name,
       name,
       value: state.value,
       meta: state.meta,
       errorMap: state.errorMap,
+      form,
       get errors() {
         const { errorMap } = state;
         const { change = [], blur = [], changeAsync = [], blurAsync = [] } = errorMap;
 
         return change.concat(blur, changeAsync, blurAsync);
       },
-      onChange,
-    });
+      handleChange,
+    };
   }
 
-  function useFormInstance() {
-    return useContext(FormContext);
+  function Field<TKey extends DeepKeys<TFormValues>>({
+    name,
+    children,
+  }: FieldProps<TFormValues, TKey>) {
+    const field = useFormField({ name });
+
+    if (children == null) {
+      return null;
+    }
+
+    return children(field);
   }
 
   return {
@@ -84,5 +99,6 @@ export function createContexts<TFormValues>() {
     Field,
     useForm: useForm as typeof useForm<TFormValues>,
     useFormInstance,
+    useFormField,
   };
 }
