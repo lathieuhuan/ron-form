@@ -11,27 +11,4 @@ alwaysApply: false
 
 - Do not test private methods or access private properties/methods when testing. Test them through other public/protected methods.
 
-- In order to test protected methods/setters of a class, make a test class extending that class and expose the protected method/setter via a public method/setter. See the example below, follow the naming convention of the test class and exposing method/setter. Remember to forward the arguments and add neccessary types.
-
-```ts
-class TestClass extends Class {
-  _protectedMethod() {
-    this.protectedMethod();
-  }
-
-  set _protectedSetter(value) {
-    this.protectedSetter = value;
-  }
-}
-```
-
-- In order to test protected properties/getters of a class, make a test class extending that class and expose the protected method/getter via a public getter. See the example below, follow the naming convention of the test class and exposing method. Remember to forward the arguments and add neccessary types.
-
-```ts
-class TestClass extends Class {
-  get _protectedProperty() {
-    return this.protectedProperty; // or this.protectedGetter
-  }
-}
-```
 
