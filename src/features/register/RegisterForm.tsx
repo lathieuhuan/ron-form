@@ -1,17 +1,22 @@
-import { type FieldError } from "@lib/core";
-import { Field, Form, useForm } from "./context";
+import type { FieldError } from "@lib/core";
+import type { ReactFieldLooseApi } from "@lib/react";
+
+import { Field, Form, FormMeta, RegisterFormValues, useForm } from "./context";
 
 import { Button } from "@src/components/Button";
-import { FieldLabel, FieldError as Error } from "@src/components/Field";
+import { FieldError as Error, FieldLabel } from "@src/components/Field";
 import { Input } from "@src/components/Input";
 import { InputNumber } from "@src/components/InputNumber";
 import { Select } from "@src/components/Select";
 
 async function isEmailAvailable(email: string) {
   return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(email !== "asd");
-    }, Math.random() * 300);
+    setTimeout(
+      () => {
+        resolve(email !== "asd");
+      },
+      250 + Math.random() * 100,
+    );
   });
 }
 
@@ -48,6 +53,10 @@ export function RegisterForm() {
     },
   });
 
+  const showErrors = (field: ReactFieldLooseApi<RegisterFormValues>) => {
+    return field.meta.isTouched && field.errors.length > 0;
+  };
+
   const formatErrors = (errors: FieldError<string>[]) => {
     return errors.map((error) => error.message).join(", ");
   };
@@ -58,18 +67,23 @@ export function RegisterForm() {
   };
 
   return (
-    <div className="max-w-120 p-4 space-y-4">
-      <h1 className="text-2xl font-bold">Register Form</h1>
+    <Form form={form}>
+      <div className="max-w-120 p-4 space-y-4">
+        <h1 className="text-2xl font-bold">Register Form</h1>
 
-      <Form form={form}>
         <div className="grid grid-cols-2 gap-4">
           <Field name="email">
             {(field) => (
               <div>
                 <FieldLabel htmlFor={field.id}>Email</FieldLabel>
-                <Input id={field.id} value={field.value} onChange={field.handleChange} />
+                <Input
+                  id={field.id}
+                  value={field.value}
+                  onBlur={field.handleBlur}
+                  onChange={field.handleChange}
+                />
                 {field.meta.isValidating && <div>Validating...</div>}
-                <Error>{formatErrors(field.errors)}</Error>
+                {showErrors(field) && <Error>{formatErrors(field.errors)}</Error>}
               </div>
             )}
           </Field>
@@ -77,8 +91,13 @@ export function RegisterForm() {
             {(field) => (
               <div>
                 <FieldLabel htmlFor={field.id}>Username</FieldLabel>
-                <Input id={field.id} value={field.value} onChange={field.handleChange} />
-                <Error>{formatErrors(field.errors)}</Error>
+                <Input
+                  id={field.id}
+                  value={field.value}
+                  onBlur={field.handleBlur}
+                  onChange={field.handleChange}
+                />
+                {showErrors(field) && <Error>{formatErrors(field.errors)}</Error>}
               </div>
             )}
           </Field>
@@ -96,8 +115,13 @@ export function RegisterForm() {
             {(field) => (
               <div>
                 <FieldLabel htmlFor={field.id}>Age</FieldLabel>
-                <InputNumber id={field.id} value={field.value} onChange={field.handleChange} />
-                <Error>{formatErrors(field.errors)}</Error>
+                <InputNumber
+                  id={field.id}
+                  value={field.value}
+                  onBlur={field.handleBlur}
+                  onChange={field.handleChange}
+                />
+                {showErrors(field) && <Error>{formatErrors(field.errors)}</Error>}
               </div>
             )}
           </Field>
@@ -106,8 +130,13 @@ export function RegisterForm() {
             {(field) => (
               <div>
                 <FieldLabel htmlFor={field.id}>Password</FieldLabel>
-                <Input id={field.id} value={field.value} onChange={field.handleChange} />
-                <Error>{formatErrors(field.errors)}</Error>
+                <Input
+                  id={field.id}
+                  value={field.value}
+                  onBlur={field.handleBlur}
+                  onChange={field.handleChange}
+                />
+                {showErrors(field) && <Error>{formatErrors(field.errors)}</Error>}
               </div>
             )}
           </Field>
@@ -116,20 +145,36 @@ export function RegisterForm() {
             {(field) => (
               <div>
                 <FieldLabel htmlFor={field.id}>Confirm Password</FieldLabel>
-                <Input id={field.id} value={field.value} onChange={field.handleChange} />
-                <Error>{formatErrors(field.errors)}</Error>
+                <Input
+                  id={field.id}
+                  value={field.value}
+                  onBlur={field.handleBlur}
+                  onChange={field.handleChange}
+                />
+                {showErrors(field) && <Error>{formatErrors(field.errors)}</Error>}
               </div>
             )}
           </Field>
         </div>
-      </Form>
 
-      <div className="flex gap-2">
-        <Button variant="outline" onClick={handleLog}>
-          Log
-        </Button>
-        <Button type="submit">Submit</Button>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={handleLog}>
+            Log
+          </Button>
+          <Button type="submit">Submit</Button>
+        </div>
+
+        <div>
+          <FormMeta>
+            {(meta) => (
+              <div className="bg-black/10 rounded-md p-2">
+                <p>Form Meta</p>
+                <pre>{JSON.stringify(meta, null, 2)}</pre>
+              </div>
+            )}
+          </FormMeta>
+        </div>
       </div>
-    </div>
+    </Form>
   );
 }
