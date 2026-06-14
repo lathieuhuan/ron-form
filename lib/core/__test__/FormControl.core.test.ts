@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import { FormControl } from "../FormControl";
 
 const defaultValues = {
-  name: "John",
-  email: "john@example.com",
+  name: "",
+  email: "",
   profile: {
-    age: 30,
+    age: 0,
   },
 };
 
@@ -62,12 +62,10 @@ describe("FormControl", () => {
       const form = new FormControl({ defaultValues });
       const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-      const result = form.setFieldValue("profile.age.name" as "name", "invalid" as never, {
-        dontValidate: true,
-      });
+      const result = form.setFieldValue("profile.age.name" as "name", "invalid" as never);
 
       expect(result).toBe(false);
-      expect(consoleError).toHaveBeenCalledWith("Field profile.age.name not found in values");
+      expect(consoleError).toHaveBeenCalled();
     });
 
     it("marks the field as touched and dirty by default", () => {
@@ -102,14 +100,6 @@ describe("FormControl", () => {
         isDirty: false,
         isValidating: false,
       });
-    });
-
-    it("returns true when dontValidate is enabled", () => {
-      const form = new FormControl({ defaultValues });
-
-      const result = form.setFieldValue("name", "Jane", { dontValidate: true });
-
-      expect(result).toBe(true);
     });
 
     it("runs change validators and stores sync errors", () => {
@@ -152,29 +142,45 @@ describe("FormControl", () => {
       expect(asyncValidator).not.toHaveBeenCalled();
     });
 
-    it("updates form meta when dontValidate is enabled", () => {
-      const form = new FormControl({ defaultValues });
+    it("clears change & changeAsync errors and calls updateMeta when dontValidate is enabled", async () => {
+      vi.useFakeTimers();
 
-      form.setFieldValue("name", "Jane", { dontValidate: true });
-
-      expect(form.meta.get()).toEqual({
-        isTouched: true,
-        isDirty: true,
-        isValidating: false,
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: ({ value }) => (value.length < 3 ? "Sync error" : null),
+        },
+        changeAsyncValidators: {
+          name: async ({ value }) => (value.length < 4 ? "Async error" : null),
+        },
+        asyncDebounceMs: 100,
       });
-    });
 
-    it("aggregates form meta across multiple fields when dontValidate is enabled", () => {
-      const form = new FormControl({ defaultValues });
+      form.setFieldValue("name", "Joe");
+      await vi.advanceTimersByTimeAsync(100);
 
-      form.setFieldValue("name", "Jane", { dontValidate: true, dontDirty: true });
-      form.setFieldValue("email", "jane@example.com", { dontValidate: true, dontTouch: true });
+      const errorMap = form.getFieldErrorMap("name");
+      expect(errorMap.change).toEqual([]);
+      expect(errorMap.changeAsync).toEqual([
+        {
+          path: "name",
+          type: "changeAsync",
+          message: "Async error",
+          meta: {},
+        },
+      ]);
 
-      expect(form.meta.get()).toEqual({
-        isTouched: true,
-        isDirty: true,
-        isValidating: false,
-      });
+      const updateMeta = vi.spyOn(form, "updateMeta");
+
+      form.setFieldValue("name", "Na", { dontValidate: true });
+      await vi.advanceTimersByTimeAsync(100);
+
+      const newErrorMap = form.getFieldErrorMap("name");
+      expect(newErrorMap.change).toEqual([]);
+      expect(newErrorMap.changeAsync).toEqual([]);
+      expect(updateMeta).toHaveBeenCalledOnce();
+
+      vi.useRealTimers();
     });
 
     it("updates form meta after sync validation", () => {

@@ -192,13 +192,13 @@ type SelectProps = React.ComponentProps<typeof SelectContainer> &
     isLoading?: boolean;
   };
 
-function Select({ id, isLoading, ...props }: SelectProps) {
+function Select({ id, isLoading, "aria-invalid": ariaInvalid, ...props }: SelectProps) {
   return (
     <SelectContainer {...props}>
       <SelectTrigger
         id={id}
         className="w-full"
-        aria-invalid={props["aria-invalid"]}
+        aria-invalid={ariaInvalid}
         isLoading={isLoading}
       >
         <SelectValue />

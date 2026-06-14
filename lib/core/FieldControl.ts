@@ -38,7 +38,9 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
       });
     }
 
-    const errors = form._validateSync(name, "blur");
+    const errors = form._validateSync(name, "blur", {
+      clearAsyncErrors: true,
+    });
 
     form.updateMeta();
 
@@ -56,8 +58,3 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
     }
   };
 }
-
-export type FieldApi<TFormValues, TField extends DeepKeys<TFormValues>> = FieldControl<
-  TFormValues,
-  TField
->;

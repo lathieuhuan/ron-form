@@ -3,12 +3,12 @@ import { ReactFieldLooseApi } from "@lib/react";
 import { FieldTester } from "@src/lib/form-tester";
 import { cloneElement } from "react";
 
-const showErrors = (field: ReactFieldLooseApi<unknown>) => {
+const shouldShowErrors = (field: ReactFieldLooseApi<unknown>) => {
   return field.meta.isTouched && field.errors.length > 0;
 };
 
 const formatErrors = (errors: FieldError<string>[]) => {
-  return errors.map((error) => error.message).join(". ");
+  return errors.at(0)?.message;
 };
 
 interface FormFieldProps {
@@ -18,6 +18,8 @@ interface FormFieldProps {
 }
 
 export function FormField({ label, field, children }: FormFieldProps) {
+  const showErrors = shouldShowErrors(field);
+
   return (
     <FieldTester name={field.name}>
       <div className="mb-1.5 flex items-center gap-2">
@@ -30,11 +32,12 @@ export function FormField({ label, field, children }: FormFieldProps) {
       {cloneElement(children, {
         id: field.id,
         value: field.value,
+        "aria-invalid": showErrors,
         onBlur: field.handleBlur,
         onChange: field.handleChange,
       })}
 
-      {showErrors(field) && (
+      {showErrors && (
         <div className="mt-1 text-sm text-destructive">{formatErrors(field.errors)}</div>
       )}
     </FieldTester>

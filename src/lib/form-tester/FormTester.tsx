@@ -1,7 +1,6 @@
 import { DeepKeys, FormApi } from "@lib/core";
 import { useMemo, useState } from "react";
 import { FormTesterContext } from "./context";
-import { FieldWatcher } from "./FieldWatcher";
 
 type FormTesterProps = {
   form: FormApi<any>;
@@ -19,12 +18,5 @@ export function FormTester({ form, children }: FormTesterProps) {
     };
   }, [form, watchedField]);
 
-  return (
-    <FormTesterContext.Provider value={value}>
-      <div className="flex gap-4">
-        {children}
-        <FieldWatcher />
-      </div>
-    </FormTesterContext.Provider>
-  );
+  return <FormTesterContext.Provider value={value}>{children}</FormTesterContext.Provider>;
 }

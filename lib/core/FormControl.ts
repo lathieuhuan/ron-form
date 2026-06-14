@@ -212,11 +212,35 @@ export class FormControl<TFormValues> {
     });
   }
 
+  /**
+   * @public
+   */
+  setFieldMeta<TField extends DeepKeys<TFormValues>>(field: TField, updater: Updater<FieldMeta>) {
+    let newMeta: FieldMeta;
+
+    if (typeof updater === "function") {
+      const currentMeta = this.getFieldMeta(field);
+
+      newMeta = updater(currentMeta);
+    } else {
+      newMeta = updater;
+    }
+
+    this.fieldMetaMap.set(field, newMeta);
+
+    this.nextFieldState(field, {
+      meta: newMeta,
+    });
+
+    this.updateMeta();
+  }
+
   _validateSync<TField extends DeepKeys<TFormValues>>(
     field: TField,
     cause: ValidationCause,
     options: {
       dontTouch?: boolean;
+      clearAsyncErrors?: boolean;
     } = {},
   ): FieldError<TField>[] {
     const validator = this.validators[cause][field];
@@ -225,12 +249,17 @@ export class FormControl<TFormValues> {
     const value = this.getFieldValue(field);
     const errors = transformErrors(field, cause, validator({ value }));
 
-    const errorMap: FieldErrors<TField> = {
-      ...this.getFieldErrorMap(field),
+    const errorMap = this.getFieldErrorMap(field);
+    const newErrorMap: FieldErrors<TField> = {
+      ...errorMap,
       [cause]: errors,
     };
 
-    this.fieldErrorMap.set(field, errorMap);
+    if (options.clearAsyncErrors) {
+      newErrorMap[`${cause}Async`] = [];
+    }
+
+    this.fieldErrorMap.set(field, newErrorMap);
 
     this.nextFieldState(field, {
       value,
@@ -240,7 +269,7 @@ export class FormControl<TFormValues> {
             ...this.getFieldMeta(field),
             isTouched: true,
           },
-      errorMap,
+      errorMap: newErrorMap,
     });
 
     return errors;
@@ -363,11 +392,19 @@ export class FormControl<TFormValues> {
     };
 
     if (dontValidate) {
+      const newErrorMap: FieldErrors<TField> = {
+        ...this.getFieldErrorMap(field),
+        change: [],
+        changeAsync: [],
+      };
+
       this.fieldMetaMap.set(field, newMeta);
+      this.fieldErrorMap.set(field, newErrorMap);
 
       this.nextFieldState(field, {
         value,
         meta: newMeta,
+        errorMap: newErrorMap,
       });
 
       this.updateMeta();
@@ -379,7 +416,10 @@ export class FormControl<TFormValues> {
 
     this.fieldMetaMap.set(field, newMeta);
 
-    const errors = this._validateSync(field, "change", { dontTouch: true });
+    const errors = this._validateSync(field, "change", {
+      dontTouch: true,
+      clearAsyncErrors: true,
+    });
 
     this.updateMeta();
 
@@ -397,29 +437,6 @@ export class FormControl<TFormValues> {
     }
 
     return true;
-  }
-
-  /**
-   * @public
-   */
-  setFieldMeta<TField extends DeepKeys<TFormValues>>(field: TField, updater: Updater<FieldMeta>) {
-    let newMeta: FieldMeta;
-
-    if (typeof updater === "function") {
-      const currentMeta = this.getFieldMeta(field);
-
-      newMeta = updater(currentMeta);
-    } else {
-      newMeta = updater;
-    }
-
-    this.fieldMetaMap.set(field, newMeta);
-
-    this.nextFieldState(field, {
-      meta: newMeta,
-    });
-
-    this.updateMeta();
   }
 
   handleSubmit = () => {

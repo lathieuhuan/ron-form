@@ -1,0 +1,290 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { FieldControl } from "../FieldControl";
+import { FormControl } from "../FormControl";
+
+const defaultValues = {
+  name: "John",
+  email: "john@example.com",
+  profile: {
+    age: 30,
+  },
+};
+
+describe("FieldControl", () => {
+  describe("constructor", () => {
+    it("stores the form and field name", () => {
+      const form = new FormControl({ defaultValues });
+      const field = new FieldControl(form, "name");
+
+      expect(field.form).toBe(form);
+      expect(field.name).toBe("name");
+    });
+  });
+
+  describe("handleChange", () => {
+    it("updates the field value through the form", () => {
+      const form = new FormControl({ defaultValues });
+      const field = new FieldControl(form, "name");
+
+      field.handleChange("Jane");
+
+      expect(form.getFieldValue("name")).toBe("Jane");
+    });
+
+    it("updates nested field values", () => {
+      const form = new FormControl({ defaultValues });
+      const field = new FieldControl(form, "profile.age");
+
+      field.handleChange(25);
+
+      expect(form.getFieldValue("profile.age")).toBe(25);
+    });
+
+    it("marks the field as touched and dirty", () => {
+      const form = new FormControl({ defaultValues });
+      const field = new FieldControl(form, "name");
+
+      field.handleChange("Jane");
+
+      expect(form.getFieldMeta("name")).toEqual({
+        isTouched: true,
+        isDirty: true,
+        isValidating: false,
+      });
+    });
+
+    it("runs change validators", () => {
+      const validator = vi.fn(() => "Name is required");
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: { name: validator },
+      });
+      const field = new FieldControl(form, "name");
+
+      field.handleChange("");
+
+      expect(validator).toHaveBeenCalledWith({ value: "" });
+      expect(form.getFieldErrorMap("name").change).toEqual([
+        {
+          path: "name",
+          type: "change",
+          message: "Name is required",
+          meta: {},
+        },
+      ]);
+    });
+  });
+
+  describe("handleBlur", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    describe("touch state", () => {
+      it("marks the field as touched when it was not touched", () => {
+        const form = new FormControl({ defaultValues });
+        const field = new FieldControl(form, "name");
+
+        field.handleBlur();
+
+        expect(form.getFieldMeta("name")).toEqual({
+          isTouched: true,
+          isDirty: false,
+          isValidating: false,
+        });
+      });
+
+      it("preserves dirty state when marking as touched", () => {
+        const form = new FormControl({ defaultValues });
+        const field = new FieldControl(form, "name");
+
+        form.setFieldValue("name", "Jane", { dontValidate: true });
+        field.handleBlur();
+
+        expect(form.getFieldMeta("name")).toEqual({
+          isTouched: true,
+          isDirty: true,
+          isValidating: false,
+        });
+      });
+    });
+
+    describe("sync validation", () => {
+      it("runs blur validators and stores errors", () => {
+        const validator = vi.fn(() => "Email is required");
+        const form = new FormControl({
+          defaultValues,
+          blurValidators: { email: validator },
+        });
+        const field = new FieldControl(form, "email");
+
+        field.handleBlur();
+
+        expect(validator).toHaveBeenCalledWith({ value: "john@example.com" });
+        expect(form.getFieldErrorMap("email").blur).toEqual([
+          {
+            path: "email",
+            type: "blur",
+            message: "Email is required",
+            meta: {},
+          },
+        ]);
+      });
+
+      it("clears blur async errors when sync validation runs", () => {
+        const form = new FormControl({
+          defaultValues,
+          blurValidators: { name: () => undefined },
+        });
+        const field = new FieldControl(form, "name");
+
+        form.fieldErrorMap.set("name", {
+          change: [],
+          blur: [],
+          changeAsync: [],
+          blurAsync: [
+            {
+              path: "name",
+              type: "blurAsync",
+              message: "Stale async error",
+              meta: {},
+            },
+          ],
+        });
+
+        field.handleBlur();
+
+        expect(form.getFieldErrorMap("name").blurAsync).toEqual([]);
+      });
+    });
+
+    describe("async validation", () => {
+      it("runs blur async validators after debounce when sync validation passes", async () => {
+        const asyncValidator = vi.fn(async () => "Async blur error");
+        const form = new FormControl({
+          defaultValues,
+          blurAsyncValidators: { name: asyncValidator },
+          asyncDebounceMs: 100,
+        });
+        const field = new FieldControl(form, "name");
+
+        field.handleBlur();
+
+        expect(asyncValidator).not.toHaveBeenCalled();
+
+        await vi.advanceTimersByTimeAsync(100);
+
+        expect(asyncValidator).toHaveBeenCalledWith({ value: "John" });
+        expect(form.getFieldErrorMap("name").blurAsync).toEqual([
+          {
+            path: "name",
+            type: "blurAsync",
+            message: "Async blur error",
+            meta: {},
+          },
+        ]);
+      });
+
+      it("does not run blur async validation when sync validation fails", async () => {
+        const asyncValidator = vi.fn(async () => "Async blur error");
+        const form = new FormControl({
+          defaultValues,
+          blurValidators: { name: () => "Sync error" },
+          blurAsyncValidators: { name: asyncValidator },
+          asyncDebounceMs: 100,
+        });
+        const field = new FieldControl(form, "name");
+
+        field.handleBlur();
+        await vi.advanceTimersByTimeAsync(100);
+
+        expect(asyncValidator).not.toHaveBeenCalled();
+      });
+
+      it("does not run blur async validation when no validator is registered", async () => {
+        const form = new FormControl({ defaultValues });
+        const field = new FieldControl(form, "name");
+        const validateAsync = vi.spyOn(form, "validateAsync");
+
+        field.handleBlur();
+        await vi.advanceTimersByTimeAsync(300);
+
+        expect(validateAsync).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("cleanup", () => {
+      it("aborts the previous blur async validation on subsequent blur", async () => {
+        let resolveFirstValidator: (value: string | undefined) => void = () => {};
+        const firstValidator = vi.fn(
+          () =>
+            new Promise<string | undefined>((resolve) => {
+              resolveFirstValidator = resolve;
+            }),
+        );
+        const secondValidator = vi.fn(async () => "Second error");
+        const form = new FormControl({
+          defaultValues,
+          blurAsyncValidators: { name: firstValidator },
+          asyncDebounceMs: 100,
+        });
+        const field = new FieldControl(form, "name");
+
+        field.handleBlur();
+        await vi.advanceTimersByTimeAsync(100);
+
+        expect(firstValidator).toHaveBeenCalledOnce();
+        expect(form.getFieldMeta("name").isValidating).toBe(true);
+
+        form.asyncValidators.blur.name = secondValidator;
+        field.handleBlur();
+        await vi.advanceTimersByTimeAsync(100);
+
+        resolveFirstValidator("First error");
+        await vi.runAllTimersAsync();
+
+        expect(secondValidator).toHaveBeenCalledOnce();
+        expect(form.getFieldErrorMap("name").blurAsync).toEqual([
+          {
+            path: "name",
+            type: "blurAsync",
+            message: "Second error",
+            meta: {},
+          },
+        ]);
+      });
+
+      it("clears pending debounced blur validation on subsequent blur", async () => {
+        const asyncValidator = vi.fn(async () => "Async blur error");
+        const form = new FormControl({
+          defaultValues,
+          blurAsyncValidators: { name: asyncValidator },
+          asyncDebounceMs: 100,
+        });
+        const field = new FieldControl(form, "name");
+
+        field.handleBlur();
+        await vi.advanceTimersByTimeAsync(50);
+        field.handleBlur();
+        await vi.advanceTimersByTimeAsync(100);
+
+        expect(asyncValidator).toHaveBeenCalledOnce();
+      });
+    });
+
+    describe("form meta", () => {
+      it("updates form meta after blur", () => {
+        const form = new FormControl({ defaultValues });
+        const field = new FieldControl(form, "name");
+
+        field.handleBlur();
+
+        expect(form.meta.get().isTouched).toBe(true);
+      });
+    });
+  });
+});

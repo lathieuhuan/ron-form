@@ -33,7 +33,12 @@ export const useFormOptions: UseFormOptions<RegisterFormValues> = {
       return null;
     },
     username: ({ value }) => {
-      return value.trim() ? "Required" : null;
+      return value.trim() ? null : "Required";
+    },
+  },
+  blurValidators: {
+    username: ({ value }) => {
+      return value.trim().length < 3 ? "Please enter at least 3 characters" : null;
     },
   },
   changeAsyncValidators: {
