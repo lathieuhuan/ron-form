@@ -1,13 +1,14 @@
 import { FormApi } from "@lib/core";
 import { Form, FormMeta, RegisterFormValues } from "./context";
 
-import { FieldWatcher, FormTester, WatchSection } from "@src/lib/form-tester";
+import { FieldSupervisor, FormSupervisor, WatchSection } from "@src/lib/form-supervisor";
+import { USED_EMAIL, USED_USERNAME } from "./config";
 
 export function Layout(props: { form: FormApi<RegisterFormValues>; children: React.ReactNode }) {
   return (
-    <FormTester form={props.form}>
+    <FormSupervisor form={props.form}>
       <Form form={props.form}>
-        <div className="p-4 flex gap-4">
+        <div className="h-screen p-4 overflow-y-auto flex gap-4">
           <div className="w-116 space-y-4">
             <h1 className="text-2xl font-bold">Register Form</h1>
 
@@ -16,8 +17,8 @@ export function Layout(props: { form: FormApi<RegisterFormValues>; children: Rea
             <Validation />
           </div>
 
-          <div className="space-y-4">
-            <FieldWatcher />
+          <div className="overflow-y-auto overflow-x-auto space-y-4">
+            <FieldSupervisor />
             <FormMeta>
               {(meta) => (
                 <WatchSection
@@ -30,7 +31,7 @@ export function Layout(props: { form: FormApi<RegisterFormValues>; children: Rea
           </div>
         </div>
       </Form>
-    </FormTester>
+    </FormSupervisor>
   );
 }
 
@@ -57,7 +58,7 @@ function Validation() {
             },
             {
               trigger: "blur async",
-              message: "Already in use — value !== 'qwe'",
+              message: `Already in use — value !== '${USED_EMAIL}'`,
             },
           ]}
         />
@@ -66,7 +67,7 @@ function Validation() {
           name="Username"
           rules={[
             {
-              trigger: "change",
+              trigger: "blur",
               message: "Required — trim().lengh > 0",
             },
             {
@@ -75,7 +76,7 @@ function Validation() {
             },
             {
               trigger: "blur async",
-              message: "Already in use — value !== 'asd'",
+              message: `Already in use — value !== '${USED_USERNAME}'`,
             },
           ]}
         />

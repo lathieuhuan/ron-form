@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FormControl } from "../FormControl";
+import { DEFAULT_ERROR_MAP, DEFAULT_FIELD_META } from "../constants";
 
 const defaultValues = {
   name: "John",
@@ -28,11 +29,7 @@ describe("FormControl getters", () => {
     it("returns default meta for fresh fields", () => {
       const form = new FormControl({ defaultValues });
 
-      expect(form.getFieldMeta("name")).toEqual({
-        isTouched: false,
-        isDirty: false,
-        isValidating: false,
-      });
+      expect(form.getFieldMeta("name")).toEqual(DEFAULT_FIELD_META);
     });
 
     it("returns stored meta after it has been set", () => {
@@ -53,12 +50,7 @@ describe("FormControl getters", () => {
     it("returns an empty error map for fresh fields", () => {
       const form = new FormControl({ defaultValues });
 
-      expect(form.getFieldErrorMap("name")).toEqual({
-        change: [],
-        blur: [],
-        changeAsync: [],
-        blurAsync: [],
-      });
+      expect(form.getFieldErrorMap("name")).toEqual(DEFAULT_ERROR_MAP);
     });
 
     it("returns stored errors after validation", () => {

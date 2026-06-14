@@ -38,9 +38,12 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
       });
     }
 
-    const errors = form._validateSync(name, "blur", {
-      clearAsyncErrors: true,
+    form.fieldErrorMap.set(name, {
+      ...form.getFieldErrorMap(name),
+      blurAsync: [],
     });
+
+    const errors = form._validateSync(name, "blur");
 
     form.updateMeta();
 

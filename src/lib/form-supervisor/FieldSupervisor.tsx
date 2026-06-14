@@ -1,11 +1,11 @@
 import { FieldState } from "@lib/core";
 import { useEffect, useState } from "react";
-import { useFormTester } from "./context";
+import { useFormSupervisor } from "./context";
 import { Divider } from "@src/components/Divider";
 import { WatchSection } from "./WatchSection";
 
-export function FieldWatcher() {
-  const { form, watchedField } = useFormTester();
+export function FieldSupervisor() {
+  const { form, watchedField } = useFormSupervisor();
   const [field, setField] = useState<FieldState<any, any> | null>(null);
 
   useEffect(() => {

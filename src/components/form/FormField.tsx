@@ -1,6 +1,6 @@
 import { FieldError } from "@lib/core";
 import { ReactFieldLooseApi } from "@lib/react";
-import { FieldTester } from "@src/lib/form-tester";
+import { FieldSelector } from "@src/lib/form-supervisor";
 import { cloneElement } from "react";
 
 const shouldShowErrors = (field: ReactFieldLooseApi<unknown>) => {
@@ -21,7 +21,7 @@ export function FormField({ label, field, children }: FormFieldProps) {
   const showErrors = shouldShowErrors(field);
 
   return (
-    <FieldTester name={field.name}>
+    <FieldSelector name={field.name}>
       <div className="mb-1.5 flex items-center gap-2">
         <label className="text-sm" htmlFor={field.id}>
           {label}
@@ -40,7 +40,7 @@ export function FormField({ label, field, children }: FormFieldProps) {
       {showErrors && (
         <div className="mt-1 text-sm text-destructive">{formatErrors(field.errors)}</div>
       )}
-    </FieldTester>
+    </FieldSelector>
   );
 }
 

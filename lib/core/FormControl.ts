@@ -22,6 +22,7 @@ import { createSubject, Subject } from "./utils/createSubject";
 import { get } from "./utils/get";
 import { set } from "./utils/set";
 import { transformErrors } from "./utils/transformErrors";
+import { DEFAULT_ERROR_MAP, DEFAULT_FIELD_META } from "./constants";
 
 type FieldSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
   TKey,
@@ -121,25 +122,14 @@ export class FormControl<TFormValues> {
    * @public
    */
   getFieldMeta<TField extends DeepKeys<TFormValues>>(field: TField): FieldMeta {
-    return (
-      this.fieldMetaMap.get(field) || {
-        isTouched: false,
-        isDirty: false,
-        isValidating: false,
-      }
-    );
+    return this.fieldMetaMap.get(field) || { ...DEFAULT_FIELD_META };
   }
 
   /**
    * @public
    */
   getFieldErrorMap<TField extends DeepKeys<TFormValues>>(field: TField) {
-    return (this.fieldErrorMap.get(field) || {
-      change: [],
-      blur: [],
-      changeAsync: [],
-      blurAsync: [],
-    }) as FieldErrors<TField>;
+    return (this.fieldErrorMap.get(field) || { ...DEFAULT_ERROR_MAP }) as FieldErrors<TField>;
   }
 
   /**
@@ -240,7 +230,6 @@ export class FormControl<TFormValues> {
     cause: ValidationCause,
     options: {
       dontTouch?: boolean;
-      clearAsyncErrors?: boolean;
     } = {},
   ): FieldError<TField>[] {
     const validator = this.validators[cause][field];
@@ -255,20 +244,22 @@ export class FormControl<TFormValues> {
       [cause]: errors,
     };
 
-    if (options.clearAsyncErrors) {
-      newErrorMap[`${cause}Async`] = [];
-    }
+    const newMeta: FieldMeta | undefined = options.dontTouch
+      ? undefined
+      : {
+          ...this.getFieldMeta(field),
+          isTouched: true,
+        };
 
     this.fieldErrorMap.set(field, newErrorMap);
 
+    if (newMeta !== undefined) {
+      this.fieldMetaMap.set(field, newMeta);
+    }
+
     this.nextFieldState(field, {
       value,
-      meta: options.dontTouch
-        ? undefined
-        : {
-            ...this.getFieldMeta(field),
-            isTouched: true,
-          },
+      meta: newMeta,
       errorMap: newErrorMap,
     });
 
@@ -415,10 +406,10 @@ export class FormControl<TFormValues> {
     // ===== VALIDATE =====
 
     this.fieldMetaMap.set(field, newMeta);
+    this.fieldErrorMap.set(field, { ...DEFAULT_ERROR_MAP });
 
     const errors = this._validateSync(field, "change", {
       dontTouch: true,
-      clearAsyncErrors: true,
     });
 
     this.updateMeta();
