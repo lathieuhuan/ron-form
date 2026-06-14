@@ -19,11 +19,11 @@ describe("FormControl validation", () => {
 
     it("does not update field state when no validator is registered", () => {
       const form = new FormControl({ defaultValues });
-      const nextFieldState = vi.spyOn(form, "nextFieldState");
+      const updateAndNotifyField = vi.spyOn(form, "updateAndNotifyField");
 
       form._validateSync("name", "change");
 
-      expect(nextFieldState).not.toHaveBeenCalled();
+      expect(updateAndNotifyField).not.toHaveBeenCalled();
     });
 
     it("validates with the current field value and returns sync errors", () => {
@@ -244,12 +244,12 @@ describe("FormControl validation", () => {
   describe("validateAsync", () => {
     it("returns immediately when no async validator is registered", async () => {
       const form = new FormControl({ defaultValues });
-      const nextFieldState = vi.spyOn(form, "nextFieldState");
+      const updateAndNotifyField = vi.spyOn(form, "updateAndNotifyField");
 
       const errors = await form.validateAsync("name", "change", new AbortController());
 
       expect(errors).toEqual([]);
-      expect(nextFieldState).not.toHaveBeenCalled();
+      expect(updateAndNotifyField).not.toHaveBeenCalled();
       expect(form.getFieldMeta("name").isValidating).toBe(false);
     });
 
@@ -320,15 +320,15 @@ describe("FormControl validation", () => {
         isValidating: true,
       });
 
-      const nextFieldState = vi.spyOn(form, "nextFieldState");
+      const updateAndNotifyField = vi.spyOn(form, "updateAndNotifyField");
 
       await form.validateAsync("name", "change", new AbortController());
 
-      const validatingOnlyUpdates = nextFieldState.mock.calls.filter(
-        ([, state]) =>
-          state.meta?.isValidating === true &&
-          state.value === undefined &&
-          state.errorMap === undefined,
+      const validatingOnlyUpdates = updateAndNotifyField.mock.calls.filter(
+        ([, changes]) =>
+          changes.meta?.isValidating === true &&
+          changes.value === undefined &&
+          changes.errorMap === undefined,
       );
 
       expect(validatingOnlyUpdates).toHaveLength(0);

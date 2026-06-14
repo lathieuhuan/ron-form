@@ -4,10 +4,10 @@ import type {
   DeepKeys,
   DeepValue,
   ErrorCauseType,
-  FieldState,
   FieldError,
   FieldErrors,
   FieldMeta,
+  FieldState,
   FormAsyncValidators,
   FormValidators,
   Updater,
@@ -15,6 +15,7 @@ import type {
   ValidatorMap,
 } from "./types";
 
+import { DEFAULT_ERROR_MAP, DEFAULT_FIELD_META } from "./constants";
 import { FormMetaControl, type FormMetaApi } from "./FormMetaControl";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
@@ -22,7 +23,6 @@ import { createSubject, Subject } from "./utils/createSubject";
 import { get } from "./utils/get";
 import { set } from "./utils/set";
 import { transformErrors } from "./utils/transformErrors";
-import { DEFAULT_ERROR_MAP, DEFAULT_FIELD_META } from "./constants";
 
 type FieldSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
   TKey,
@@ -163,7 +163,7 @@ export class FormControl<TFormValues> {
     return (subject as Subject<FieldState<TFormValues, TField>>).subscribe(subscriber);
   }
 
-  updateMeta() {
+  syncMeta() {
     let isTouched = false;
     let isDirty = false;
     let isValidating = false;
@@ -185,15 +185,27 @@ export class FormControl<TFormValues> {
     });
   }
 
-  nextFieldState<TField extends DeepKeys<TFormValues>>(
+  updateAndNotifyField<TField extends DeepKeys<TFormValues>>(
     field: TField,
-    newState: Partial<FieldState<TFormValues, TField>>,
+    changes: Partial<FieldState<TFormValues, TField>>,
   ) {
-    const {
-      value = this.getFieldValue(field),
-      meta = this.getFieldMeta(field),
-      errorMap = this.getFieldErrorMap(field),
-    } = newState;
+    let { value, meta, errorMap } = changes;
+
+    if (value === undefined) {
+      value = this.getFieldValue(field);
+    }
+
+    if (meta === undefined) {
+      meta = this.getFieldMeta(field);
+    } else {
+      this.fieldMetaMap.set(field, meta);
+    }
+
+    if (errorMap === undefined) {
+      errorMap = this.getFieldErrorMap(field);
+    } else {
+      this.fieldErrorMap.set(field, errorMap);
+    }
 
     this.fieldSubjects.get(field)?.next({
       value,
@@ -216,13 +228,11 @@ export class FormControl<TFormValues> {
       newMeta = updater;
     }
 
-    this.fieldMetaMap.set(field, newMeta);
-
-    this.nextFieldState(field, {
+    this.updateAndNotifyField(field, {
       meta: newMeta,
     });
 
-    this.updateMeta();
+    this.syncMeta();
   }
 
   _validateSync<TField extends DeepKeys<TFormValues>>(
@@ -238,9 +248,8 @@ export class FormControl<TFormValues> {
     const value = this.getFieldValue(field);
     const errors = transformErrors(field, cause, validator({ value }));
 
-    const errorMap = this.getFieldErrorMap(field);
     const newErrorMap: FieldErrors<TField> = {
-      ...errorMap,
+      ...this.getFieldErrorMap(field),
       [cause]: errors,
     };
 
@@ -251,13 +260,7 @@ export class FormControl<TFormValues> {
           isTouched: true,
         };
 
-    this.fieldErrorMap.set(field, newErrorMap);
-
-    if (newMeta !== undefined) {
-      this.fieldMetaMap.set(field, newMeta);
-    }
-
-    this.nextFieldState(field, {
+    this.updateAndNotifyField(field, {
       value,
       meta: newMeta,
       errorMap: newErrorMap,
@@ -293,9 +296,7 @@ export class FormControl<TFormValues> {
           isValidating: true,
         };
 
-        this.fieldMetaMap.set(field, newMeta);
-
-        this.nextFieldState(field, { meta: newMeta });
+        this.updateAndNotifyField(field, { meta: newMeta });
       }
 
       // Update form meta
@@ -326,10 +327,7 @@ export class FormControl<TFormValues> {
       isValidating: this.runningValidatorMap.isAnyRunning(field),
     };
 
-    this.fieldErrorMap.set(field, newErrorMap);
-    this.fieldMetaMap.set(field, newMeta);
-
-    this.nextFieldState(field, {
+    this.updateAndNotifyField(field, {
       meta: newMeta,
       errorMap: newErrorMap,
     });
@@ -389,16 +387,13 @@ export class FormControl<TFormValues> {
         changeAsync: [],
       };
 
-      this.fieldMetaMap.set(field, newMeta);
-      this.fieldErrorMap.set(field, newErrorMap);
-
-      this.nextFieldState(field, {
+      this.updateAndNotifyField(field, {
         value,
         meta: newMeta,
         errorMap: newErrorMap,
       });
 
-      this.updateMeta();
+      this.syncMeta();
 
       return true;
     }
@@ -406,13 +401,16 @@ export class FormControl<TFormValues> {
     // ===== VALIDATE =====
 
     this.fieldMetaMap.set(field, newMeta);
+    // Reset all errors even errors by other causes
+    // because those errors are for the old value.
+    // This behaviour is different from tanstack form v1.33.0 who kept blur errors.
     this.fieldErrorMap.set(field, { ...DEFAULT_ERROR_MAP });
 
     const errors = this._validateSync(field, "change", {
       dontTouch: true,
     });
 
-    this.updateMeta();
+    this.syncMeta();
 
     // TODO add an option to validate async even if there are sync errors
     if (errors.length === 0 && this.asyncValidators.change[field] != null) {

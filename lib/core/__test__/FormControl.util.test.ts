@@ -47,13 +47,13 @@ describe("FormControl utilities", () => {
     });
   });
 
-  describe("nextFieldState", () => {
+  describe("updateAndNotifyField", () => {
     it("merges partial state with current field value, meta, and errors", () => {
       const form = new FormControl({ defaultValues });
       const subscriber = vi.fn();
 
       form.subscribeField("name", subscriber);
-      form.nextFieldState("name", {
+      form.updateAndNotifyField("name", {
         meta: {
           isTouched: true,
           isDirty: false,
@@ -76,6 +76,32 @@ describe("FormControl utilities", () => {
           blurAsync: [],
         },
       });
+      expect(form.getFieldMeta("name")).toEqual({
+        isTouched: true,
+        isDirty: false,
+        isValidating: false,
+      });
+    });
+
+    it("persists error map changes to the field error map", () => {
+      const form = new FormControl({ defaultValues });
+      const errorMap = {
+        change: [
+          {
+            path: "name" as const,
+            type: "change" as const,
+            message: "Name is required",
+            meta: {},
+          },
+        ],
+        blur: [],
+        changeAsync: [],
+        blurAsync: [],
+      };
+
+      form.updateAndNotifyField("name", { errorMap });
+
+      expect(form.getFieldErrorMap("name")).toEqual(errorMap);
     });
 
     it("does not notify form meta", () => {
@@ -83,7 +109,7 @@ describe("FormControl utilities", () => {
       const metaSubscriber = vi.fn();
 
       form.meta.subscribe(metaSubscriber);
-      form.nextFieldState("name", {
+      form.updateAndNotifyField("name", {
         meta: {
           isTouched: true,
           isDirty: true,
@@ -95,11 +121,11 @@ describe("FormControl utilities", () => {
     });
   });
 
-  describe("updateMeta", () => {
+  describe("syncMeta", () => {
     it("keeps form meta false when no field meta exists", () => {
       const form = new FormControl({ defaultValues });
 
-      form.updateMeta();
+      form.syncMeta();
 
       expect(form.meta.get()).toEqual({
         isTouched: false,
@@ -122,7 +148,7 @@ describe("FormControl utilities", () => {
         isValidating: false,
       });
 
-      form.updateMeta();
+      form.syncMeta();
 
       expect(form.meta.get()).toEqual({
         isTouched: true,
@@ -145,7 +171,7 @@ describe("FormControl utilities", () => {
         isValidating: false,
       });
 
-      form.updateMeta();
+      form.syncMeta();
 
       expect(form.meta.get()).toEqual({
         isTouched: false,
@@ -168,7 +194,7 @@ describe("FormControl utilities", () => {
         isValidating: false,
       });
 
-      form.updateMeta();
+      form.syncMeta();
 
       expect(form.meta.get()).toEqual({
         isTouched: false,
@@ -196,7 +222,7 @@ describe("FormControl utilities", () => {
         isValidating: true,
       });
 
-      form.updateMeta();
+      form.syncMeta();
 
       expect(form.meta.get()).toEqual({
         isTouched: true,
@@ -213,14 +239,14 @@ describe("FormControl utilities", () => {
         isDirty: true,
         isValidating: false,
       });
-      form.updateMeta();
+      form.syncMeta();
 
       form.fieldMetaMap.set("name", {
         isTouched: false,
         isDirty: false,
         isValidating: false,
       });
-      form.updateMeta();
+      form.syncMeta();
 
       expect(form.meta.get()).toEqual({
         isTouched: false,
@@ -240,7 +266,7 @@ describe("FormControl utilities", () => {
         isValidating: false,
       });
 
-      form.updateMeta();
+      form.syncMeta();
 
       expect(subscriber).toHaveBeenCalledOnce();
       expect(subscriber).toHaveBeenCalledWith({

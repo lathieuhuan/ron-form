@@ -45,7 +45,7 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
 
     const errors = form._validateSync(name, "blur");
 
-    form.updateMeta();
+    form.syncMeta();
 
     // TODO add an option to validate async even if there are sync errors
     if (errors.length === 0 && form.asyncValidators.blur[name] != null) {

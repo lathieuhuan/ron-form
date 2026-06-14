@@ -1,7 +1,7 @@
 import type { AnyObject } from "../types/utils";
 import { isObject } from "./isObject";
 
-export function get<T extends AnyObject>(obj: T, path: string, defaultValue: any = null) {
+export function get<T extends AnyObject>(obj: T, path: string, defaultValue: any = undefined) {
   const segments = path.split(".");
   let current: any = obj;
 

@@ -23,7 +23,7 @@ describe("get", () => {
   });
 
   it("returns null by default when path is invalid", () => {
-    expect(get(nestedObject, "user.address.city")).toBeNull();
+    expect(get(nestedObject, "user.address.city")).toBeUndefined();
   });
 
   it("returns undefined when the final key is missing", () => {

@@ -142,7 +142,7 @@ describe("FormControl", () => {
       expect(asyncValidator).not.toHaveBeenCalled();
     });
 
-    it("clears change & changeAsync errors and calls updateMeta when dontValidate is enabled", async () => {
+    it("clears change & changeAsync errors and calls syncMeta when dontValidate is enabled", async () => {
       vi.useFakeTimers();
 
       const form = new FormControl({
@@ -170,7 +170,7 @@ describe("FormControl", () => {
         },
       ]);
 
-      const updateMeta = vi.spyOn(form, "updateMeta");
+      const syncMeta = vi.spyOn(form, "syncMeta");
 
       form.setFieldValue("name", "Na", { dontValidate: true });
       await vi.advanceTimersByTimeAsync(100);
@@ -178,7 +178,7 @@ describe("FormControl", () => {
       const newErrorMap = form.getFieldErrorMap("name");
       expect(newErrorMap.change).toEqual([]);
       expect(newErrorMap.changeAsync).toEqual([]);
-      expect(updateMeta).toHaveBeenCalledOnce();
+      expect(syncMeta).toHaveBeenCalledOnce();
 
       vi.useRealTimers();
     });
@@ -248,9 +248,9 @@ describe("FormControl", () => {
       expect(form.getFieldMeta("name").isTouched).toBe(true);
     });
 
-    it("calls updateMeta", () => {
+    it("calls syncMeta", () => {
       const form = new FormControl({ defaultValues });
-      const updateMeta = vi.spyOn(form, "updateMeta");
+      const syncMeta = vi.spyOn(form, "syncMeta");
 
       form.setFieldMeta("name", {
         isTouched: true,
@@ -258,7 +258,222 @@ describe("FormControl", () => {
         isValidating: false,
       });
 
-      expect(updateMeta).toHaveBeenCalledOnce();
+      expect(syncMeta).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("handleSubmit", () => {
+    it("calls onSubmit with current values when all validators pass", () => {
+      const onSubmit = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: ({ value }) => (value.length > 0 ? null : "Name is required"),
+        },
+        blurValidators: {
+          email: ({ value }) => (value.includes("@") ? null : "Invalid email"),
+        },
+        onSubmit,
+      });
+
+      form.setFieldValue("name", "Jane", { dontValidate: true });
+      form.setFieldValue("email", "jane@example.com", { dontValidate: true });
+
+      form.handleSubmit();
+
+      expect(onSubmit).toHaveBeenCalledOnce();
+      expect(onSubmit).toHaveBeenCalledWith({
+        values: {
+          name: "Jane",
+          email: "jane@example.com",
+          profile: { age: 0 },
+        },
+      });
+    });
+
+    it("calls onSubmit when no validators are registered", () => {
+      const onSubmit = vi.fn();
+      const form = new FormControl({ defaultValues, onSubmit });
+
+      form.handleSubmit();
+
+      expect(onSubmit).toHaveBeenCalledOnce();
+      expect(onSubmit).toHaveBeenCalledWith({ values: defaultValues });
+    });
+
+    it("does not call onSubmit when change validation fails", () => {
+      const onSubmit = vi.fn();
+      const onSubmitFailed = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: () => "Name is required",
+        },
+        onSubmit,
+        onSubmitFailed,
+      });
+
+      form.handleSubmit();
+
+      expect(onSubmit).not.toHaveBeenCalled();
+      expect(onSubmitFailed).toHaveBeenCalledOnce();
+    });
+
+    it("does not call onSubmit when blur validation fails", () => {
+      const onSubmit = vi.fn();
+      const onSubmitFailed = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        blurValidators: {
+          email: () => "Email is required",
+        },
+        onSubmit,
+        onSubmitFailed,
+      });
+
+      form.handleSubmit();
+
+      expect(onSubmit).not.toHaveBeenCalled();
+      expect(onSubmitFailed).toHaveBeenCalledOnce();
+    });
+
+    it("calls onSubmitFailed when any validator fails", () => {
+      const onSubmitFailed = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: () => "Name is required",
+        },
+        blurValidators: {
+          email: () => "Email is required",
+        },
+        onSubmitFailed,
+      });
+
+      form.handleSubmit();
+
+      expect(onSubmitFailed).toHaveBeenCalledOnce();
+    });
+
+    it("runs change and blur validators for all registered fields", () => {
+      const changeValidator = vi.fn(() => null);
+      const blurValidator = vi.fn(() => null);
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: changeValidator,
+          email: changeValidator,
+        },
+        blurValidators: {
+          name: blurValidator,
+          "profile.age": blurValidator,
+        },
+      });
+
+      form.handleSubmit();
+
+      expect(changeValidator).toHaveBeenCalledTimes(2);
+      expect(changeValidator.mock.calls).toEqual([[{ value: "" }], [{ value: "" }]]);
+
+      expect(blurValidator).toHaveBeenCalledTimes(2);
+      expect(blurValidator.mock.calls).toEqual([[{ value: "" }], [{ value: 0 }]]);
+    });
+
+    it("stores sync validation errors in field error maps", () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: () => "Name is required",
+        },
+        blurValidators: {
+          email: () => "Email is required",
+        },
+      });
+
+      form.handleSubmit();
+
+      expect(form.getFieldErrorMap("name").change).toEqual([
+        {
+          path: "name",
+          type: "change",
+          message: "Name is required",
+          meta: {},
+        },
+      ]);
+      expect(form.getFieldErrorMap("email").blur).toEqual([
+        {
+          path: "email",
+          type: "blur",
+          message: "Email is required",
+          meta: {},
+        },
+      ]);
+    });
+
+    it("marks validated fields as touched", () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: () => null,
+        },
+        blurValidators: {
+          email: () => null,
+        },
+      });
+
+      form.handleSubmit();
+
+      expect(form.getFieldMeta("name").isTouched).toBe(true);
+      expect(form.getFieldMeta("email").isTouched).toBe(true);
+    });
+
+    it("sets form meta isTouched to true", () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: () => "Name is required",
+        },
+      });
+
+      form.handleSubmit();
+
+      expect(form.meta.get().isTouched).toBe(true);
+    });
+
+    it("sets form meta isTouched to true even when validation succeeds", () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: () => null,
+        },
+        onSubmit: () => {},
+      });
+
+      form.handleSubmit();
+
+      expect(form.meta.get().isTouched).toBe(true);
+    });
+
+    it("does not run async validators", async () => {
+      vi.useFakeTimers();
+
+      const asyncValidator = vi.fn(async () => "Async error");
+      const onSubmit = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: {
+          name: asyncValidator,
+        },
+        onSubmit,
+      });
+
+      form.handleSubmit();
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(asyncValidator).not.toHaveBeenCalled();
+      expect(onSubmit).toHaveBeenCalledOnce();
+
+      vi.useRealTimers();
     });
   });
 });
