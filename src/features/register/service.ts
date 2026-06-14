@@ -8,3 +8,14 @@ export async function isUsernameAvailable(username: string) {
     );
   });
 }
+
+export async function isEmailAvailable(email: string) {
+  return new Promise((resolve) => {
+    setTimeout(
+      () => {
+        resolve(email !== "qwe");
+      },
+      300 + Math.random() * 200,
+    );
+  });
+}

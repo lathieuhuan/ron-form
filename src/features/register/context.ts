@@ -1,8 +1,8 @@
 import { createContexts, UseFormOptions } from "@lib/react";
-import { isUsernameAvailable } from "./service";
+import { isEmailAvailable, isUsernameAvailable } from "./service";
 
 export interface RegisterFormValues {
-  firstName: string;
+  email: string;
   username: string;
   profession?: string;
   age: number | null;
@@ -15,15 +15,25 @@ export const { FormContext, Form, FormMeta, Field, useForm, useFormInstance, use
 
 export const useFormOptions: UseFormOptions<RegisterFormValues> = {
   defaultValues: {
-    firstName: "",
+    email: "",
     username: "",
     age: 0,
     password: "",
     confirmPassword: "",
   },
   changeValidators: {
-    firstName: ({ value }) => {
-      return value.trim() ? "Required" : null;
+    email: ({ value }) => {
+      const email = value.trim();
+
+      if (!email) {
+        return "Required";
+      }
+
+      if (email.length < 3) {
+        return "Please enter at least 3 characters";
+      }
+
+      return null;
     },
     username: ({ value }) => {
       return value.trim() ? "Required" : null;
@@ -34,10 +44,15 @@ export const useFormOptions: UseFormOptions<RegisterFormValues> = {
       }
 
       if (value < 18) {
-        return "You must be at least 18 years old to register";
+        return "You must be at least 18 or older";
       }
 
       return null;
+    },
+  },
+  changeAsyncValidators: {
+    email: async ({ value }) => {
+      return (await isEmailAvailable(value)) ? null : "This email is already in use";
     },
   },
   blurAsyncValidators: {
