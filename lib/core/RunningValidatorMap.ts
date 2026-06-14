@@ -12,15 +12,25 @@ export class RunningValidatorMap<TFormValues> {
   }
 
   remove(field: DeepKeys<TFormValues>, cause: ValidationCause) {
-    const runningValidators = this.get(field);
+    const causes = this.get(field);
 
     this.map.set(
       field,
-      runningValidators.filter((c) => c !== cause),
+      causes.filter((c) => c !== cause),
     );
   }
 
-  isAnyRunning(field: DeepKeys<TFormValues>) {
+  isAnyRunning(field?: DeepKeys<TFormValues>) {
+    if (field === undefined) {
+      for (const causes of this.map.values()) {
+        if (causes.length > 0) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
     return this.get(field).length > 0;
   }
 }

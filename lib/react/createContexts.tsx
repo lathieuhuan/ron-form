@@ -1,16 +1,23 @@
-import { createContext, ReactElement, useContext, useEffect, useState } from "react";
-
-import {
+import type {
   DeepKeys,
   DeepValue,
-  FieldApi,
-  FormControl,
   FieldError,
   FieldErrors,
   FieldMeta,
-  type FormApi,
+  FieldState,
+  FormApi,
   FormMeta,
 } from "@lib/core";
+
+import { FieldControl, FormControl } from "@lib/core";
+import {
+  createContext,
+  ReactElement,
+  useContext,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useForm } from "./hooks";
 
 export interface UseFormFieldProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
@@ -25,20 +32,20 @@ export interface ReactFieldLooseApi<TFormValues> {
   errorMap: FieldErrors<string>;
   errors: FieldError<string>[];
   form: FormApi<TFormValues>;
-  handleChange: (value: any) => void;
-  handleBlur: () => void;
+  handleChange(value: any): void;
+  handleBlur(): void;
 }
 
 export interface ReactFieldStrictApi<
   TFormValues,
   TKey extends DeepKeys<TFormValues>,
-> extends FieldApi<TFormValues, TKey> {
+> extends FieldState<TFormValues, TKey> {
   id: string;
   name: TKey;
   errors: FieldError<TKey>[];
   form: FormApi<TFormValues>;
-  handleChange: (value: DeepValue<TFormValues, TKey>) => void;
-  handleBlur: () => void;
+  handleChange(value: DeepValue<TFormValues, TKey>): void;
+  handleBlur(): void;
 }
 
 export type ReactFieldApi<TFormValues, TKey extends string> =
@@ -51,6 +58,8 @@ export interface FieldProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
   children?: (props: ReactFieldStrictApi<TFormValues, TKey>) => React.ReactElement;
 }
 
+export const defaultFieldStateSelector = <T,>(state: T) => state;
+
 export function createContexts<TFormValues>() {
   const FormContext = createContext<FormApi<TFormValues>>(new FormControl<TFormValues>());
 
@@ -62,29 +71,38 @@ export function createContexts<TFormValues>() {
     return <FormContext.Provider value={props.form}>{props.children}</FormContext.Provider>;
   }
 
-  function useFormMeta(form: FormApi<TFormValues>) {
-    const [state, setState] = useState<FormMeta>(() => form.meta);
+  function FormMeta(props: {
+    children: (meta: FormMeta, form: FormApi<TFormValues>) => ReactElement;
+  }) {
+    const form = useContext(FormContext);
+    const meta = useSyncExternalStore(form.meta.subscribe, form.meta.get);
+
+    return props.children(meta, form);
+  }
+
+  function useFieldState<TKey extends DeepKeys<TFormValues>, K = FieldState<TFormValues, TKey>>(
+    name: TKey,
+    form: FormApi<TFormValues>,
+    selector: (state: FieldState<TFormValues, TKey>) => K,
+  ) {
+    const selectFn = selector || defaultFieldStateSelector<K>;
+
+    const [state, setState] = useState<K>(() => selectFn(form.getFieldState(name)));
 
     useEffect(() => {
-      const unsubscribe = form.subscribeMeta((newMeta) => {
-        setState(newMeta);
+      const unsubscribe = form.subscribeField(name, (field) => {
+        setState((prev) => {
+          const next = selectFn(field);
+          return next === prev ? prev : next;
+        });
       });
 
       return () => {
         unsubscribe();
       };
-    }, [form]);
+    }, [form, name]);
 
     return state;
-  }
-
-  function FormMeta(props: {
-    children: (meta: FormMeta, form: FormApi<TFormValues>) => ReactElement;
-  }) {
-    const form = useContext(FormContext);
-    const meta = useFormMeta(form);
-
-    return props.children(meta, form);
   }
 
   function useFormField<TKey extends DeepKeys<TFormValues>>({
@@ -92,15 +110,29 @@ export function createContexts<TFormValues>() {
   }: UseFormFieldProps<TFormValues, TKey>): ReactFieldStrictApi<TFormValues, TKey> {
     const form = useContext(FormContext);
 
-    const [state, setState] = useState<FieldApi<TFormValues, TKey>>(() => {
-      return {
-        value: form.getFieldValue(name),
-        meta: form.getFieldMeta(name),
-        errorMap: form.getFieldErrorMap(name),
-      };
+    const [api, setApi] = useState(() => {
+      return new FieldControl(form as FormControl<TFormValues>, name);
+    });
+    const [state, setState] = useState<FieldState<TFormValues, TKey>>(() => {
+      return form.getFieldState(name);
     });
 
     useEffect(() => {
+      let newApi = api;
+
+      if (api.form !== form || api.name !== name) {
+        newApi = new FieldControl(form as FormControl<TFormValues>, name);
+        setApi(newApi);
+      }
+
+      const value = form.getFieldValue(name);
+      const meta = form.getFieldMeta(name);
+      const errorMap = form.getFieldErrorMap(name);
+
+      if (value !== state.value || meta !== state.meta || errorMap !== state.errorMap) {
+        setState({ value, meta, errorMap });
+      }
+
       const unsubscribe = form.subscribeField(name, (newField) => {
         setState(newField);
       });
@@ -109,21 +141,6 @@ export function createContexts<TFormValues>() {
         unsubscribe();
       };
     }, [form, name]);
-
-    const handleChange = (value: DeepValue<TFormValues, TKey>) => {
-      form.setFieldValue(name, value);
-    };
-
-    const handleBlur = () => {
-      if (form.getFieldMeta(name).isTouched) {
-        return;
-      }
-
-      form.setFieldMeta(name, (prev) => ({
-        ...prev,
-        isTouched: true,
-      }));
-    };
 
     return {
       id: name,
@@ -138,8 +155,8 @@ export function createContexts<TFormValues>() {
 
         return change.concat(blur, changeAsync, blurAsync);
       },
-      handleChange,
-      handleBlur,
+      handleChange: api.handleChange,
+      handleBlur: api.handleBlur,
     };
   }
 
@@ -166,6 +183,6 @@ export function createContexts<TFormValues>() {
     useForm: useForm as typeof useForm<TFormValues>,
     useFormInstance,
     useFormField,
-    useFormMeta,
+    useFieldState,
   };
 }

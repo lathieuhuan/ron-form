@@ -1,57 +1,17 @@
 import type { FieldError } from "@lib/core";
 import type { ReactFieldLooseApi } from "@lib/react";
 
-import { Field, Form, FormMeta, RegisterFormValues, useForm } from "./context";
+import { Field, Form, FormMeta, RegisterFormValues, useForm, useFormOptions } from "./context";
 
 import { Button } from "@src/components/Button";
 import { FieldError as Error, FieldLabel } from "@src/components/Field";
 import { Input } from "@src/components/Input";
 import { InputNumber } from "@src/components/InputNumber";
 import { Select } from "@src/components/Select";
-
-async function isEmailAvailable(email: string) {
-  return new Promise((resolve) => {
-    setTimeout(
-      () => {
-        resolve(email !== "asd");
-      },
-      250 + Math.random() * 100,
-    );
-  });
-}
+import { FormField } from "@src/components/form";
 
 export function RegisterForm() {
-  const form = useForm({
-    defaultValues: {
-      email: "",
-      username: "",
-      age: 0,
-      password: "",
-      confirmPassword: "",
-    },
-    changeValidators: {
-      email: ({ value }) => {
-        return value.length < 2 ? "Please enter at least 2 characters" : null;
-      },
-      age: ({ value }) => {
-        if (typeof value !== "number" || isNaN(value)) {
-          return "Please enter a valid age";
-        }
-
-        if (value < 18) {
-          return "You must be at least 18 years old to register";
-        }
-
-        return null;
-      },
-    },
-    changeAsyncValidators: {
-      email: async ({ value }) => {
-        const emailAvailable = await isEmailAvailable(value);
-        return emailAvailable ? null : "This email is already in use";
-      },
-    },
-  });
+  const form = useForm(useFormOptions);
 
   const showErrors = (field: ReactFieldLooseApi<RegisterFormValues>) => {
     return field.meta.isTouched && field.errors.length > 0;
@@ -63,7 +23,6 @@ export function RegisterForm() {
 
   const handleLog = () => {
     console.log(form.values);
-    console.log(form["fieldMetaMap"]);
   };
 
   return (
@@ -72,21 +31,14 @@ export function RegisterForm() {
         <h1 className="text-2xl font-bold">Register Form</h1>
 
         <div className="grid grid-cols-2 gap-4">
-          <Field name="email">
+          <Field name="firstName">
             {(field) => (
-              <div>
-                <FieldLabel htmlFor={field.id}>Email</FieldLabel>
-                <Input
-                  id={field.id}
-                  value={field.value}
-                  onBlur={field.handleBlur}
-                  onChange={field.handleChange}
-                />
-                {field.meta.isValidating && <div>Validating...</div>}
-                {showErrors(field) && <Error>{formatErrors(field.errors)}</Error>}
-              </div>
+              <FormField label="First Name" field={field}>
+                <Input />
+              </FormField>
             )}
           </Field>
+
           <Field name="username">
             {(field) => (
               <div>
@@ -161,7 +113,9 @@ export function RegisterForm() {
           <Button variant="outline" onClick={handleLog}>
             Log
           </Button>
-          <Button type="submit">Submit</Button>
+          <Button type="submit" onClick={form.handleSubmit}>
+            Submit
+          </Button>
         </div>
 
         <div>

@@ -9,7 +9,7 @@ export interface FieldMeta {
   isValidating: boolean;
 }
 
-export interface FieldApi<TFormValues, TKey extends DeepKeys<TFormValues>> {
+export interface FieldState<TFormValues, TKey extends DeepKeys<TFormValues>> {
   value: DeepValue<TFormValues, TKey>;
   meta: FieldMeta;
   errorMap: FieldErrors<TKey>;

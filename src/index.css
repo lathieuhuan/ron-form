@@ -27,6 +27,14 @@
   --color-primary-foreground: black;
   --color-secondary: #349cfe;
   --color-background: var(--background);
+
+  --animate-spin: spin 0.5s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .app {
