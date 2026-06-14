@@ -183,6 +183,39 @@ describe("FormControl", () => {
       vi.useRealTimers();
     });
 
+    it("notifies field subscribers", () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: () => "Name is invalid",
+        },
+      });
+      const subscriber = vi.fn();
+
+      form.subscribeField("name", subscriber);
+      form.setFieldValue("name", "Jane");
+
+      expect(subscriber).toHaveBeenCalledWith(
+        expect.objectContaining({
+          value: "Jane",
+        }),
+      );
+    });
+
+    it("notifies field subscribers even when dontValidate is false but there is no sync validator", () => {
+      const form = new FormControl({ defaultValues });
+      const subscriber = vi.fn();
+
+      form.subscribeField("name", subscriber);
+      form.setFieldValue("name", "Jane", { dontValidate: false });
+
+      expect(subscriber).toHaveBeenCalledWith(
+        expect.objectContaining({
+          value: "Jane",
+        }),
+      );
+    });
+
     it("updates form meta after sync validation", () => {
       const form = new FormControl({
         defaultValues,
