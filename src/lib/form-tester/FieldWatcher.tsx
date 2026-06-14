@@ -28,21 +28,21 @@ export function FieldWatcher() {
 
       <div className="space-y-2">
         <div>
-          <p>Value</p>
+          <p className="text-primary">Value</p>
           <pre>{JSON.stringify(field.value, null, 2)}</pre>
         </div>
 
         <Divider direction="horizontal" />
 
         <div>
-          <p>Meta</p>
+          <p className="text-primary">Meta</p>
           <pre>{JSON.stringify(field.meta, null, 2)}</pre>
         </div>
 
         <Divider direction="horizontal" />
 
         <div>
-          <p>Errors</p>
+          <p className="text-primary">Errors</p>
           <pre>{JSON.stringify(field.errorMap, null, 2)}</pre>
         </div>
       </div>

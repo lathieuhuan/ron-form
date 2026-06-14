@@ -49,57 +49,19 @@ export function RegisterForm() {
               )}
             </Field>
 
-            <Field name="profession">
-              {(field) => (
-                <div>
-                  <FieldLabel htmlFor={field.id}>Profession</FieldLabel>
-                  <Select id={field.id} value={field.value} onValueChange={field.handleChange} />
-                  <Error>{formatErrors(field.errors)}</Error>
-                </div>
-              )}
-            </Field>
-            <Field name="age">
-              {(field) => (
-                <div>
-                  <FieldLabel htmlFor={field.id}>Age</FieldLabel>
-                  <InputNumber
-                    id={field.id}
-                    value={field.value}
-                    onBlur={field.handleBlur}
-                    onChange={field.handleChange}
-                  />
-                  {showErrors(field) && <Error>{formatErrors(field.errors)}</Error>}
-                </div>
-              )}
-            </Field>
-
             <Field name="password">
               {(field) => (
-                <div>
-                  <FieldLabel htmlFor={field.id}>Password</FieldLabel>
-                  <Input
-                    id={field.id}
-                    value={field.value}
-                    onBlur={field.handleBlur}
-                    onChange={field.handleChange}
-                  />
-                  {showErrors(field) && <Error>{formatErrors(field.errors)}</Error>}
-                </div>
+                <FormField label="Password" field={field}>
+                  <Input />
+                </FormField>
               )}
             </Field>
 
             <Field name="confirmPassword">
               {(field) => (
-                <div>
-                  <FieldLabel htmlFor={field.id}>Confirm Password</FieldLabel>
-                  <Input
-                    id={field.id}
-                    value={field.value}
-                    onBlur={field.handleBlur}
-                    onChange={field.handleChange}
-                  />
-                  {showErrors(field) && <Error>{formatErrors(field.errors)}</Error>}
-                </div>
+                <FormField label="Confirm Password" field={field}>
+                  <Input />
+                </FormField>
               )}
             </Field>
           </div>

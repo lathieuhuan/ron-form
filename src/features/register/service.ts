@@ -1,10 +1,10 @@
-export async function isUsernameAvailable(username: string) {
+export async function isEmailValid(email: string) {
   return new Promise((resolve) => {
     setTimeout(
       () => {
-        resolve(username !== "asd");
+        resolve(email.includes("@"));
       },
-      800 + Math.random() * 200,
+      300 + Math.random() * 200,
     );
   });
 }
@@ -14,6 +14,17 @@ export async function isEmailAvailable(email: string) {
     setTimeout(
       () => {
         resolve(email !== "qwe");
+      },
+      800 + Math.random() * 200,
+    );
+  });
+}
+
+export async function isUsernameAvailable(username: string) {
+  return new Promise((resolve) => {
+    setTimeout(
+      () => {
+        resolve(username !== "asd");
       },
       300 + Math.random() * 200,
     );
