@@ -4,7 +4,7 @@ import { FieldSelector } from "@src/lib/form-supervisor";
 import { cloneElement } from "react";
 
 const shouldShowErrors = (field: ReactFieldLooseApi<unknown>) => {
-  return field.meta.isTouched && field.errors.length > 0;
+  return field.meta.isBlurred && field.errors.length > 0;
 };
 
 const formatErrors = (errors: FieldError<string>[]) => {

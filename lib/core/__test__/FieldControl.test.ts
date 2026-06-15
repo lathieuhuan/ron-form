@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FieldControl } from "../FieldControl";
 import { FormControl } from "../FormControl";
+import { delay } from "../utils/delay";
 
 const defaultValues = {
   name: "John",
@@ -47,6 +48,7 @@ describe("FieldControl", () => {
       field.handleChange("Jane");
 
       expect(form.getFieldMeta("name")).toEqual({
+        isBlurred: false,
         isTouched: true,
         isDirty: true,
         isValidating: false,
@@ -84,31 +86,50 @@ describe("FieldControl", () => {
       vi.useRealTimers();
     });
 
-    describe("touch state", () => {
-      it("marks the field as touched when it was not touched", () => {
+    describe("blurred and touched state", () => {
+      it("marks the field as blurred and touched when it was not blurred or touched", () => {
         const form = new FormControl({ defaultValues });
         const field = new FieldControl(form, "name");
+
+        form.fieldMetaMap.set("name", {
+          ...form.getFieldMeta("name"),
+          isBlurred: true,
+          isTouched: false,
+        });
 
         field.handleBlur();
 
         expect(form.getFieldMeta("name")).toEqual({
+          isBlurred: true,
           isTouched: true,
           isDirty: false,
           isValidating: false,
         });
       });
 
-      it("preserves dirty state when marking as touched", () => {
-        const form = new FormControl({ defaultValues });
+      it("preserves other meta when marking as blurred and touched", async () => {
+        const form = new FormControl({
+          defaultValues,
+          changeAsyncValidators: {
+            name: async () => {
+              await delay(100);
+              return "Async error";
+            },
+          },
+          asyncDebounceMs: 100,
+        });
         const field = new FieldControl(form, "name");
 
-        form.setFieldValue("name", "Jane", { dontValidate: true });
+        form.setFieldValue("name", "Jane");
+        await vi.advanceTimersByTimeAsync(100);
+
         field.handleBlur();
 
         expect(form.getFieldMeta("name")).toEqual({
+          isBlurred: true,
           isTouched: true,
           isDirty: true,
-          isValidating: false,
+          isValidating: true,
         });
       });
     });

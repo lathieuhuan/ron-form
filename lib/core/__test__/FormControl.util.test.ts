@@ -22,6 +22,7 @@ describe("FormControl utilities", () => {
       expect(subscriber).toHaveBeenCalledWith({
         value: "Jane",
         meta: {
+          isBlurred: false,
           isTouched: true,
           isDirty: true,
           isValidating: false,
@@ -48,6 +49,21 @@ describe("FormControl utilities", () => {
   });
 
   describe("updateAndNotifyField", () => {
+    it("short circuits if value, meta, and errorMap are not passed/undefined", () => {
+      const form = new FormControl({ defaultValues });
+      const subscriber = vi.fn();
+      form.subscribeField("name", subscriber);
+
+      form.updateAndNotifyField("name", {});
+      expect(subscriber).not.toHaveBeenCalled();
+
+      form.updateAndNotifyField("name", {
+        meta: undefined,
+        errorMap: undefined,
+      });
+      expect(subscriber).not.toHaveBeenCalled();
+    });
+
     it("merges partial state with current field value, meta, and errors", () => {
       const form = new FormControl({ defaultValues });
       const subscriber = vi.fn();
@@ -55,6 +71,7 @@ describe("FormControl utilities", () => {
       form.subscribeField("name", subscriber);
       form.updateAndNotifyField("name", {
         meta: {
+          isBlurred: false,
           isTouched: true,
           isDirty: false,
           isValidating: false,
@@ -65,6 +82,7 @@ describe("FormControl utilities", () => {
       expect(subscriber).toHaveBeenCalledWith({
         value: "John",
         meta: {
+          isBlurred: false,
           isTouched: true,
           isDirty: false,
           isValidating: false,
@@ -77,6 +95,7 @@ describe("FormControl utilities", () => {
         },
       });
       expect(form.getFieldMeta("name")).toEqual({
+        isBlurred: false,
         isTouched: true,
         isDirty: false,
         isValidating: false,
@@ -111,6 +130,7 @@ describe("FormControl utilities", () => {
       form.meta.subscribe(metaSubscriber);
       form.updateAndNotifyField("name", {
         meta: {
+          isBlurred: false,
           isTouched: true,
           isDirty: true,
           isValidating: false,
@@ -128,6 +148,7 @@ describe("FormControl utilities", () => {
       form.syncMeta();
 
       expect(form.meta.get()).toEqual({
+        isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: false,
@@ -138,11 +159,13 @@ describe("FormControl utilities", () => {
       const form = new FormControl({ defaultValues });
 
       form.fieldMetaMap.set("name", {
+        isBlurred: false,
         isTouched: true,
         isDirty: false,
         isValidating: false,
       });
       form.fieldMetaMap.set("email", {
+        isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: false,
@@ -151,6 +174,7 @@ describe("FormControl utilities", () => {
       form.syncMeta();
 
       expect(form.meta.get()).toEqual({
+        isBlurred: false,
         isTouched: true,
         isDirty: false,
         isValidating: false,
@@ -161,11 +185,13 @@ describe("FormControl utilities", () => {
       const form = new FormControl({ defaultValues });
 
       form.fieldMetaMap.set("name", {
+        isBlurred: false,
         isTouched: false,
         isDirty: true,
         isValidating: false,
       });
       form.fieldMetaMap.set("email", {
+        isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: false,
@@ -174,6 +200,7 @@ describe("FormControl utilities", () => {
       form.syncMeta();
 
       expect(form.meta.get()).toEqual({
+        isBlurred: false,
         isTouched: false,
         isDirty: true,
         isValidating: false,
@@ -184,11 +211,13 @@ describe("FormControl utilities", () => {
       const form = new FormControl({ defaultValues });
 
       form.fieldMetaMap.set("name", {
+        isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: true,
       });
       form.fieldMetaMap.set("email", {
+        isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: false,
@@ -197,6 +226,7 @@ describe("FormControl utilities", () => {
       form.syncMeta();
 
       expect(form.meta.get()).toEqual({
+        isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: true,
@@ -207,16 +237,19 @@ describe("FormControl utilities", () => {
       const form = new FormControl({ defaultValues });
 
       form.fieldMetaMap.set("name", {
+        isBlurred: false,
         isTouched: true,
         isDirty: false,
         isValidating: false,
       });
       form.fieldMetaMap.set("email", {
+        isBlurred: false,
         isTouched: false,
         isDirty: true,
         isValidating: false,
       });
       form.fieldMetaMap.set("profile.age", {
+        isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: true,
@@ -225,6 +258,7 @@ describe("FormControl utilities", () => {
       form.syncMeta();
 
       expect(form.meta.get()).toEqual({
+        isBlurred: false,
         isTouched: true,
         isDirty: true,
         isValidating: true,
@@ -235,6 +269,7 @@ describe("FormControl utilities", () => {
       const form = new FormControl({ defaultValues });
 
       form.fieldMetaMap.set("name", {
+        isBlurred: false,
         isTouched: true,
         isDirty: true,
         isValidating: false,
@@ -242,6 +277,7 @@ describe("FormControl utilities", () => {
       form.syncMeta();
 
       form.fieldMetaMap.set("name", {
+        isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: false,
@@ -249,6 +285,7 @@ describe("FormControl utilities", () => {
       form.syncMeta();
 
       expect(form.meta.get()).toEqual({
+        isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: false,
@@ -261,6 +298,7 @@ describe("FormControl utilities", () => {
 
       form.meta.subscribe(subscriber);
       form.fieldMetaMap.set("name", {
+        isBlurred: false,
         isTouched: true,
         isDirty: true,
         isValidating: false,
@@ -270,6 +308,7 @@ describe("FormControl utilities", () => {
 
       expect(subscriber).toHaveBeenCalledOnce();
       expect(subscriber).toHaveBeenCalledWith({
+        isBlurred: false,
         isTouched: true,
         isDirty: true,
         isValidating: false,

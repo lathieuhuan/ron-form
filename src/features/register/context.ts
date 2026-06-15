@@ -57,4 +57,10 @@ export const useFormOptions: UseFormOptions<RegisterFormValues> = {
       return (await isUsernameAvailable(value)) ? null : "This username is already in use";
     },
   },
+  onSubmit: ({ values }) => {
+    console.log(values);
+  },
+  onSubmitFailed: () => {
+    console.log("Submit failed");
+  },
 };

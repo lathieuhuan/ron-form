@@ -220,6 +220,7 @@ describe("FormControl validation", () => {
       expect(subscriber).toHaveBeenLastCalledWith({
         value: "John",
         meta: {
+          isBlurred: false,
           isTouched: true,
           isDirty: false,
           isValidating: false,
@@ -315,6 +316,7 @@ describe("FormControl validation", () => {
       });
 
       form.fieldMetaMap.set("name", {
+        isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: true,

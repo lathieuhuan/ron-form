@@ -21,9 +21,11 @@ export type FieldErrors<TKey> = {
 
 // ===== VALIDATORS =====
 
+type ErrorMessages = string | string[] | null | undefined;
+
 type Validator<TValues, TDeepKey extends DeepKeys<TValues>> = (args: {
   value: DeepValue<TValues, TDeepKey>;
-}) => string | string[] | null | undefined;
+}) => ErrorMessages;
 
 export type FormValidators<TFormValues> = {
   [K in DeepKeys<TFormValues>]?: Validator<TFormValues, K>;
@@ -31,7 +33,7 @@ export type FormValidators<TFormValues> = {
 
 export type AsyncValidator<TValues, TDeepKey> = (args: {
   value: DeepValue<TValues, TDeepKey>;
-}) => Promise<string | string[] | null | undefined>;
+}) => Promise<ErrorMessages>;
 
 export type FormAsyncValidators<TFormValues> = {
   [K in DeepKeys<TFormValues>]?: AsyncValidator<TFormValues, K>;

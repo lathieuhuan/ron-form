@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FormControl } from "../FormControl";
-import { DEFAULT_ERROR_MAP, DEFAULT_FIELD_META } from "../constants";
+import { DEFAULT_ERROR_MAP, DEFAULT_META } from "../constants";
 
 const defaultValues = {
   name: "John",
@@ -29,7 +29,7 @@ describe("FormControl getters", () => {
     it("returns default meta for fresh fields", () => {
       const form = new FormControl({ defaultValues });
 
-      expect(form.getFieldMeta("name")).toEqual(DEFAULT_FIELD_META);
+      expect(form.getFieldMeta("name")).toEqual(DEFAULT_META);
     });
 
     it("returns stored meta after it has been set", () => {

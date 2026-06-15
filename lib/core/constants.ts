@@ -7,7 +7,8 @@ export const DEFAULT_ERROR_MAP: FieldErrors<string> = {
   blurAsync: [],
 };
 
-export const DEFAULT_FIELD_META: FieldMeta = {
+export const DEFAULT_META: FieldMeta = {
+  isBlurred: false,
   isTouched: false,
   isDirty: false,
   isValidating: false,

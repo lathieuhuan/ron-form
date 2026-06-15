@@ -1,5 +1,5 @@
 import type { FormControl } from "./FormControl";
-import type { DeepKeys, DeepValue } from "./types";
+import type { DeepKeys, DeepValue, FieldError } from "./types";
 
 export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
   form: FormControl<TFormValues>;
@@ -30,20 +30,44 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
     // ===== MAIN LOGIC =====
 
     const meta = form.getFieldMeta(name);
+    const errorMap = form.getFieldErrorMap(name);
+    let newMeta = meta;
+    let newErrorMap = errorMap;
 
-    if (!meta.isTouched) {
-      form.setFieldMeta(name, {
+    if (!meta.isBlurred || !meta.isTouched) {
+      newMeta = {
         ...meta,
+        isBlurred: true,
         isTouched: true,
-      });
+      };
+
+      form.fieldMetaMap.set(name, newMeta);
     }
 
-    form.fieldErrorMap.set(name, {
-      ...form.getFieldErrorMap(name),
-      blurAsync: [],
-    });
+    if (errorMap.blurAsync != null && errorMap.blurAsync.length > 0) {
+      newErrorMap = {
+        ...errorMap,
+        blurAsync: [],
+      };
 
-    const errors = form._validateSync(name, "blur");
+      form.fieldErrorMap.set(name, newErrorMap);
+    }
+
+    let errors: FieldError<TField>[] = [];
+
+    // TODO check if it is handled correctly,
+    // we want no field update when these conditions are met:
+    // - meta before handleBlur: isBlurred === true & isTouched === true
+    // - no blur async validators are registered
+    // - no blur sync validators are registered OR no blur sync errors
+    if (form.validators.blur[name] != null) {
+      errors = form._validateSync(name, "blur");
+    } else {
+      form.updateAndNotifyField(name, {
+        meta: newMeta === meta ? undefined : newMeta,
+        errorMap: newErrorMap === errorMap ? undefined : newErrorMap,
+      });
+    }
 
     form.syncMeta();
 

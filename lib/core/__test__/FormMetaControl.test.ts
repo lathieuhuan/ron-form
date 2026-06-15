@@ -1,16 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { FormMetaControl } from "../FormMetaControl";
+import { DEFAULT_META } from "../constants";
 
 describe("FormMetaControl", () => {
   describe("constructor", () => {
     it("initializes meta as untouched, clean, and not validating by default", () => {
       const metaControl = new FormMetaControl();
 
-      expect(metaControl.get()).toEqual({
-        isTouched: false,
-        isDirty: false,
-        isValidating: false,
-      });
+      expect(metaControl.get()).toEqual(DEFAULT_META);
     });
 
     it("accepts partial initial meta values", () => {
@@ -20,8 +17,8 @@ describe("FormMetaControl", () => {
       });
 
       expect(metaControl.get()).toEqual({
+        ...DEFAULT_META,
         isTouched: true,
-        isDirty: false,
         isValidating: true,
       });
     });
@@ -30,12 +27,14 @@ describe("FormMetaControl", () => {
   describe("get", () => {
     it("returns the current meta state", () => {
       const metaControl = new FormMetaControl({
+        isBlurred: false,
         isTouched: true,
         isDirty: true,
         isValidating: false,
       });
 
       expect(metaControl.get()).toEqual({
+        isBlurred: false,
         isTouched: true,
         isDirty: true,
         isValidating: false,
@@ -50,6 +49,7 @@ describe("FormMetaControl", () => {
       metaControl.set({ isTouched: true });
 
       expect(metaControl.get()).toEqual({
+        isBlurred: false,
         isTouched: true,
         isDirty: false,
         isValidating: false,
@@ -62,6 +62,7 @@ describe("FormMetaControl", () => {
       metaControl.set({ isDirty: true });
 
       expect(metaControl.get()).toEqual({
+        isBlurred: false,
         isTouched: true,
         isDirty: true,
         isValidating: false,
@@ -107,6 +108,7 @@ describe("FormMetaControl", () => {
 
       expect(subscriber).toHaveBeenCalledOnce();
       expect(subscriber).toHaveBeenCalledWith({
+        isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: true,
@@ -136,11 +138,13 @@ describe("FormMetaControl", () => {
       expect(firstSubscriber).toHaveBeenCalledOnce();
       expect(secondSubscriber).toHaveBeenCalledOnce();
       expect(firstSubscriber).toHaveBeenCalledWith({
+        isBlurred: false,
         isTouched: false,
         isDirty: true,
         isValidating: false,
       });
       expect(secondSubscriber).toHaveBeenCalledWith({
+        isBlurred: false,
         isTouched: false,
         isDirty: true,
         isValidating: false,

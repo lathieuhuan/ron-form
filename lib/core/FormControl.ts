@@ -15,7 +15,7 @@ import type {
   ValidatorMap,
 } from "./types";
 
-import { DEFAULT_ERROR_MAP, DEFAULT_FIELD_META } from "./constants";
+import { DEFAULT_ERROR_MAP, DEFAULT_META } from "./constants";
 import { FormMetaControl, type FormMetaApi } from "./FormMetaControl";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
@@ -122,7 +122,7 @@ export class FormControl<TFormValues> {
    * @public
    */
   getFieldMeta<TField extends DeepKeys<TFormValues>>(field: TField): FieldMeta {
-    return this.fieldMetaMap.get(field) || { ...DEFAULT_FIELD_META };
+    return this.fieldMetaMap.get(field) || { ...DEFAULT_META };
   }
 
   /**
@@ -164,34 +164,47 @@ export class FormControl<TFormValues> {
   }
 
   syncMeta() {
+    let isBlurred = false;
     let isTouched = false;
     let isDirty = false;
     let isValidating = false;
 
     for (const meta of this.fieldMetaMap.values()) {
+      isBlurred = isBlurred || meta.isBlurred;
       isValidating = isValidating || meta.isValidating;
       isTouched = isTouched || meta.isTouched;
       isDirty = isDirty || meta.isDirty;
 
-      if (isTouched && isDirty && isValidating) {
+      if (isBlurred && isTouched && isDirty && isValidating) {
         break;
       }
     }
 
     this.meta.set({
+      isBlurred,
       isTouched,
       isDirty,
       isValidating,
     });
   }
 
+  /**
+   * If `value` is not passed and meta & errorMap are not passed/undefined,
+   * this method will short circuit.
+   */
   updateAndNotifyField<TField extends DeepKeys<TFormValues>>(
     field: TField,
     changes: Partial<FieldState<TFormValues, TField>>,
   ) {
     let { value, meta, errorMap } = changes;
+    const valueChanged = "value" in changes;
 
-    if (value === undefined) {
+    if (!valueChanged && meta === undefined && errorMap === undefined) {
+      return;
+    }
+
+    // TODO write test for value === undefined/null (e.g. clear value)
+    if (!valueChanged) {
       value = this.getFieldValue(field);
     }
 
@@ -208,7 +221,7 @@ export class FormControl<TFormValues> {
     }
 
     this.fieldSubjects.get(field)?.next({
-      value,
+      value: value as DeepValue<TFormValues, TField>,
       meta,
       errorMap,
     });
@@ -245,6 +258,7 @@ export class FormControl<TFormValues> {
     const validator = this.validators[cause][field];
     if (validator == null) return [];
 
+    const { dontTouch = false } = options;
     const value = this.getFieldValue(field);
     const errors = transformErrors(field, cause, validator({ value }));
 
@@ -253,12 +267,14 @@ export class FormControl<TFormValues> {
       [cause]: errors,
     };
 
-    const newMeta: FieldMeta | undefined = options.dontTouch
-      ? undefined
-      : {
-          ...this.getFieldMeta(field),
-          isTouched: true,
-        };
+    const meta = this.getFieldMeta(field);
+    const newMeta: FieldMeta | undefined =
+      dontTouch || meta.isTouched
+        ? undefined
+        : {
+            ...meta,
+            isTouched: true,
+          };
 
     this.updateAndNotifyField(field, {
       value,
@@ -375,6 +391,7 @@ export class FormControl<TFormValues> {
 
     const meta = this.getFieldMeta(field);
     const newMeta: FieldMeta = {
+      isBlurred: meta.isBlurred,
       isTouched: dontTouch ? meta.isTouched : true,
       isDirty: dontDirty ? meta.isDirty : true,
       isValidating: false,

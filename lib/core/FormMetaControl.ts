@@ -8,11 +8,17 @@ export class FormMetaControl {
   private meta: FormMeta;
   private subject = createSubject<FormMeta>();
 
-  constructor({ isTouched, isDirty, isValidating }: Partial<FormMeta> = {}) {
+  constructor({
+    isBlurred = false,
+    isTouched = false,
+    isDirty = false,
+    isValidating = false,
+  }: Partial<FormMeta> = {}) {
     this.meta = {
-      isTouched: isTouched ?? false,
-      isDirty: isDirty ?? false,
-      isValidating: isValidating ?? false,
+      isBlurred,
+      isTouched,
+      isDirty,
+      isValidating,
     };
   }
 
