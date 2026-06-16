@@ -1,5 +1,6 @@
 import type { FormControl } from "./FormControl";
-import type { DeepKeys, DeepValue, FieldError } from "./types";
+import type { DeepKeys, DeepValue, FieldError, FieldMeta } from "./types";
+import { transformErrors } from "./utils/transformErrors";
 
 export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
   form: FormControl<TFormValues>;
@@ -29,14 +30,12 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
 
     // ===== MAIN LOGIC =====
 
-    const meta = form.getFieldMeta(name);
-    const errorMap = form.getFieldErrorMap(name);
-    let newMeta = meta;
-    let newErrorMap = errorMap;
+    let newMeta = form.getFieldMeta(name);
+    let newErrorMap = form.getFieldErrorMap(name);
 
-    if (!meta.isBlurred || !meta.isTouched) {
+    if (!newMeta.isBlurred || !newMeta.isTouched) {
       newMeta = {
-        ...meta,
+        ...newMeta,
         isBlurred: true,
         isTouched: true,
       };
@@ -44,30 +43,36 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
       form.fieldMetaMap.set(name, newMeta);
     }
 
-    if (errorMap.blurAsync != null && errorMap.blurAsync.length > 0) {
+    // Clear blur async errors if any
+    if (newErrorMap.blurAsync != null && newErrorMap.blurAsync.length) {
       newErrorMap = {
-        ...errorMap,
+        ...newErrorMap,
         blurAsync: [],
       };
 
       form.fieldErrorMap.set(name, newErrorMap);
     }
 
+    const syncValidator = form.validators.blur[name];
     let errors: FieldError<TField>[] = [];
 
-    // TODO check if it is handled correctly,
-    // we want no field update when these conditions are met:
-    // - meta before handleBlur: isBlurred === true & isTouched === true
-    // - no blur async validators are registered
-    // - no blur sync validators are registered OR no blur sync errors
-    if (form.validators.blur[name] != null) {
-      errors = form._validateSync(name, "blur");
-    } else {
-      form.updateAndNotifyField(name, {
-        meta: newMeta === meta ? undefined : newMeta,
-        errorMap: newErrorMap === errorMap ? undefined : newErrorMap,
-      });
+    if (syncValidator != null) {
+      const value = form.getFieldValue(name);
+
+      errors = transformErrors(name, "blur", syncValidator({ value }));
+
+      if (errors.length || newErrorMap.blur?.length) {
+        newErrorMap = {
+          ...newErrorMap,
+          blur: errors,
+        };
+      }
     }
+
+    form.updateAndNotifyField(name, {
+      meta: newMeta,
+      errorMap: newErrorMap,
+    });
 
     form.syncMeta();
 

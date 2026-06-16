@@ -199,7 +199,14 @@ export class FormControl<TFormValues> {
     let { value, meta, errorMap } = changes;
     const valueChanged = "value" in changes;
 
-    if (!valueChanged && meta === undefined && errorMap === undefined) {
+    const currentMeta = this.getFieldMeta(field);
+    const currentErrorMap = this.getFieldErrorMap(field);
+
+    // Note: The meta & errorMap passed in changes can already be the current ones.
+    meta = meta === undefined ? currentMeta : meta;
+    errorMap = errorMap === undefined ? currentErrorMap : errorMap;
+
+    if (!valueChanged && meta === currentMeta && errorMap === currentErrorMap) {
       return;
     }
 
@@ -208,17 +215,8 @@ export class FormControl<TFormValues> {
       value = this.getFieldValue(field);
     }
 
-    if (meta === undefined) {
-      meta = this.getFieldMeta(field);
-    } else {
-      this.fieldMetaMap.set(field, meta);
-    }
-
-    if (errorMap === undefined) {
-      errorMap = this.getFieldErrorMap(field);
-    } else {
-      this.fieldErrorMap.set(field, errorMap);
-    }
+    this.fieldMetaMap.set(field, meta);
+    this.fieldErrorMap.set(field, errorMap);
 
     this.fieldSubjects.get(field)?.next({
       value: value as DeepValue<TFormValues, TField>,
@@ -231,15 +229,7 @@ export class FormControl<TFormValues> {
    * @public
    */
   setFieldMeta<TField extends DeepKeys<TFormValues>>(field: TField, updater: Updater<FieldMeta>) {
-    let newMeta: FieldMeta;
-
-    if (typeof updater === "function") {
-      const currentMeta = this.getFieldMeta(field);
-
-      newMeta = updater(currentMeta);
-    } else {
-      newMeta = updater;
-    }
+    const newMeta = typeof updater === "function" ? updater(this.getFieldMeta(field)) : updater;
 
     this.updateAndNotifyField(field, {
       meta: newMeta,
@@ -251,6 +241,7 @@ export class FormControl<TFormValues> {
   _validateSync<TField extends DeepKeys<TFormValues>>(
     field: TField,
     cause: ValidationCause,
+    // TODO how about we pass new meta (isTouched: true) here instead
     options: {
       dontTouch?: boolean;
     } = {},
@@ -262,19 +253,23 @@ export class FormControl<TFormValues> {
     const value = this.getFieldValue(field);
     const errors = transformErrors(field, cause, validator({ value }));
 
-    const newErrorMap: FieldErrors<TField> = {
-      ...this.getFieldErrorMap(field),
-      [cause]: errors,
-    };
+    let newErrorMap = this.getFieldErrorMap(field);
 
-    const meta = this.getFieldMeta(field);
-    const newMeta: FieldMeta | undefined =
-      dontTouch || meta.isTouched
-        ? undefined
-        : {
-            ...meta,
-            isTouched: true,
-          };
+    if (errors.length || newErrorMap[cause]?.length) {
+      newErrorMap = {
+        ...newErrorMap,
+        [cause]: errors,
+      };
+    }
+
+    let newMeta = this.getFieldMeta(field);
+
+    if (!dontTouch && !newMeta.isTouched) {
+      newMeta = {
+        ...newMeta,
+        isTouched: true,
+      };
+    }
 
     this.updateAndNotifyField(field, {
       value,
@@ -304,11 +299,11 @@ export class FormControl<TFormValues> {
       this.runningValidatorMap.add(field, cause);
 
       // Update field meta
-      const currentMeta = this.getFieldMeta(field);
+      let newMeta = this.getFieldMeta(field);
 
-      if (!currentMeta.isValidating) {
-        const newMeta: FieldMeta = {
-          ...currentMeta,
+      if (!newMeta.isValidating) {
+        newMeta = {
+          ...newMeta,
           isValidating: true,
         };
 
@@ -334,13 +329,13 @@ export class FormControl<TFormValues> {
     this.runningValidatorMap.remove(field, cause);
 
     // Update field state
-    const newErrorMap: FieldErrors<TField> = {
-      ...this.getFieldErrorMap(field),
-      [errorCause]: errors,
-    };
     const newMeta: FieldMeta = {
       ...this.getFieldMeta(field),
       isValidating: this.runningValidatorMap.isAnyRunning(field),
+    };
+    const newErrorMap: FieldErrors<TField> = {
+      ...this.getFieldErrorMap(field),
+      [errorCause]: errors,
     };
 
     this.updateAndNotifyField(field, {
@@ -398,6 +393,8 @@ export class FormControl<TFormValues> {
     };
 
     if (dontValidate) {
+      // Clear all change errors because they are for the old value.
+      // TODO check if we should clear other errors as well.
       const newErrorMap: FieldErrors<TField> = {
         ...this.getFieldErrorMap(field),
         change: [],

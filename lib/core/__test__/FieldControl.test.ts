@@ -1,7 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
 import { FieldControl } from "../FieldControl";
 import { FormControl } from "../FormControl";
 import { delay } from "../utils/delay";
+import { FieldMeta } from "../types";
 
 const defaultValues = {
   name: "John",
@@ -87,9 +88,45 @@ describe("FieldControl", () => {
     });
 
     describe("blurred and touched state", () => {
-      it("marks the field as blurred and touched when it was not blurred or touched", () => {
+      test("when field is not blurred, it marks the field as blurred and touched, notifies field and form subscribers", () => {
         const form = new FormControl({ defaultValues });
         const field = new FieldControl(form, "name");
+        const formSubscriber = vi.fn();
+        const fieldSubscriber = vi.fn();
+
+        form.meta.subscribe(formSubscriber);
+        form.subscribeField("name", fieldSubscriber);
+
+        form.fieldMetaMap.set("name", {
+          ...form.getFieldMeta("name"),
+          isBlurred: false,
+          isTouched: true,
+        });
+
+        field.handleBlur();
+
+        const newMeta: FieldMeta = {
+          isBlurred: true,
+          isTouched: true,
+          isDirty: false,
+          isValidating: false,
+        };
+
+        expect(form.getFieldMeta("name")).toEqual(newMeta);
+        expect(formSubscriber).toHaveBeenCalledOnce();
+        expect(fieldSubscriber).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({ meta: newMeta }),
+        );
+      });
+
+      test("when field is not touched, it marks the field as blurred and touched, notifies field and form subscribers", () => {
+        const form = new FormControl({ defaultValues });
+        const field = new FieldControl(form, "name");
+        const formSubscriber = vi.fn();
+        const fieldSubscriber = vi.fn();
+
+        form.meta.subscribe(formSubscriber);
+        form.subscribeField("name", fieldSubscriber);
 
         form.fieldMetaMap.set("name", {
           ...form.getFieldMeta("name"),
@@ -99,12 +136,18 @@ describe("FieldControl", () => {
 
         field.handleBlur();
 
-        expect(form.getFieldMeta("name")).toEqual({
+        const newMeta: FieldMeta = {
           isBlurred: true,
           isTouched: true,
           isDirty: false,
           isValidating: false,
-        });
+        };
+
+        expect(form.getFieldMeta("name")).toEqual(newMeta);
+        expect(formSubscriber).toHaveBeenCalledOnce();
+        expect(fieldSubscriber).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({ meta: newMeta }),
+        );
       });
 
       it("preserves other meta when marking as blurred and touched", async () => {
@@ -305,6 +348,47 @@ describe("FieldControl", () => {
         field.handleBlur();
 
         expect(form.meta.get().isTouched).toBe(true);
+      });
+    });
+
+    // PERFORMANCE TESTS
+
+    describe("should not notify field or form subscribers", () => {
+      test("when field is already blurred and touched, no blur sync or async validator", () => {
+        const form = new FormControl({ defaultValues });
+        const field = new FieldControl(form, "name");
+        const formSubscriber = vi.fn();
+        const fieldSubscriber = vi.fn();
+
+        field.handleBlur();
+
+        form.meta.subscribe(formSubscriber);
+        form.subscribeField("name", fieldSubscriber);
+
+        field.handleBlur();
+
+        expect(formSubscriber).not.toHaveBeenCalled();
+        expect(fieldSubscriber).not.toHaveBeenCalled();
+      });
+
+      test("when field is already blurred and touched, no blur async validator, has blur sync validator but no errors", () => {
+        const form = new FormControl({
+          defaultValues,
+          blurValidators: { name: () => null },
+        });
+        const field = new FieldControl(form, "name");
+        const formSubscriber = vi.fn();
+        const fieldSubscriber = vi.fn();
+
+        field.handleBlur();
+
+        form.meta.subscribe(formSubscriber);
+        form.subscribeField("name", fieldSubscriber);
+
+        field.handleBlur();
+
+        expect(formSubscriber).not.toHaveBeenCalled();
+        expect(fieldSubscriber).not.toHaveBeenCalled();
       });
     });
   });
