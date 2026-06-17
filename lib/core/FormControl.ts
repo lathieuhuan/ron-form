@@ -238,6 +238,19 @@ export class FormControl<TFormValues> {
     this.syncMeta();
   }
 
+  _runSyncValidators<TField extends DeepKeys<TFormValues>>(
+    cause: ValidationCause,
+    field: TField,
+    value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
+  ) {
+    const validator = this.validators[cause][field];
+    if (validator == null) return [];
+
+    const errors = transformErrors(field, cause, validator({ value }));
+
+    return errors;
+  }
+
   _validateSync<TField extends DeepKeys<TFormValues>>(
     field: TField,
     cause: ValidationCause,
@@ -414,27 +427,26 @@ export class FormControl<TFormValues> {
 
     // ===== VALIDATE =====
 
-    this.fieldMetaMap.set(field, newMeta);
     // Reset all errors even errors by other causes
     // because those errors are for the old value.
     // This behaviour is different from tanstack form v1.33.0
     // who kept blur errors on value change and not blur yet.
-    const errorMap = { ...DEFAULT_ERROR_MAP };
-    this.fieldErrorMap.set(field, errorMap);
+    let newErrorMap = { ...DEFAULT_ERROR_MAP } as FieldErrors<TField>;
 
-    let errors: FieldError<TField>[] = [];
+    const errors = this._runSyncValidators("change", field);
 
-    if (this.validators.change[field] != null) {
-      errors = this._validateSync(field, "change", {
-        dontTouch: true,
-      });
-    } else {
-      this.fieldSubjects.get(field)?.next({
-        value,
-        meta: newMeta,
-        errorMap,
-      });
+    if (errors.length) {
+      newErrorMap = {
+        ...newErrorMap,
+        change: errors,
+      };
     }
+
+    this.updateAndNotifyField(field, {
+      value,
+      meta: newMeta,
+      errorMap: newErrorMap,
+    });
 
     this.syncMeta();
 
