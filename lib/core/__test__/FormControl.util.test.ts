@@ -152,6 +152,7 @@ describe("FormControl utilities", () => {
         isTouched: false,
         isDirty: false,
         isValidating: false,
+        submitCount: 0,
       });
     });
 
@@ -178,6 +179,7 @@ describe("FormControl utilities", () => {
         isTouched: true,
         isDirty: false,
         isValidating: false,
+        submitCount: 0,
       });
     });
 
@@ -204,6 +206,7 @@ describe("FormControl utilities", () => {
         isTouched: false,
         isDirty: true,
         isValidating: false,
+        submitCount: 0,
       });
     });
 
@@ -230,6 +233,7 @@ describe("FormControl utilities", () => {
         isTouched: false,
         isDirty: false,
         isValidating: true,
+        submitCount: 0,
       });
     });
 
@@ -262,6 +266,7 @@ describe("FormControl utilities", () => {
         isTouched: true,
         isDirty: true,
         isValidating: true,
+        submitCount: 0,
       });
     });
 
@@ -289,6 +294,7 @@ describe("FormControl utilities", () => {
         isTouched: false,
         isDirty: false,
         isValidating: false,
+        submitCount: 0,
       });
     });
 
@@ -312,6 +318,7 @@ describe("FormControl utilities", () => {
         isTouched: true,
         isDirty: true,
         isValidating: false,
+        submitCount: 0,
       });
     });
   });

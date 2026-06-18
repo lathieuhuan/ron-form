@@ -2,7 +2,9 @@ import type { FieldMeta } from "./types";
 import { createSubject } from "./utils/createSubject";
 import { isShallowEqual } from "./utils/isShallowEqual";
 
-export interface FormMeta extends FieldMeta {}
+export interface FormMeta extends FieldMeta {
+  submitCount: number;
+}
 
 export class FormMetaControl {
   private meta: FormMeta;
@@ -13,12 +15,14 @@ export class FormMetaControl {
     isTouched = false,
     isDirty = false,
     isValidating = false,
+    submitCount = 0,
   }: Partial<FormMeta> = {}) {
     this.meta = {
       isBlurred,
       isTouched,
       isDirty,
       isValidating,
+      submitCount,
     };
   }
 
@@ -26,14 +30,17 @@ export class FormMetaControl {
     return this.meta;
   };
 
-  set = (changes: Partial<FormMeta>) => {
-    const newValues = { ...this.meta, ...changes };
+  set = (changes: Partial<FormMeta> | ((meta: FormMeta) => Partial<FormMeta>)) => {
+    const newMeta = {
+      ...this.meta,
+      ...(typeof changes === "function" ? changes(this.meta) : changes),
+    };
 
-    if (isShallowEqual(this.meta, newValues)) {
+    if (isShallowEqual(this.meta, newMeta)) {
       return;
     }
 
-    this.meta = newValues;
+    this.meta = newMeta;
     this.subject.next(this.meta);
   };
 
@@ -44,6 +51,6 @@ export class FormMetaControl {
 
 export type FormMetaApi = {
   get(): FormMeta;
-  set(changes: Partial<FormMeta>): void;
+  set(changes: Partial<FormMeta> | ((meta: FormMeta) => Partial<FormMeta>)): void;
   subscribe(subscriber: (meta: FormMeta) => void): () => void;
 };

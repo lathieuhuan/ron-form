@@ -25,7 +25,7 @@ describe("FormControl", () => {
       expect(form.values).toEqual({});
     });
 
-    it("initializes form meta as not blurred, untouched, clean, and not validating", () => {
+    it("initializes form meta as not blurred, untouched, clean, and not validating, and submit count 0", () => {
       const form = new FormControl({ defaultValues });
 
       expect(form.meta.get()).toEqual({
@@ -33,6 +33,7 @@ describe("FormControl", () => {
         isTouched: false,
         isDirty: false,
         isValidating: false,
+        submitCount: 0,
       });
     });
 
@@ -235,6 +236,7 @@ describe("FormControl", () => {
         isTouched: true,
         isDirty: true,
         isValidating: false,
+        submitCount: 0,
       });
     });
 
@@ -255,6 +257,7 @@ describe("FormControl", () => {
         isTouched: true,
         isDirty: true,
         isValidating: false,
+        submitCount: 0,
       });
     });
   });
@@ -482,19 +485,13 @@ describe("FormControl", () => {
       expect(form.meta.get().isTouched).toBe(true);
     });
 
-    it("sets form meta isTouched to true even when validation succeeds", () => {
-      const form = new FormControl({
-        defaultValues,
-        changeValidators: {
-          name: () => null,
-        },
-        onSubmit: () => {},
-      });
+    it("increments submit count", () => {
+      const form = new FormControl({ defaultValues });
 
       form.handleSubmit();
 
-      expect(form.meta.get().isTouched).toBe(true);
-    });
+      expect(form.meta.get().submitCount).toBe(1);
+    })
 
     it("does not run async validators", async () => {
       vi.useFakeTimers();

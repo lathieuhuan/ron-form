@@ -7,7 +7,10 @@ describe("FormMetaControl", () => {
     it("initializes meta as untouched, clean, and not validating by default", () => {
       const metaControl = new FormMetaControl();
 
-      expect(metaControl.get()).toEqual(DEFAULT_META);
+      expect(metaControl.get()).toEqual({
+        ...DEFAULT_META,
+        submitCount: 0,
+      });
     });
 
     it("accepts partial initial meta values", () => {
@@ -20,6 +23,7 @@ describe("FormMetaControl", () => {
         ...DEFAULT_META,
         isTouched: true,
         isValidating: true,
+        submitCount: 0,
       });
     });
   });
@@ -31,6 +35,7 @@ describe("FormMetaControl", () => {
         isTouched: true,
         isDirty: true,
         isValidating: false,
+        submitCount: 0,
       });
 
       expect(metaControl.get()).toEqual({
@@ -38,12 +43,13 @@ describe("FormMetaControl", () => {
         isTouched: true,
         isDirty: true,
         isValidating: false,
+        submitCount: 0,
       });
     });
   });
 
   describe("set", () => {
-    it("updates meta with partial changes", () => {
+    it("updates meta with partial value changes", () => {
       const metaControl = new FormMetaControl();
 
       metaControl.set({ isTouched: true });
@@ -53,6 +59,24 @@ describe("FormMetaControl", () => {
         isTouched: true,
         isDirty: false,
         isValidating: false,
+        submitCount: 0,
+      });
+    });
+
+    it("updates meta with partial function changes", () => {
+      const metaControl = new FormMetaControl();
+
+      metaControl.set((meta) => ({
+        isTouched: true,
+        submitCount: meta.submitCount + 1,
+      }));
+
+      expect(metaControl.get()).toEqual({
+        isBlurred: false,
+        isTouched: true,
+        isDirty: false,
+        isValidating: false,
+        submitCount: 1,
       });
     });
 
@@ -66,6 +90,7 @@ describe("FormMetaControl", () => {
         isTouched: true,
         isDirty: true,
         isValidating: false,
+        submitCount: 0,
       });
     });
 
@@ -112,6 +137,7 @@ describe("FormMetaControl", () => {
         isTouched: false,
         isDirty: false,
         isValidating: true,
+        submitCount: 0,
       });
     });
 
@@ -142,12 +168,14 @@ describe("FormMetaControl", () => {
         isTouched: false,
         isDirty: true,
         isValidating: false,
+        submitCount: 0,
       });
       expect(secondSubscriber).toHaveBeenCalledWith({
         isBlurred: false,
         isTouched: false,
         isDirty: true,
         isValidating: false,
+        submitCount: 0,
       });
     });
   });

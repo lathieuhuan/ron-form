@@ -189,7 +189,9 @@ export class FormControl<TFormValues> {
   }
 
   /**
-   * If `value` is not passed and meta & errorMap are not passed/undefined,
+   * If `value` is not passed AND
+   * (`meta` & `errorMap` are not passed/undefined OR
+   * `meta` & `errorMap` are the same as the current ones),
    * this method will short circuit.
    */
   updateAndNotifyField<TField extends DeepKeys<TFormValues>>(
@@ -247,48 +249,6 @@ export class FormControl<TFormValues> {
     if (validator == null) return [];
 
     const errors = transformErrors(field, cause, validator({ value }));
-
-    return errors;
-  }
-
-  _validateSync<TField extends DeepKeys<TFormValues>>(
-    field: TField,
-    cause: ValidationCause,
-    // TODO how about we pass new meta (isTouched: true) here instead
-    options: {
-      dontTouch?: boolean;
-    } = {},
-  ): FieldError<TField>[] {
-    const validator = this.validators[cause][field];
-    if (validator == null) return [];
-
-    const { dontTouch = false } = options;
-    const value = this.getFieldValue(field);
-    const errors = transformErrors(field, cause, validator({ value }));
-
-    let newErrorMap = this.getFieldErrorMap(field);
-
-    if (errors.length || newErrorMap[cause]?.length) {
-      newErrorMap = {
-        ...newErrorMap,
-        [cause]: errors,
-      };
-    }
-
-    let newMeta = this.getFieldMeta(field);
-
-    if (!dontTouch && !newMeta.isTouched) {
-      newMeta = {
-        ...newMeta,
-        isTouched: true,
-      };
-    }
-
-    this.updateAndNotifyField(field, {
-      value,
-      meta: newMeta,
-      errorMap: newErrorMap,
-    });
 
     return errors;
   }
@@ -433,7 +393,7 @@ export class FormControl<TFormValues> {
     // who kept blur errors on value change and not blur yet.
     let newErrorMap = { ...DEFAULT_ERROR_MAP } as FieldErrors<TField>;
 
-    const errors = this._runSyncValidators("change", field);
+    const errors = this._runSyncValidators("change", field, value);
 
     if (errors.length) {
       newErrorMap = {
@@ -466,11 +426,54 @@ export class FormControl<TFormValues> {
     return true;
   }
 
+  _validateSyncAndNotify<TField extends DeepKeys<TFormValues>>(
+    field: TField,
+    cause: ValidationCause,
+    options: {
+      value?: DeepValue<TFormValues, TField>;
+      dontTouch?: boolean;
+    } = {},
+  ): FieldError<TField>[] {
+    const { value = this.getFieldValue(field), dontTouch = false } = options;
+    const errors = this._runSyncValidators(cause, field, value);
+
+    let newErrorMap = this.getFieldErrorMap(field);
+
+    if (errors.length || newErrorMap[cause]?.length) {
+      newErrorMap = {
+        ...newErrorMap,
+        [cause]: errors,
+      };
+    }
+
+    let newMeta = this.getFieldMeta(field);
+
+    if (!dontTouch && !newMeta.isTouched) {
+      newMeta = {
+        ...newMeta,
+        isTouched: true,
+      };
+    }
+
+    this.updateAndNotifyField(field, {
+      value,
+      meta: newMeta,
+      errorMap: newErrorMap,
+    });
+
+    return errors;
+  }
+
   handleSubmit = () => {
+    this.meta.set(({ submitCount }) => ({
+      isTouched: true,
+      submitCount: submitCount + 1,
+    }));
+
     let isValid = true;
 
     for (const field of Object.keys(this.validators.change) as DeepKeys<TFormValues>[]) {
-      const errors = this._validateSync(field, "change");
+      const errors = this._validateSyncAndNotify(field, "change");
 
       if (errors.length > 0) {
         isValid = false;
@@ -478,17 +481,15 @@ export class FormControl<TFormValues> {
     }
 
     for (const field of Object.keys(this.validators.blur) as DeepKeys<TFormValues>[]) {
-      const errors = this._validateSync(field, "blur");
+      const errors = this._validateSyncAndNotify(field, "blur");
 
       if (errors.length > 0) {
         isValid = false;
       }
     }
 
-    this.meta.set({ isTouched: true });
-
     if (isValid) {
-      this.onSubmit?.({ values: this._values });
+      this.onSubmit?.({ values: clone(this._values) });
     } else {
       this.onSubmitFailed?.();
     }

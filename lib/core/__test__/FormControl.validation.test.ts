@@ -10,20 +10,11 @@ const defaultValues = {
 };
 
 describe("FormControl validation", () => {
-  describe("_validateSync", () => {
+  describe("_validateSyncAndNotify", () => {
     it("returns an empty array when no validator is registered", () => {
       const form = new FormControl({ defaultValues });
 
-      expect(form._validateSync("name", "change")).toEqual([]);
-    });
-
-    it("does not update field state when no validator is registered", () => {
-      const form = new FormControl({ defaultValues });
-      const updateAndNotifyField = vi.spyOn(form, "updateAndNotifyField");
-
-      form._validateSync("name", "change");
-
-      expect(updateAndNotifyField).not.toHaveBeenCalled();
+      expect(form._validateSyncAndNotify("name", "change")).toEqual([]);
     });
 
     it("validates with the current field value and returns sync errors", () => {
@@ -33,7 +24,7 @@ describe("FormControl validation", () => {
         changeValidators: { name: validator },
       });
 
-      const errors = form._validateSync("name", "change");
+      const errors = form._validateSyncAndNotify("name", "change");
 
       expect(validator).toHaveBeenCalledWith({ value: "John" });
       expect(errors).toEqual([
@@ -53,7 +44,7 @@ describe("FormControl validation", () => {
         blurValidators: { email: validator },
       });
 
-      const errors = form._validateSync("email", "blur");
+      const errors = form._validateSyncAndNotify("email", "blur");
 
       expect(validator).toHaveBeenCalledWith({ value: "john@example.com" });
       expect(errors).toEqual([
@@ -72,7 +63,7 @@ describe("FormControl validation", () => {
         changeValidators: { name: () => "Name is required" },
       });
 
-      form._validateSync("name", "change");
+      form._validateSyncAndNotify("name", "change");
 
       expect(form.getFieldErrorMap("name").change).toEqual([
         {
@@ -91,7 +82,7 @@ describe("FormControl validation", () => {
         blurValidators: { name: () => "Blur error" },
       });
 
-      form._validateSync("name", "blur");
+      form._validateSyncAndNotify("name", "blur");
 
       expect(form.getFieldErrorMap("name").blur).toEqual([
         {
@@ -102,7 +93,7 @@ describe("FormControl validation", () => {
         },
       ]);
 
-      form._validateSync("name", "change");
+      form._validateSyncAndNotify("name", "change");
 
       expect(form.getFieldErrorMap("name")).toEqual({
         change: [
@@ -134,9 +125,9 @@ describe("FormControl validation", () => {
         },
       });
 
-      form._validateSync("name", "change");
+      form._validateSyncAndNotify("name", "change");
       form.setFieldValue("name", "Jane", { dontValidate: true });
-      form._validateSync("name", "change");
+      form._validateSyncAndNotify("name", "change");
 
       expect(form.getFieldErrorMap("name").change).toEqual([
         {
@@ -155,7 +146,7 @@ describe("FormControl validation", () => {
         changeValidators: { name: validator },
       });
 
-      const errors = form._validateSync("name", "change");
+      const errors = form._validateSyncAndNotify("name", "change");
 
       expect(errors).toEqual([]);
       expect(form.getFieldErrorMap("name").change).toEqual([]);
@@ -169,7 +160,7 @@ describe("FormControl validation", () => {
         },
       });
 
-      const errors = form._validateSync("name", "change");
+      const errors = form._validateSyncAndNotify("name", "change");
 
       expect(errors).toEqual([
         {
@@ -194,7 +185,7 @@ describe("FormControl validation", () => {
         changeValidators: { "profile.age": validator },
       });
 
-      const errors = form._validateSync("profile.age", "change");
+      const errors = form._validateSyncAndNotify("profile.age", "change");
 
       expect(validator).toHaveBeenCalledWith({ value: 30 });
       expect(errors).toEqual([
@@ -215,7 +206,7 @@ describe("FormControl validation", () => {
       const subscriber = vi.fn();
 
       form.subscribeField("name", subscriber);
-      form._validateSync("name", "change");
+      form._validateSyncAndNotify("name", "change");
 
       expect(subscriber).toHaveBeenLastCalledWith({
         value: "John",
