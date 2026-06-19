@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { FormControl } from "../FormControl";
+import { DEFAULT_FORM_META } from "../FormMetaControl";
 
 const defaultValues = {
   name: "",
@@ -511,6 +512,184 @@ describe("FormControl", () => {
 
       expect(asyncValidator).not.toHaveBeenCalled();
       expect(onSubmit).toHaveBeenCalledOnce();
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe("reset", () => {
+    it("restores values to cloned default values", () => {
+      const form = new FormControl({ defaultValues });
+
+      form.setFieldValue("name", "Jane", { dontValidate: true });
+      form.setFieldValue("profile.age", 25, { dontValidate: true });
+
+      form.reset();
+
+      expect(form.values).toEqual(defaultValues);
+      expect(form.values).not.toBe(defaultValues);
+      expect(form.values.profile).not.toBe(defaultValues.profile);
+    });
+
+    it("does not mutate default values when values change after reset", () => {
+      const form = new FormControl({ defaultValues });
+
+      form.setFieldValue("name", "Jane", { dontValidate: true });
+      form.reset();
+      form.setFieldValue("name", "Updated", { dontValidate: true });
+
+      expect(form.getFieldValue("name")).toBe("Updated");
+      expect(form._defaultValues.name).toBe("");
+    });
+
+    it("clears field meta and errors", () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: () => "Name is required",
+        },
+      });
+
+      form.setFieldValue("name", "");
+      form.handleSubmit();
+
+      form.reset();
+
+      expect(form.getFieldMeta("name")).toEqual({
+        isBlurred: false,
+        isTouched: false,
+        isDirty: false,
+        isValidating: false,
+      });
+      expect(form.getFieldErrorMap("name")).toEqual({
+        change: [],
+        blur: [],
+        changeAsync: [],
+        blurAsync: [],
+      });
+    });
+
+    it("resets form meta to default including submit count", () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: () => "Name is required",
+        },
+      });
+
+      form.setFieldValue("name", "Jane", { dontValidate: true });
+      form.handleSubmit();
+
+      form.reset();
+
+      expect(form.meta.get()).toEqual(DEFAULT_FORM_META);
+    });
+
+    it("notifies field subscribers with reset state", () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: () => "Name is required",
+        },
+      });
+      const subscriber = vi.fn();
+
+      form.subscribeField("name", subscriber);
+      form.setFieldValue("name", "Jane");
+      subscriber.mockClear();
+
+      form.reset();
+
+      expect(subscriber).toHaveBeenCalledOnce();
+      expect(subscriber).toHaveBeenCalledWith({
+        value: "",
+        meta: {
+          isBlurred: false,
+          isTouched: false,
+          isDirty: false,
+          isValidating: false,
+        },
+        errorMap: {
+          change: [],
+          blur: [],
+          changeAsync: [],
+          blurAsync: [],
+        },
+      });
+    });
+
+    it("notifies meta subscribers with default form meta", () => {
+      const form = new FormControl({ defaultValues });
+      const subscriber = vi.fn();
+
+      form.meta.subscribe(subscriber);
+      form.setFieldValue("name", "Jane", { dontValidate: true });
+      form.handleSubmit();
+      subscriber.mockClear();
+
+      form.reset();
+
+      expect(subscriber).toHaveBeenCalledOnce();
+      expect(subscriber).toHaveBeenCalledWith({
+        isBlurred: false,
+        isTouched: false,
+        isDirty: false,
+        isValidating: false,
+        submitCount: 0,
+      });
+    });
+
+    it("clears pending async validation timers", async () => {
+      vi.useFakeTimers();
+
+      const asyncValidator = vi.fn(async () => "Async error");
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: {
+          name: asyncValidator,
+        },
+        asyncDebounceMs: 100,
+      });
+
+      form.setFieldValue("name", "Jane");
+      form.reset();
+      await vi.advanceTimersByTimeAsync(100);
+
+      expect(asyncValidator).not.toHaveBeenCalled();
+      expect(form.getFieldMeta("name").isValidating).toBe(false);
+
+      vi.useRealTimers();
+    });
+
+    it("aborts in-flight async validation and clears validating state", async () => {
+      vi.useFakeTimers();
+
+      let resolveValidator: (value: string) => void = () => {};
+      const asyncValidator = vi.fn(
+        () =>
+          new Promise<string>((resolve) => {
+            resolveValidator = resolve;
+          }),
+      );
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: {
+          name: asyncValidator,
+        },
+        asyncDebounceMs: 100,
+      });
+
+      form.setFieldValue("name", "Jane");
+      await vi.advanceTimersByTimeAsync(100);
+
+      expect(form.getFieldMeta("name").isValidating).toBe(true);
+
+      form.reset();
+      resolveValidator("Async error");
+      await Promise.resolve();
+
+      expect(form.getFieldMeta("name").isValidating).toBe(false);
+      expect(form.getFieldErrorMap("name").changeAsync).toEqual([]);
 
       vi.useRealTimers();
     });

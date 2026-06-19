@@ -38,7 +38,7 @@ export interface ReactFieldLooseApi<TFormValues> {
 
 export interface ReactFieldStrictApi<
   TFormValues,
-  TKey extends DeepKeys<TFormValues>,
+  TKey extends DeepKeys<TFormValues> = DeepKeys<TFormValues>,
 > extends FieldState<TFormValues, TKey> {
   id: string;
   name: TKey;

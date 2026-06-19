@@ -16,7 +16,7 @@ import type {
 } from "./types";
 
 import { DEFAULT_ERROR_MAP, DEFAULT_META } from "./constants";
-import { FormMetaControl, type FormMetaApi } from "./FormMetaControl";
+import { DEFAULT_FORM_META, FormMetaControl, type FormMetaApi } from "./FormMetaControl";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
 import { createSubject, Subject } from "./utils/createSubject";
@@ -499,6 +499,37 @@ export class FormControl<TFormValues> {
       this.onSubmitFailed?.();
     }
   };
+
+  /**
+   * @public
+   */
+  reset() {
+    this._values = clone(this._defaultValues);
+
+    for (const cause of <ValidationCause[]>["change", "blur"]) {
+      for (const timeoutId of this.timeoutIdMaps[cause].values()) {
+        clearTimeout(timeoutId);
+      }
+      for (const abortCtrl of this.abortCtrlMaps[cause].values()) {
+        abortCtrl.abort();
+      }
+    }
+
+    this.runningValidatorMap = new RunningValidatorMap<TFormValues>();
+
+    this.fieldMetaMap.clear();
+    this.fieldErrorMap.clear();
+
+    for (const [field, subject] of this.fieldSubjects.entries()) {
+      subject.next({
+        value: this.getFieldValue(field),
+        meta: this.getFieldMeta(field),
+        errorMap: this.getFieldErrorMap(field),
+      });
+    }
+
+    this.meta.set(DEFAULT_FORM_META);
+  }
 }
 
 export type FormApi<TFormValues> = Pick<
@@ -512,6 +543,7 @@ export type FormApi<TFormValues> = Pick<
   | "subscribeField"
   | "setFieldValue"
   | "setFieldMeta"
+  | "reset"
 > & {
   handleSubmit(): void;
 };

@@ -2,6 +2,14 @@ import type { FieldMeta } from "./types";
 import { createSubject } from "./utils/createSubject";
 import { isShallowEqual } from "./utils/isShallowEqual";
 
+export const DEFAULT_FORM_META: FormMeta = {
+  isBlurred: false,
+  isTouched: false,
+  isDirty: false,
+  isValidating: false,
+  submitCount: 0,
+};
+
 export interface FormMeta extends FieldMeta {
   submitCount: number;
 }
