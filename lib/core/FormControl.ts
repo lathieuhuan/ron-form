@@ -15,8 +15,8 @@ import type {
   ValidatorMap,
 } from "./types";
 
-import { DEFAULT_ERROR_MAP, DEFAULT_META } from "./constants";
-import { DEFAULT_FORM_META, FormMetaControl, type FormMetaApi } from "./FormMetaControl";
+import { DEFAULT_ERROR_MAP, DEFAULT_FORM_META, DEFAULT_META } from "./constants";
+import { FormMetaControl, type FormMetaApi } from "./FormMetaControl";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
 import { createSubject, Subject } from "./utils/createSubject";

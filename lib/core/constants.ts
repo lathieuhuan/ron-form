@@ -1,4 +1,4 @@
-import type { FieldErrors, FieldMeta } from "./types";
+import type { FieldErrors, FieldMeta, FormMeta } from "./types";
 
 export const DEFAULT_ERROR_MAP: FieldErrors<string> = {
   change: [],
@@ -12,4 +12,12 @@ export const DEFAULT_META: FieldMeta = {
   isTouched: false,
   isDirty: false,
   isValidating: false,
+};
+
+export const DEFAULT_FORM_META: FormMeta = {
+  isBlurred: false,
+  isTouched: false,
+  isDirty: false,
+  isValidating: false,
+  submitCount: 0,
 };

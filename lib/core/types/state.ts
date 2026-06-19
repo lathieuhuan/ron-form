@@ -16,3 +16,7 @@ export interface FieldState<TFormValues, TKey extends DeepKeys<TFormValues>> {
   meta: FieldMeta;
   errorMap: FieldErrors<TKey>;
 }
+
+export interface FormMeta extends FieldMeta {
+  submitCount: number;
+}

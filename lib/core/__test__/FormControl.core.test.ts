@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { FormControl } from "../FormControl";
-import { DEFAULT_FORM_META } from "../FormMetaControl";
+import { DEFAULT_FORM_META, DEFAULT_META } from "../constants";
 
 const defaultValues = {
   name: "",
@@ -492,7 +492,7 @@ describe("FormControl", () => {
       form.handleSubmit();
 
       expect(form.meta.get().submitCount).toBe(1);
-    })
+    });
 
     it("does not run async validators", async () => {
       vi.useFakeTimers();
@@ -555,12 +555,7 @@ describe("FormControl", () => {
 
       form.reset();
 
-      expect(form.getFieldMeta("name")).toEqual({
-        isBlurred: false,
-        isTouched: false,
-        isDirty: false,
-        isValidating: false,
-      });
+      expect(form.getFieldMeta("name")).toEqual(DEFAULT_META);
       expect(form.getFieldErrorMap("name")).toEqual({
         change: [],
         blur: [],
