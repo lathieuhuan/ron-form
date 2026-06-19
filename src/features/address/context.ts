@@ -7,7 +7,7 @@ export interface AddressFormValues {
   city: string;
 }
 
-export const { FormContext, Form, FormMeta, Field, useForm, useFormInstance, useFormField } =
+export const { FormContext, Form, FormMeta, Field, useForm, useFormInstance } =
   createContexts<AddressFormValues>();
 
 export const useFormOptions: UseFormOptions<AddressFormValues> = {
@@ -20,6 +20,15 @@ export const useFormOptions: UseFormOptions<AddressFormValues> = {
   changeValidators: {
     street: ({ value }) => {
       return value?.trim() ? null : "Required";
+    },
+    ward: ({ value }) => {
+      return value ? null : "Required";
+    },
+    district: ({ value }) => {
+      return value ? null : "Required";
+    },
+    city: ({ value }) => {
+      return value ? null : "Required";
     },
   },
   onSubmit: ({ values }) => {

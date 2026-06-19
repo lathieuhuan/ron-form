@@ -1,18 +1,19 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-
-import { cn } from "@src/utils";
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, XIcon } from "lucide-react";
+import type { ComponentProps } from "react";
 import { AriaAttributes } from "react";
 
-function SelectContainer({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) {
+import { cn } from "@src/utils";
+
+function SelectContainer({ ...props }: ComponentProps<typeof SelectPrimitive.Root>) {
   return <SelectPrimitive.Root data-slot="select" {...props} />;
 }
 
-function SelectGroup({ ...props }: React.ComponentProps<typeof SelectPrimitive.Group>) {
+function SelectGroup({ ...props }: ComponentProps<typeof SelectPrimitive.Group>) {
   return <SelectPrimitive.Group data-slot="select-group" {...props} />;
 }
 
-function SelectValue({ ...props }: React.ComponentProps<typeof SelectPrimitive.Value>) {
+function SelectValue({ ...props }: ComponentProps<typeof SelectPrimitive.Value>) {
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
 
@@ -40,29 +41,36 @@ const loadingIcon = (
   </svg>
 );
 
+type SelectTriggerProps = ComponentProps<typeof SelectPrimitive.Trigger> & {
+  size?: "sm" | "default";
+  isLoading?: boolean;
+};
+
 function SelectTrigger({
   className,
   size = "default",
   children,
   isLoading,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: "sm" | "default";
-  isLoading?: boolean;
-}) {
+}: SelectTriggerProps) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "border-border flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "w-fit px-3 py-2 flex items-center justify-between gap-2 rounded-md border-border border bg-transparent shadow-xs transition-[color,box-shadow]",
+        "outline-none text-sm whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50",
         "focus:ring-1 focus:ring-primary aria-invalid:border-destructive aria-invalid:focus:ring-destructive",
+        "data-[size=default]:h-9 data-[size=sm]:h-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
+        "data-[placeholder]:*:data-[slot=select-value]:text-muted/60",
         className,
       )}
       {...props}
     >
       {children}
-      <SelectPrimitive.Icon asChild>
+
+      <SelectPrimitive.Icon asChild data-slot="select-trigger-suffix">
         {isLoading ? loadingIcon : <ChevronDownIcon className="size-4 opacity-50" />}
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
@@ -74,7 +82,7 @@ function SelectContent({
   children,
   position = "popper",
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content>) {
+}: ComponentProps<typeof SelectPrimitive.Content>) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -105,7 +113,7 @@ function SelectContent({
   );
 }
 
-function SelectLabel({ className, ...props }: React.ComponentProps<typeof SelectPrimitive.Label>) {
+function SelectLabel({ className, ...props }: ComponentProps<typeof SelectPrimitive.Label>) {
   return (
     <SelectPrimitive.Label
       data-slot="select-label"
@@ -119,7 +127,7 @@ function SelectItem({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+}: ComponentProps<typeof SelectPrimitive.Item>) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
@@ -142,7 +150,7 @@ function SelectItem({
 function SelectSeparator({
   className,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Separator>) {
+}: ComponentProps<typeof SelectPrimitive.Separator>) {
   return (
     <SelectPrimitive.Separator
       data-slot="select-separator"
@@ -155,7 +163,7 @@ function SelectSeparator({
 function SelectScrollUpButton({
   className,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
+}: ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
   return (
     <SelectPrimitive.ScrollUpButton
       data-slot="select-scroll-up-button"
@@ -170,7 +178,7 @@ function SelectScrollUpButton({
 function SelectScrollDownButton({
   className,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
+}: ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
   return (
     <SelectPrimitive.ScrollDownButton
       data-slot="select-scroll-down-button"
@@ -182,27 +190,53 @@ function SelectScrollDownButton({
   );
 }
 
-type SelectProps = React.ComponentProps<typeof SelectContainer> &
+type SelectProps<T extends string> = Omit<ComponentProps<typeof SelectContainer>, "onValueChange"> &
   AriaAttributes & {
     id?: string;
     options?: {
       label: string;
-      value: string;
+      value: T;
     }[];
     isLoading?: boolean;
+    allowClear?: boolean;
+    onChange?: (value: T) => void;
   };
 
-function Select({ id, isLoading, "aria-invalid": ariaInvalid, ...props }: SelectProps) {
+function Select<T extends string>({
+  id,
+  isLoading,
+  allowClear = true,
+  "aria-invalid": ariaInvalid,
+  value,
+  onChange,
+  ...props
+}: SelectProps<T>) {
+  const clearable = allowClear && Boolean(value);
+
   return (
-    <SelectContainer {...props}>
-      <SelectTrigger
-        id={id}
-        className="w-full"
-        aria-invalid={ariaInvalid}
-        isLoading={isLoading}
+    <SelectContainer {...props} value={value} onValueChange={(value) => onChange?.(value as T)}>
+      <div
+        data-slot="select"
+        className={cn(
+          "relative *:data-[slot=select-clear-button]:hidden hover:*:data-[slot=select-clear-button]:block",
+          clearable && "hover:[&_[data-slot='select-trigger-suffix']]:hidden",
+        )}
       >
-        <SelectValue />
-      </SelectTrigger>
+        <SelectTrigger id={id} className="w-full" aria-invalid={ariaInvalid} isLoading={isLoading}>
+          <SelectValue placeholder="Select" />
+        </SelectTrigger>
+
+        {clearable && (
+          <button
+            data-slot="select-clear-button"
+            className="absolute right-3 top-1/2 -translate-y-1/2"
+            onClick={() => onChange?.("" as T)}
+          >
+            <XIcon className="size-4 opacity-50" />
+          </button>
+        )}
+      </div>
+
       <SelectContent>
         {props.options?.map((option) => (
           <SelectItem key={option.value} value={option.value}>
@@ -215,6 +249,7 @@ function Select({ id, isLoading, "aria-invalid": ariaInvalid, ...props }: Select
 }
 
 export {
+  Select,
   SelectContainer,
   SelectContent,
   SelectGroup,
@@ -225,5 +260,4 @@ export {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-  Select,
 };

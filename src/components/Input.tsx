@@ -12,14 +12,16 @@ export function Input({ className, value, defaultValue, onChange, ...props }: In
     <input
       data-slot="input"
       className={cn(
-        "border-border h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none",
-        "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "h-9 w-full min-w-0 px-3 py-1 rounded-md border-border border bg-transparent shadow-xs transition-[color,box-shadow] outline-none",
+        "text-base md:text-sm placeholder:text-muted/60",
+        "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
         "focus:ring-1 focus:ring-primary aria-invalid:border-destructive aria-invalid:focus:ring-destructive",
         className,
       )}
       value={value ?? undefined}
       defaultValue={value == null && defaultValue != null ? defaultValue : undefined}
       autoComplete="off"
+      placeholder="Enter"
       onChange={(e) => {
         onChange?.(e.target.value, e);
       }}

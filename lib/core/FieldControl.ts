@@ -1,5 +1,5 @@
 import type { FormControl } from "./FormControl";
-import type { DeepKeys, DeepValue, FieldError, FieldMeta } from "./types";
+import type { DeepKeys, DeepValue, FieldError } from "./types";
 import { transformErrors } from "./utils/transformErrors";
 
 export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
@@ -30,27 +30,23 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
 
     // ===== MAIN LOGIC =====
 
-    let newMeta = form.getFieldMeta(name);
-    let newErrorMap = form.getFieldErrorMap(name);
+    let meta = form.getFieldMeta(name);
+    let errorMap = form.getFieldErrorMap(name);
 
-    if (!newMeta.isBlurred || !newMeta.isTouched) {
-      newMeta = {
-        ...newMeta,
+    if (!meta.isBlurred || !meta.isTouched) {
+      meta = {
+        ...meta,
         isBlurred: true,
         isTouched: true,
       };
-
-      form.fieldMetaMap.set(name, newMeta);
     }
 
     // Clear blur async errors if any
-    if (newErrorMap.blurAsync != null && newErrorMap.blurAsync.length) {
-      newErrorMap = {
-        ...newErrorMap,
+    if (errorMap.blurAsync != null && errorMap.blurAsync.length) {
+      errorMap = {
+        ...errorMap,
         blurAsync: [],
       };
-
-      form.fieldErrorMap.set(name, newErrorMap);
     }
 
     const syncValidator = form.validators.blur[name];
@@ -61,17 +57,17 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
 
       errors = transformErrors(name, "blur", syncValidator({ value }));
 
-      if (errors.length || newErrorMap.blur?.length) {
-        newErrorMap = {
-          ...newErrorMap,
+      if (errors.length || errorMap.blur?.length) {
+        errorMap = {
+          ...errorMap,
           blur: errors,
         };
       }
     }
 
     form.updateAndNotifyField(name, {
-      meta: newMeta,
-      errorMap: newErrorMap,
+      meta,
+      errorMap,
     });
 
     form.syncMeta();

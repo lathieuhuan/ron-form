@@ -9,7 +9,7 @@ import type {
   FormMeta,
 } from "@lib/core";
 
-import { FieldControl, FormControl } from "@lib/core";
+import { FormControl } from "@lib/core";
 import {
   createContext,
   ReactElement,
@@ -19,9 +19,11 @@ import {
   useSyncExternalStore,
 } from "react";
 import { useForm } from "./hooks";
+import { useFormField } from "./hooks/useFormField";
 
 export interface UseFormFieldProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
   name: TKey;
+  form: FormApi<TFormValues>;
 }
 
 export interface ReactFieldLooseApi<TFormValues> {
@@ -105,66 +107,12 @@ export function createContexts<TFormValues>() {
     return state;
   }
 
-  function useFormField<TKey extends DeepKeys<TFormValues>>({
-    name,
-  }: UseFormFieldProps<TFormValues, TKey>): ReactFieldStrictApi<TFormValues, TKey> {
-    const form = useContext(FormContext);
-
-    const [api, setApi] = useState(() => {
-      return new FieldControl(form as FormControl<TFormValues>, name);
-    });
-    const [state, setState] = useState<FieldState<TFormValues, TKey>>(() => {
-      return form.getFieldState(name);
-    });
-
-    useEffect(() => {
-      let newApi = api;
-
-      if (api.form !== form || api.name !== name) {
-        newApi = new FieldControl(form as FormControl<TFormValues>, name);
-        setApi(newApi);
-      }
-
-      const value = form.getFieldValue(name);
-      const meta = form.getFieldMeta(name);
-      const errorMap = form.getFieldErrorMap(name);
-
-      if (value !== state.value || meta !== state.meta || errorMap !== state.errorMap) {
-        setState({ value, meta, errorMap });
-      }
-
-      const unsubscribe = form.subscribeField(name, (newField) => {
-        setState(newField);
-      });
-
-      return () => {
-        unsubscribe();
-      };
-    }, [form, name]);
-
-    return {
-      id: name,
-      name,
-      value: state.value,
-      meta: state.meta,
-      errorMap: state.errorMap,
-      form,
-      get errors() {
-        const { errorMap } = state;
-        const { change = [], blur = [], changeAsync = [], blurAsync = [] } = errorMap;
-
-        return change.concat(blur, changeAsync, blurAsync);
-      },
-      handleChange: api.handleChange,
-      handleBlur: api.handleBlur,
-    };
-  }
-
   function Field<TKey extends DeepKeys<TFormValues>>({
     name,
     children,
   }: FieldProps<TFormValues, TKey>) {
-    const field = useFormField({ name });
+    const form = useContext(FormContext);
+    const field = useFormField({ name, form });
 
     if (children == null) {
       return null;
@@ -182,7 +130,6 @@ export function createContexts<TFormValues>() {
     Field,
     useForm: useForm as typeof useForm<TFormValues>,
     useFormInstance,
-    useFormField,
     useFieldState,
   };
 }

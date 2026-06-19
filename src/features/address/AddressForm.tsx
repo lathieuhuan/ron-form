@@ -1,4 +1,4 @@
-import { ReactFieldStrictApi } from "@lib/react";
+import { ReactFieldStrictApi, useFormField } from "@lib/react";
 import { CITY_OPTIONS, DISTRICT_OPTIONS, WARD_OPTIONS } from "./config";
 import { AddressFormValues, Field, useForm, useFormOptions } from "./context";
 
@@ -10,6 +10,11 @@ import { Layout } from "./Layout";
 
 export function AddressForm() {
   const form = useForm(useFormOptions);
+
+  const cityField = useFormField({
+    name: "city",
+    form,
+  });
 
   const handleLog = () => {
     console.log(form.values);
@@ -42,6 +47,10 @@ export function AddressForm() {
             <FormField label="City" field={field}>
               <Select
                 options={CITY_OPTIONS}
+                onChange={() => {
+                  form.setFieldValue("district", "");
+                  form.setFieldValue("ward", "");
+                }}
                 onOpenChange={(open) => handleSelectOpenChange(open, field)}
               />
             </FormField>
@@ -53,20 +62,29 @@ export function AddressForm() {
             <FormField label="District" field={field}>
               <Select
                 options={DISTRICT_OPTIONS}
+                disabled={!cityField.value}
+                onChange={() => {
+                  form.setFieldValue("ward", "");
+                }}
                 onOpenChange={(open) => handleSelectOpenChange(open, field)}
               />
             </FormField>
           )}
         </Field>
 
-        <Field name="ward">
-          {(field) => (
-            <FormField label="Ward" field={field}>
-              <Select
-                options={WARD_OPTIONS}
-                onOpenChange={(open) => handleSelectOpenChange(open, field)}
-              />
-            </FormField>
+        <Field name="district">
+          {({ value: districtValue }) => (
+            <Field name="ward">
+              {(field) => (
+                <FormField label="Ward" field={field}>
+                  <Select
+                    options={WARD_OPTIONS}
+                    disabled={!districtValue}
+                    onOpenChange={(open) => handleSelectOpenChange(open, field)}
+                  />
+                </FormField>
+              )}
+            </Field>
           )}
         </Field>
       </div>

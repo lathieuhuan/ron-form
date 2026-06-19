@@ -91,17 +91,18 @@ describe("FieldControl", () => {
       test("when field is not blurred, it marks the field as blurred and touched, notifies field and form subscribers", () => {
         const form = new FormControl({ defaultValues });
         const field = new FieldControl(form, "name");
-        const formSubscriber = vi.fn();
-        const fieldSubscriber = vi.fn();
-
-        form.meta.subscribe(formSubscriber);
-        form.subscribeField("name", fieldSubscriber);
 
         form.fieldMetaMap.set("name", {
           ...form.getFieldMeta("name"),
           isBlurred: false,
           isTouched: true,
         });
+
+        const formSubscriber = vi.fn();
+        const fieldSubscriber = vi.fn();
+
+        form.meta.subscribe(formSubscriber);
+        form.subscribeField("name", fieldSubscriber);
 
         field.handleBlur();
 
@@ -122,17 +123,18 @@ describe("FieldControl", () => {
       test("when field is not touched, it marks the field as blurred and touched, notifies field and form subscribers", () => {
         const form = new FormControl({ defaultValues });
         const field = new FieldControl(form, "name");
-        const formSubscriber = vi.fn();
-        const fieldSubscriber = vi.fn();
-
-        form.meta.subscribe(formSubscriber);
-        form.subscribeField("name", fieldSubscriber);
 
         form.fieldMetaMap.set("name", {
           ...form.getFieldMeta("name"),
           isBlurred: true,
           isTouched: false,
         });
+
+        const formSubscriber = vi.fn();
+        const fieldSubscriber = vi.fn();
+
+        form.meta.subscribe(formSubscriber);
+        form.subscribeField("name", fieldSubscriber);
 
         field.handleBlur();
 

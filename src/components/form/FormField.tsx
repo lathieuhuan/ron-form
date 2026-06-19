@@ -1,7 +1,8 @@
+import { cloneElement } from "react";
+
 import { FieldError } from "@lib/core";
 import { ReactFieldLooseApi } from "@lib/react";
 import { FieldSelector } from "@src/lib/form-supervisor";
-import { cloneElement } from "react";
 
 const shouldShowErrors = (field: ReactFieldLooseApi<unknown>) => {
   return field.errors.length > 0 && (field.meta.isBlurred || field.form.meta.get().submitCount > 0);
@@ -33,8 +34,14 @@ export function FormField({ label, field, children }: FormFieldProps) {
         id: field.id,
         value: field.value,
         "aria-invalid": showErrors,
-        onBlur: field.handleBlur,
-        onChange: field.handleChange,
+        onBlur: () => {
+          children.props.onBlur?.();
+          field.handleBlur();
+        },
+        onChange: (...args: unknown[]) => {
+          children.props.onChange?.(...args);
+          field.handleChange(args[0]);
+        },
       })}
 
       {showErrors && (
