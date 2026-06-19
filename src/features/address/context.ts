@@ -17,6 +17,11 @@ export const useFormOptions: UseFormOptions<AddressFormValues> = {
     district: "",
     city: "",
   },
+  changeValidators: {
+    street: ({ value }) => {
+      return value?.trim() ? null : "Required";
+    },
+  },
   onSubmit: ({ values }) => {
     console.log(values);
   },

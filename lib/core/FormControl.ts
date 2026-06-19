@@ -253,6 +253,57 @@ export class FormControl<TFormValues> {
     return errors;
   }
 
+  /**
+   * @public
+   */
+  validateSync<TField extends DeepKeys<TFormValues>>(
+    field: TField,
+    cause: ValidationCause,
+    options: {
+      shouldBlur?: boolean;
+      shouldTouch?: boolean;
+    } = {},
+  ) {
+    let fieldMeta = this.getFieldMeta(field);
+
+    if (options.shouldTouch && !fieldMeta.isTouched) {
+      fieldMeta = {
+        ...fieldMeta,
+        isTouched: true,
+      };
+    }
+
+    if (options.shouldBlur && !fieldMeta.isBlurred) {
+      fieldMeta = {
+        ...fieldMeta,
+        isBlurred: true,
+      };
+    }
+
+    const value = this.getFieldValue(field);
+    const errors = this._runSyncValidators(cause, field, value);
+    let errorMap = this.getFieldErrorMap(field);
+
+    if (errors.length || errorMap[cause]?.length) {
+      errorMap = {
+        ...errorMap,
+        [cause]: errors,
+      };
+    }
+
+    this.updateAndNotifyField(field, {
+      meta: fieldMeta,
+      errorMap,
+    });
+
+    this.meta.set({
+      isBlurred: fieldMeta.isBlurred,
+      isTouched: fieldMeta.isTouched,
+    });
+
+    return errors;
+  }
+
   async validateAsync<TField extends DeepKeys<TFormValues>>(
     field: TField,
     cause: ValidationCause,
@@ -543,6 +594,7 @@ export type FormApi<TFormValues> = Pick<
   | "subscribeField"
   | "setFieldValue"
   | "setFieldMeta"
+  | "validateSync"
   | "reset"
 > & {
   handleSubmit(): void;

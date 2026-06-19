@@ -160,6 +160,180 @@ describe("FormControl validation", () => {
     });
   });
 
+  describe("validateSync", () => {
+    it("returns an empty array when no sync validator is registered", () => {
+      const form = new FormControl({ defaultValues });
+      const fieldSubscriber = vi.fn();
+
+      form.subscribeField("name", fieldSubscriber);
+
+      const errors = form.validateSync("name", "change");
+
+      expect(errors).toEqual([]);
+      expect(form.getFieldErrorMap("name").change).toEqual([]);
+      expect(fieldSubscriber).toHaveBeenCalledOnce();
+    });
+
+    it("validates with the current field value and stores sync errors", () => {
+      const validator = vi.fn(() => "Name is required");
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: { name: validator },
+      });
+      const fieldSubscriber = vi.fn();
+
+      form.subscribeField("name", fieldSubscriber);
+
+      const errors = form.validateSync("name", "change");
+
+      expect(validator).toHaveBeenCalledWith({ value: "John" });
+      expect(errors).toEqual([
+        {
+          path: "name",
+          type: "change",
+          message: "Name is required",
+          meta: {},
+        },
+      ]);
+      expect(form.getFieldErrorMap("name").change).toEqual(errors);
+      expect(fieldSubscriber).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          errorMap: expect.objectContaining({
+            change: errors,
+          }),
+        }),
+      );
+    });
+
+    it("validates with blur validators when cause is blur", () => {
+      const validator = vi.fn(() => "Email is invalid");
+      const form = new FormControl({
+        defaultValues,
+        blurValidators: { email: validator },
+      });
+
+      const errors = form.validateSync("email", "blur");
+
+      expect(validator).toHaveBeenCalledWith({ value: "john@example.com" });
+      expect(errors).toEqual([
+        {
+          path: "email",
+          type: "blur",
+          message: "Email is invalid",
+          meta: {},
+        },
+      ]);
+      expect(form.getFieldErrorMap("email").blur).toEqual(errors);
+    });
+
+    it("clears existing errors for the cause when validation passes", () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: { name: () => undefined },
+      });
+
+      form.fieldErrorMap.set("name", {
+        change: [
+          {
+            path: "name",
+            type: "change",
+            message: "Existing error",
+            meta: {},
+          },
+        ],
+        blur: [],
+        changeAsync: [],
+        blurAsync: [],
+      });
+
+      const errors = form.validateSync("name", "change");
+
+      expect(errors).toEqual([]);
+      expect(form.getFieldErrorMap("name").change).toEqual([]);
+    });
+
+    it("preserves errors for other causes", () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: { name: () => "Change error" },
+      });
+
+      form.fieldErrorMap.set("name", {
+        change: [],
+        blur: [
+          {
+            path: "name",
+            type: "blur",
+            message: "Blur error",
+            meta: {},
+          },
+        ],
+        changeAsync: [],
+        blurAsync: [],
+      });
+
+      form.validateSync("name", "change");
+
+      expect(form.getFieldErrorMap("name").change).toEqual([
+        {
+          path: "name",
+          type: "change",
+          message: "Change error",
+          meta: {},
+        },
+      ]);
+      expect(form.getFieldErrorMap("name").blur).toEqual([
+        {
+          path: "name",
+          type: "blur",
+          message: "Blur error",
+          meta: {},
+        },
+      ]);
+    });
+
+    it("sets isTouched on field and form meta when shouldTouch is true", () => {
+      const form = new FormControl({ defaultValues });
+
+      form.validateSync("name", "change", { shouldTouch: true });
+
+      expect(form.getFieldMeta("name").isTouched).toBe(true);
+      expect(form.meta.get().isTouched).toBe(true);
+    });
+
+    it("sets isBlurred on field and form meta when shouldBlur is true", () => {
+      const form = new FormControl({ defaultValues });
+
+      form.validateSync("name", "change", { shouldBlur: true });
+
+      expect(form.getFieldMeta("name").isBlurred).toBe(true);
+      expect(form.meta.get().isBlurred).toBe(true);
+    });
+
+    it("does not override existing touched or blurred meta", () => {
+      const form = new FormControl({ defaultValues });
+
+      form.fieldMetaMap.set("name", {
+        isBlurred: true,
+        isTouched: true,
+        isDirty: true,
+        isValidating: false,
+      });
+
+      form.validateSync("name", "change", {
+        shouldTouch: true,
+        shouldBlur: true,
+      });
+
+      expect(form.getFieldMeta("name")).toEqual({
+        isBlurred: true,
+        isTouched: true,
+        isDirty: true,
+        isValidating: false,
+      });
+    });
+  });
+
   describe("async validation", () => {
     beforeEach(() => {
       vi.useFakeTimers();

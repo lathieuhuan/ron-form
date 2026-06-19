@@ -22,6 +22,14 @@ export function ApiTryout({ form }: ApiTryoutProps) {
       fn: () => form.setFieldMeta("street", (meta) => ({ ...meta, isTouched: true })),
     },
     {
+      label: "Validate 'street' sync (also touch & blur)",
+      fn: () =>
+        form.validateSync("street", "change", {
+          shouldTouch: true,
+          shouldBlur: true,
+        }),
+    },
+    {
       label: "Reset form",
       fn: () => form.reset(),
     },

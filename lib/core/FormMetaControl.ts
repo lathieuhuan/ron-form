@@ -26,6 +26,7 @@ export class FormMetaControl {
     return this.meta;
   };
 
+  /** Update and notify */
   set = (changes: Partial<FormMeta> | ((meta: FormMeta) => Partial<FormMeta>)) => {
     const newMeta = {
       ...this.meta,
