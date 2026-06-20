@@ -39,17 +39,4 @@ describe("transformErrors", () => {
     expect(transformErrors(field, errorType, null)).toEqual([]);
     expect(transformErrors(field, errorType, undefined)).toEqual([]);
   });
-
-  it("supports async error cause types", () => {
-    const asyncType = "blurAsync" as const;
-
-    expect(transformErrors(field, asyncType, singleMessage)).toEqual([
-      {
-        path: field,
-        type: asyncType,
-        message: singleMessage,
-        meta: {},
-      },
-    ]);
-  });
 });

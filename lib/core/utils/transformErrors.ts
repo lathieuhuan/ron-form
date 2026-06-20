@@ -1,16 +1,25 @@
-import { ErrorCauseType, FieldError } from "../types";
+import type { ErrorCauseType, FieldError, ValidationResult } from "../types";
+import { parseRawError } from "./parseRawError";
 
 export function transformErrors<TField>(
   field: TField,
   type: ErrorCauseType,
-  messages: string | string[] | null | undefined,
-) {
-  const errors = typeof messages === "string" ? [messages] : messages == null ? [] : messages;
+  rawError: ValidationResult,
+): FieldError<TField>[] {
+  if (rawError == null) {
+    return [];
+  }
 
-  return errors.map<FieldError<TField>>((error) => ({
-    path: field,
-    type,
-    message: error,
-    meta: {},
-  }));
+  const errors = Array.isArray(rawError) ? rawError : [rawError];
+
+  return errors.map<FieldError<TField>>((error) => {
+    const { message, meta } = parseRawError(error);
+
+    return {
+      path: field,
+      type,
+      message,
+      meta,
+    };
+  });
 }

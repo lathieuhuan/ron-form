@@ -12,6 +12,7 @@ import type {
   FormValidators,
   Updater,
   ValidationCause,
+  ValidationResult,
   ValidatorMap,
 } from "./types";
 
@@ -23,6 +24,7 @@ import { createSubject, Subject } from "./utils/createSubject";
 import { get } from "./utils/get";
 import { set } from "./utils/set";
 import { transformErrors } from "./utils/transformErrors";
+import { parseRawError } from "./utils/parseRawError";
 
 type FieldSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
   TKey,
@@ -248,9 +250,25 @@ export class FormControl<TFormValues> {
     const validator = this.validators[cause][field];
     if (validator == null) return [];
 
-    const errors = transformErrors(field, cause, validator({ value }));
+    return transformErrors(field, cause, validator({ value }));
+  }
 
-    return errors;
+  async _runAsyncValidators<TField extends DeepKeys<TFormValues>>(
+    cause: ValidationCause,
+    field: TField,
+    value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
+  ) {
+    const validator = this.asyncValidators[cause][field];
+    if (validator == null) return [];
+    let result: ValidationResult;
+
+    try {
+      result = await validator({ value });
+    } catch (e) {
+      result = parseRawError(e);
+    }
+
+    return transformErrors(field, `${cause}Async`, result);
   }
 
   /**
@@ -280,8 +298,7 @@ export class FormControl<TFormValues> {
       };
     }
 
-    const value = this.getFieldValue(field);
-    const errors = this._runSyncValidators(cause, field, value);
+    const errors = this._runSyncValidators(cause, field);
     let errorMap = this.getFieldErrorMap(field);
 
     if (errors.length || errorMap[cause]?.length) {
@@ -304,6 +321,13 @@ export class FormControl<TFormValues> {
     return errors;
   }
 
+  // async validateAsync_<TField extends DeepKeys<TFormValues>>(
+  //   field: TField,
+  //   cause: ValidationCause,
+  // ) {
+  //   //
+  // }
+
   async validateAsync<TField extends DeepKeys<TFormValues>>(
     field: TField,
     cause: ValidationCause,
@@ -315,11 +339,10 @@ export class FormControl<TFormValues> {
       return [];
     }
 
-    const value = this.getFieldValue(field);
     const errorCause: ErrorCauseType = `${cause}Async`;
     let errors: FieldError<TField>[] | undefined;
 
-    try {
+    {
       this.runningValidatorMap.add(field, cause);
 
       // Update field meta
@@ -334,20 +357,13 @@ export class FormControl<TFormValues> {
         this.updateAndNotifyField(field, { meta: newMeta });
       }
 
-      // Update form meta
       this.meta.set({ isValidating: true });
 
-      // Validate
-      const rawErrors = await validator({ value });
+      errors = await this._runAsyncValidators(cause, field);
 
       if (abortCtrl.signal.aborted) {
         return [];
       }
-
-      errors = transformErrors(field, errorCause, rawErrors);
-    } catch (e) {
-      // TODO handle error
-      console.error(e);
     }
 
     this.runningValidatorMap.remove(field, cause);
@@ -477,6 +493,9 @@ export class FormControl<TFormValues> {
     return true;
   }
 
+  /**
+   * @public
+   */
   handleSubmit = () => {
     this.meta.set(({ submitCount }) => ({
       isTouched: true,
@@ -500,7 +519,7 @@ export class FormControl<TFormValues> {
         };
       }
 
-      const errors = this._runSyncValidators("change", field, this.getFieldValue(field));
+      const errors = this._runSyncValidators("change", field);
 
       if (errors.length > 0) {
         isValid = false;
@@ -524,7 +543,7 @@ export class FormControl<TFormValues> {
         };
       }
 
-      const errors = this._runSyncValidators("blur", field, this.getFieldValue(field));
+      const errors = this._runSyncValidators("blur", field);
 
       if (errors.length > 0) {
         isValid = false;

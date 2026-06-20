@@ -6,6 +6,8 @@ export type ErrorCauseType = ValidationCause | `${ValidationCause}Async`;
 
 // ===== ERRORS =====
 
+export type RawError = string | { message: string };
+
 export interface ErrorMeta {}
 
 export interface FieldError<TKey> {
@@ -21,11 +23,11 @@ export type FieldErrors<TKey> = {
 
 // ===== VALIDATORS =====
 
-type ErrorMessages = string | string[] | null | undefined;
+export type ValidationResult = RawError | RawError[] | null | undefined;
 
 type Validator<TValues, TDeepKey extends DeepKeys<TValues>> = (args: {
   value: DeepValue<TValues, TDeepKey>;
-}) => ErrorMessages;
+}) => ValidationResult;
 
 export type FormValidators<TFormValues> = {
   [K in DeepKeys<TFormValues>]?: Validator<TFormValues, K>;
@@ -33,7 +35,7 @@ export type FormValidators<TFormValues> = {
 
 export type AsyncValidator<TValues, TDeepKey> = (args: {
   value: DeepValue<TValues, TDeepKey>;
-}) => Promise<ErrorMessages>;
+}) => Promise<ValidationResult>;
 
 export type FormAsyncValidators<TFormValues> = {
   [K in DeepKeys<TFormValues>]?: AsyncValidator<TFormValues, K>;
