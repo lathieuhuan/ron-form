@@ -1,4 +1,4 @@
-import { FormApi, FormControl, FormControlOptions } from "@lib/core/FormControl";
+import { FormApi, FormControl, FormControlOptions } from "@lib/core";
 import { useState } from "react";
 
 export interface UseFormOptions<TFormValues> extends FormControlOptions<TFormValues> {}

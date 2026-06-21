@@ -1,287 +1,46 @@
+import type { SetFieldValueOptions, ValidateSyncOptions } from "./FormApi.type";
 import type {
   AnyObject,
-  AsyncValidatorMap,
   DeepKeys,
   DeepValue,
-  ErrorCauseType,
   FieldError,
   FieldErrors,
   FieldMeta,
   FieldState,
-  FormAsyncValidators,
-  FormValidators,
   Updater,
   ValidationCause,
-  ValidationResult,
-  ValidatorMap,
 } from "./types";
 
-import { DEFAULT_ERROR_MAP, DEFAULT_FORM_META, DEFAULT_META } from "./constants";
-import { FormMetaControl, type FormMetaApi } from "./FormMetaControl";
+import { DEFAULT_ERROR_MAP, DEFAULT_FORM_META } from "./constants";
+import { FormCore, FormCoreOptions } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
-import { createSubject, Subject } from "./utils/createSubject";
-import { get } from "./utils/get";
 import { set } from "./utils/set";
-import { transformErrors } from "./utils/transformErrors";
-import { parseRawError } from "./utils/parseRawError";
 
-type FieldSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
-  TKey,
-  Subject<FieldState<TFormValues, TKey>>
->;
-
-type TimeoutIDMapByCause<TFormValues> = {
-  [key in ValidationCause]: Map<DeepKeys<TFormValues>, NodeJS.Timeout>;
-};
-
-type AbortControllerMapByCause<TFormValues> = {
-  [key in ValidationCause]: Map<DeepKeys<TFormValues>, AbortController>;
-};
-
-export interface FormControlOptions<TFormValues> {
-  defaultValues?: TFormValues;
-  changeValidators?: FormValidators<TFormValues>;
-  changeAsyncValidators?: FormAsyncValidators<TFormValues>;
-  blurValidators?: FormValidators<TFormValues>;
-  blurAsyncValidators?: FormAsyncValidators<TFormValues>;
-  asyncDebounceMs?: number;
+export interface FormControlOptions<TFormValues> extends FormCoreOptions<TFormValues> {
   onSubmit?: (props: { values: TFormValues }) => void;
   onSubmitFailed?: () => void;
 }
 
-export class FormControl<TFormValues> {
-  _defaultValues: TFormValues;
-  _values: TFormValues;
-  meta: FormMetaApi;
-
-  fieldMetaMap: Map<DeepKeys<TFormValues>, FieldMeta> = new Map();
-  fieldErrorMap: Map<DeepKeys<TFormValues>, FieldErrors<DeepKeys<TFormValues>>> = new Map();
-
-  asyncDebounceMs: number;
-
-  validators: ValidatorMap<TFormValues>;
-  asyncValidators: AsyncValidatorMap<TFormValues>;
-
-  timeoutIdMaps: TimeoutIDMapByCause<TFormValues> = {
-    change: new Map(),
-    blur: new Map(),
-  };
-  abortCtrlMaps: AbortControllerMapByCause<TFormValues> = {
-    change: new Map(),
-    blur: new Map(),
-  };
-  runningValidatorMap = new RunningValidatorMap<TFormValues>();
-
-  fieldSubjects: FieldSubjects<TFormValues, DeepKeys<TFormValues>> = new Map();
-
+export class FormControl<TFormValues> extends FormCore<TFormValues> {
   onSubmit?: (props: { values: TFormValues }) => void;
   onSubmitFailed?: () => void;
 
-  constructor({
-    defaultValues,
-    changeValidators,
-    changeAsyncValidators,
-    blurValidators,
-    blurAsyncValidators,
-    asyncDebounceMs = 300,
-    onSubmit,
-    onSubmitFailed,
-  }: FormControlOptions<TFormValues> = {}) {
-    this._defaultValues = defaultValues !== undefined ? clone(defaultValues) : ({} as TFormValues);
-    this._values = clone(this._defaultValues);
+  constructor(options: FormControlOptions<TFormValues>) {
+    super(options);
 
-    this.validators = {
-      change: changeValidators !== undefined ? changeValidators : {},
-      blur: blurValidators !== undefined ? blurValidators : {},
-    };
-    this.asyncValidators = {
-      change: changeAsyncValidators !== undefined ? changeAsyncValidators : {},
-      blur: blurAsyncValidators !== undefined ? blurAsyncValidators : {},
-    };
-
-    this.asyncDebounceMs = asyncDebounceMs;
-    this.meta = new FormMetaControl();
-
-    this.onSubmit = onSubmit;
-    this.onSubmitFailed = onSubmitFailed;
-  }
-
-  get values() {
-    return this._values;
+    this.onSubmit = options.onSubmit;
+    this.onSubmitFailed = options.onSubmitFailed;
   }
 
   /**
    * @public
    */
-  getFieldValue<TField extends DeepKeys<TFormValues>>(
-    field: TField,
-  ): DeepValue<TFormValues, TField> {
-    return get(this._values as AnyObject, field);
-  }
-
-  /**
-   * @public
-   */
-  getFieldMeta<TField extends DeepKeys<TFormValues>>(field: TField): FieldMeta {
-    return this.fieldMetaMap.get(field) || { ...DEFAULT_META };
-  }
-
-  /**
-   * @public
-   */
-  getFieldErrorMap<TField extends DeepKeys<TFormValues>>(field: TField) {
-    return (this.fieldErrorMap.get(field) || { ...DEFAULT_ERROR_MAP }) as FieldErrors<TField>;
-  }
-
-  /**
-   * @public
-   */
-  getFieldState<TField extends DeepKeys<TFormValues>>(
-    field: TField,
-  ): FieldState<TFormValues, TField> {
-    return {
-      value: this.getFieldValue(field),
-      meta: this.getFieldMeta(field),
-      errorMap: this.getFieldErrorMap(field),
-    };
-  }
-
-  /**
-   * @public
-   */
-  subscribeField<TField extends DeepKeys<TFormValues>>(
-    key: TField,
-    subscriber: (field: FieldState<TFormValues, TField>) => void,
-  ) {
-    let subject = this.fieldSubjects.get(key);
-
-    if (subject === undefined) {
-      subject = createSubject();
-
-      this.fieldSubjects.set(key, subject);
-    }
-
-    return (subject as Subject<FieldState<TFormValues, TField>>).subscribe(subscriber);
-  }
-
-  syncMeta() {
-    let isBlurred = false;
-    let isTouched = false;
-    let isDirty = false;
-    let isValidating = false;
-
-    for (const meta of this.fieldMetaMap.values()) {
-      isBlurred = isBlurred || meta.isBlurred;
-      isValidating = isValidating || meta.isValidating;
-      isTouched = isTouched || meta.isTouched;
-      isDirty = isDirty || meta.isDirty;
-
-      if (isBlurred && isTouched && isDirty && isValidating) {
-        break;
-      }
-    }
-
-    this.meta.set({
-      isBlurred,
-      isTouched,
-      isDirty,
-      isValidating,
-    });
-  }
-
-  /**
-   * If `value` is not passed AND
-   * (`meta` & `errorMap` are not passed/undefined OR
-   * `meta` & `errorMap` are the same as the current ones),
-   * this method will short circuit.
-   */
-  updateAndNotifyField<TField extends DeepKeys<TFormValues>>(
-    field: TField,
-    changes: Partial<FieldState<TFormValues, TField>>,
-  ) {
-    let { value, meta, errorMap } = changes;
-    const valueChanged = "value" in changes;
-
-    const currentMeta = this.getFieldMeta(field);
-    const currentErrorMap = this.getFieldErrorMap(field);
-
-    // Note: The meta & errorMap passed in changes can already be the current ones.
-    meta = meta === undefined ? currentMeta : meta;
-    errorMap = errorMap === undefined ? currentErrorMap : errorMap;
-
-    if (!valueChanged && meta === currentMeta && errorMap === currentErrorMap) {
-      return;
-    }
-
-    // TODO write test for value === undefined/null (e.g. clear value)
-    if (!valueChanged) {
-      value = this.getFieldValue(field);
-    }
-
-    this.fieldMetaMap.set(field, meta);
-    this.fieldErrorMap.set(field, errorMap);
-
-    this.fieldSubjects.get(field)?.next({
-      value: value as DeepValue<TFormValues, TField>,
-      meta,
-      errorMap,
-    });
-  }
-
-  /**
-   * @public
-   */
-  setFieldMeta<TField extends DeepKeys<TFormValues>>(field: TField, updater: Updater<FieldMeta>) {
-    const newMeta = typeof updater === "function" ? updater(this.getFieldMeta(field)) : updater;
-
-    this.updateAndNotifyField(field, {
-      meta: newMeta,
-    });
-
-    this.syncMeta();
-  }
-
-  _runSyncValidators<TField extends DeepKeys<TFormValues>>(
-    cause: ValidationCause,
-    field: TField,
-    value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
-  ) {
-    const validator = this.validators[cause][field];
-    if (validator == null) return [];
-
-    return transformErrors(field, cause, validator({ value }));
-  }
-
-  async _runAsyncValidators<TField extends DeepKeys<TFormValues>>(
-    cause: ValidationCause,
-    field: TField,
-    value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
-  ) {
-    const validator = this.asyncValidators[cause][field];
-    if (validator == null) return [];
-    let result: ValidationResult;
-
-    try {
-      result = await validator({ value });
-    } catch (e) {
-      result = parseRawError(e);
-    }
-
-    return transformErrors(field, `${cause}Async`, result);
-  }
-
-  /**
-   * @public
-   */
-  validateSync<TField extends DeepKeys<TFormValues>>(
+  validateSync = <TField extends DeepKeys<TFormValues>>(
     field: TField,
     cause: ValidationCause,
-    options: {
-      shouldBlur?: boolean;
-      shouldTouch?: boolean;
-    } = {},
-  ) {
+    options: ValidateSyncOptions = {},
+  ) => {
     let fieldMeta = this.getFieldMeta(field);
 
     if (options.shouldTouch && !fieldMeta.isTouched) {
@@ -319,108 +78,52 @@ export class FormControl<TFormValues> {
     });
 
     return errors;
-  }
-
-  // async validateAsync_<TField extends DeepKeys<TFormValues>>(
-  //   field: TField,
-  //   cause: ValidationCause,
-  // ) {
-  //   //
-  // }
-
-  async validateAsync<TField extends DeepKeys<TFormValues>>(
-    field: TField,
-    cause: ValidationCause,
-    abortCtrl: AbortController,
-  ): Promise<FieldError<TField>[]> {
-    const validator = this.asyncValidators[cause][field];
-
-    if (validator == null || abortCtrl.signal.aborted) {
-      return [];
-    }
-
-    const errorCause: ErrorCauseType = `${cause}Async`;
-    let errors: FieldError<TField>[] | undefined;
-
-    {
-      this.runningValidatorMap.add(field, cause);
-
-      // Update field meta
-      let newMeta = this.getFieldMeta(field);
-
-      if (!newMeta.isValidating) {
-        newMeta = {
-          ...newMeta,
-          isValidating: true,
-        };
-
-        this.updateAndNotifyField(field, { meta: newMeta });
-      }
-
-      this.meta.set({ isValidating: true });
-
-      errors = await this._runAsyncValidators(cause, field);
-
-      if (abortCtrl.signal.aborted) {
-        return [];
-      }
-    }
-
-    this.runningValidatorMap.remove(field, cause);
-
-    // Update field state
-    const newMeta: FieldMeta = {
-      ...this.getFieldMeta(field),
-      isValidating: this.runningValidatorMap.isAnyRunning(field),
-    };
-    const newErrorMap: FieldErrors<TField> = {
-      ...this.getFieldErrorMap(field),
-      [errorCause]: errors,
-    };
-
-    this.updateAndNotifyField(field, {
-      meta: newMeta,
-      errorMap: newErrorMap,
-    });
-
-    // Update form meta
-    this.meta.set({
-      isValidating: this.runningValidatorMap.isAnyRunning(),
-    });
-
-    return errors || [];
-  }
+  };
 
   /**
    * @public
    */
-  setFieldValue<TField extends DeepKeys<TFormValues>>(
+  validateAsync = async <TField extends DeepKeys<TFormValues>>(
+    field: TField,
+    cause: ValidationCause,
+  ): Promise<FieldError<TField>[]> => {
+    const timeoutId = this.timeoutIdMaps[cause].get(field);
+
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+      this.timeoutIdMaps[cause].delete(field);
+    }
+
+    const abortCtrl = new AbortController();
+
+    this.abortCtrlMaps[cause].get(field)?.abort();
+    this.abortCtrlMaps[cause].set(field, abortCtrl);
+
+    this.meta.set({ isValidating: true });
+
+    const errors = await this._validateAsync(field, cause, abortCtrl);
+
+    this.meta.set({
+      isValidating: this.runningValidatorMap.isAnyRunning(field),
+    });
+
+    return errors;
+  };
+
+  /**
+   * @public
+   */
+  setFieldValue = <TField extends DeepKeys<TFormValues>>(
     field: TField,
     value: DeepValue<TFormValues, TField>,
-    options: {
-      dontTouch?: boolean;
-      dontDirty?: boolean;
-      dontValidate?: boolean;
-    } = {},
-  ): boolean {
+    options: SetFieldValueOptions = {},
+  ): boolean => {
     const success = set(this._values as AnyObject, field, value);
 
     if (!success) {
       console.error(`Field ${field} not found in values`);
       return false;
     }
-
-    // ===== CLEANUP =====
-
-    this.abortCtrlMaps.change.get(field)?.abort();
-
-    let timeoutId = this.timeoutIdMaps.change.get(field);
-
-    if (timeoutId !== undefined) {
-      clearTimeout(timeoutId);
-    }
-
-    // ===== MAIN LOGIC =====
 
     const { dontTouch = false, dontDirty = false, dontValidate = false } = options;
 
@@ -477,21 +180,57 @@ export class FormControl<TFormValues> {
 
     this.syncMeta();
 
+    // ===== ASYNC VALIDATION =====
+
+    let timeoutId = this.timeoutIdMaps.change.get(field);
+
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+
+    this.abortCtrlMaps.change.get(field)?.abort();
+
     // TODO add an option to validate async even if there are sync errors
     if (errors.length === 0 && this.asyncValidators.change[field] != null) {
       const abortCtrl = new AbortController();
 
       this.abortCtrlMaps.change.set(field, abortCtrl);
 
-      timeoutId = setTimeout(() => {
-        this.validateAsync(field, "change", abortCtrl);
+      timeoutId = setTimeout(async () => {
+        if (abortCtrl.signal.aborted) {
+          return;
+        }
+
+        this.meta.set({ isValidating: true });
+
+        await this._validateAsync(field, "change", abortCtrl);
+
+        this.meta.set({
+          isValidating: this.runningValidatorMap.isAnyRunning(),
+        });
       }, this.asyncDebounceMs);
 
       this.timeoutIdMaps.change.set(field, timeoutId);
     }
 
     return true;
-  }
+  };
+
+  /**
+   * @public
+   */
+  setFieldMeta = <TField extends DeepKeys<TFormValues>>(
+    field: TField,
+    updater: Updater<FieldMeta>,
+  ) => {
+    const newMeta = typeof updater === "function" ? updater(this.getFieldMeta(field)) : updater;
+
+    this.updateAndNotifyField(field, {
+      meta: newMeta,
+    });
+
+    this.syncMeta();
+  };
 
   /**
    * @public
@@ -573,7 +312,7 @@ export class FormControl<TFormValues> {
   /**
    * @public
    */
-  reset() {
+  reset = () => {
     this._values = clone(this._defaultValues);
 
     for (const cause of <ValidationCause[]>["change", "blur"]) {
@@ -599,22 +338,5 @@ export class FormControl<TFormValues> {
     }
 
     this.meta.set(DEFAULT_FORM_META);
-  }
+  };
 }
-
-export type FormApi<TFormValues> = Pick<
-  FormControl<TFormValues>,
-  | "values"
-  | "meta"
-  | "getFieldValue"
-  | "getFieldMeta"
-  | "getFieldErrorMap"
-  | "getFieldState"
-  | "subscribeField"
-  | "setFieldValue"
-  | "setFieldMeta"
-  | "validateSync"
-  | "reset"
-> & {
-  handleSubmit(): void;
-};

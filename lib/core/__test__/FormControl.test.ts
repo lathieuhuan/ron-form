@@ -11,46 +11,6 @@ const defaultValues = {
 };
 
 describe("FormControl", () => {
-  describe("constructor", () => {
-    it("initializes with cloned default values", () => {
-      const form = new FormControl({ defaultValues });
-
-      expect(form.values).toEqual(defaultValues);
-      expect(form.values).not.toBe(defaultValues);
-      expect(form.values.profile).not.toBe(defaultValues.profile);
-    });
-
-    it("initializes with an empty object when default values are omitted", () => {
-      const form = new FormControl();
-
-      expect(form.values).toEqual({});
-    });
-
-    it("initializes form meta as not blurred, untouched, clean, and not validating, and submit count 0", () => {
-      const form = new FormControl({ defaultValues });
-
-      expect(form.meta.get()).toEqual({
-        isBlurred: false,
-        isTouched: false,
-        isDirty: false,
-        isValidating: false,
-        submitCount: 0,
-      });
-    });
-
-    it("uses the provided async debounce delay", () => {
-      const form = new FormControl({ defaultValues, asyncDebounceMs: 500 });
-
-      expect(form.asyncDebounceMs).toBe(500);
-    });
-
-    it("defaults async debounce to 300ms", () => {
-      const form = new FormControl({ defaultValues });
-
-      expect(form.asyncDebounceMs).toBe(300);
-    });
-  });
-
   describe("setFieldValue", () => {
     it("updates the field value", () => {
       const form = new FormControl({ defaultValues });

@@ -78,8 +78,18 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
 
       form.abortCtrlMaps.blur.set(name, abortCtrl);
 
-      timeoutId = setTimeout(() => {
-        form.validateAsync(name, "blur", abortCtrl);
+      timeoutId = setTimeout(async () => {
+        if (abortCtrl.signal.aborted) {
+          return;
+        }
+
+        form.meta.set({ isValidating: true });
+
+        await form._validateAsync(name, "blur", abortCtrl);
+
+        form.meta.set({
+          isValidating: form.runningValidatorMap.isAnyRunning(),
+        });
       }, form.asyncDebounceMs);
 
       form.timeoutIdMaps.blur.set(name, timeoutId);
