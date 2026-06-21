@@ -184,6 +184,298 @@ describe("FormControl validation", () => {
     });
   });
 
+  describe("validateAsync", () => {
+    it("returns an empty array when no async validator is registered", async () => {
+      const form = new FormControl({ defaultValues });
+      const fieldSubscriber = vi.fn();
+
+      form.subscribeField("name", fieldSubscriber);
+
+      const errors = await form.validateAsync("name", "change");
+
+      expect(errors).toEqual([]);
+      expect(form.getFieldErrorMap("name").changeAsync).toEqual([]);
+      expect(form.meta.get().isValidating).toBe(false);
+      expect(fieldSubscriber).not.toHaveBeenCalled();
+    });
+
+    it("validates with the current field value and stores async errors", async () => {
+      const validator = vi.fn(async () => "Async error");
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: { name: validator },
+      });
+      const fieldSubscriber = vi.fn();
+
+      form.subscribeField("name", fieldSubscriber);
+
+      const errors = await form.validateAsync("name", "change");
+
+      expect(validator).toHaveBeenCalledWith({ value: "John" });
+      expect(errors).toEqual([
+        {
+          path: "name",
+          type: "changeAsync",
+          message: "Async error",
+          meta: {},
+        },
+      ]);
+      expect(form.getFieldErrorMap("name").changeAsync).toEqual(errors);
+      expect(form.getFieldMeta("name").isValidating).toBe(false);
+      expect(form.meta.get().isValidating).toBe(false);
+      expect(fieldSubscriber).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          errorMap: expect.objectContaining({
+            changeAsync: errors,
+          }),
+        }),
+      );
+    });
+
+    it("returns the resolved errors", async () => {
+      const validator = vi.fn(async () => "Async error");
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: { name: validator },
+      });
+
+      const errors = await form.validateAsync("name", "change");
+
+      expect(errors).toEqual([
+        {
+          path: "name",
+          type: "changeAsync",
+          message: "Async error",
+          meta: {},
+        },
+      ]);
+    });
+
+    it("sets form meta isValidating while async validation is running", async () => {
+      let resolveValidator: (value: string | undefined) => void = () => {};
+      const validator = vi.fn(
+        () =>
+          new Promise<string | undefined>((resolve) => {
+            resolveValidator = resolve;
+          }),
+      );
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: { name: validator },
+      });
+
+      const validation = form.validateAsync("name", "change");
+
+      await Promise.resolve();
+
+      expect(form.getFieldMeta("name").isValidating).toBe(true);
+      expect(form.meta.get().isValidating).toBe(true);
+
+      resolveValidator(undefined);
+      await validation;
+
+      expect(form.getFieldMeta("name").isValidating).toBe(false);
+      expect(form.meta.get().isValidating).toBe(false);
+    });
+
+    it("validates with blur async validators when cause is blur", async () => {
+      const validator = vi.fn(async () => "Blur async error");
+      const form = new FormControl({
+        defaultValues,
+        blurAsyncValidators: { email: validator },
+      });
+
+      const errors = await form.validateAsync("email", "blur");
+
+      expect(validator).toHaveBeenCalledWith({ value: "john@example.com" });
+      expect(errors).toEqual([
+        {
+          path: "email",
+          type: "blurAsync",
+          message: "Blur async error",
+          meta: {},
+        },
+      ]);
+      expect(form.getFieldErrorMap("email").blurAsync).toEqual(errors);
+    });
+
+    it("clears existing async errors when validation passes", async () => {
+      const validator = vi.fn(async () => undefined);
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: { name: validator },
+      });
+
+      form.fieldErrorMap.set("name", {
+        change: [],
+        blur: [],
+        changeAsync: [
+          {
+            path: "name",
+            type: "changeAsync",
+            message: "Existing error",
+            meta: {},
+          },
+        ],
+        blurAsync: [],
+      });
+
+      const errors = await form.validateAsync("name", "change");
+
+      expect(errors).toEqual([]);
+      expect(form.getFieldErrorMap("name").changeAsync).toEqual([]);
+    });
+
+    it("preserves errors for other async causes", async () => {
+      const validator = vi.fn(async () => "Change async error");
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: { name: validator },
+      });
+
+      form.fieldErrorMap.set("name", {
+        change: [],
+        blur: [],
+        changeAsync: [],
+        blurAsync: [
+          {
+            path: "name",
+            type: "blurAsync",
+            message: "Blur async error",
+            meta: {},
+          },
+        ],
+      });
+
+      await form.validateAsync("name", "change");
+
+      expect(form.getFieldErrorMap("name").changeAsync).toEqual([
+        {
+          path: "name",
+          type: "changeAsync",
+          message: "Change async error",
+          meta: {},
+        },
+      ]);
+      expect(form.getFieldErrorMap("name").blurAsync).toEqual([
+        {
+          path: "name",
+          type: "blurAsync",
+          message: "Blur async error",
+          meta: {},
+        },
+      ]);
+    });
+
+    it("aborts the previous async validation when called again for the same field and cause", async () => {
+      let resolveFirstValidator: (value: string | undefined) => void = () => {};
+      const firstValidator = vi.fn(
+        () =>
+          new Promise<string | undefined>((resolve) => {
+            resolveFirstValidator = resolve;
+          }),
+      );
+      const secondValidator = vi.fn(async () => "Second error");
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: { name: firstValidator },
+      });
+
+      const firstValidation = form.validateAsync("name", "change");
+
+      await Promise.resolve();
+
+      form.asyncValidators.change.name = secondValidator;
+      const secondValidation = form.validateAsync("name", "change");
+
+      resolveFirstValidator("First error");
+      await firstValidation;
+      await secondValidation;
+
+      expect(firstValidator).toHaveBeenCalledOnce();
+      expect(secondValidator).toHaveBeenCalledOnce();
+      expect(form.getFieldErrorMap("name").changeAsync).toEqual([
+        {
+          path: "name",
+          type: "changeAsync",
+          message: "Second error",
+          meta: {},
+        },
+      ]);
+    });
+
+    it("keeps form meta isValidating true while another cause validation is still running", async () => {
+      let resolveChange: (value: string | undefined) => void = () => {};
+      let resolveBlur: (value: string | undefined) => void = () => {};
+      const changeValidator = vi.fn(
+        () =>
+          new Promise<string | undefined>((resolve) => {
+            resolveChange = resolve;
+          }),
+      );
+      const blurValidator = vi.fn(
+        () =>
+          new Promise<string | undefined>((resolve) => {
+            resolveBlur = resolve;
+          }),
+      );
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: { name: changeValidator },
+        blurAsyncValidators: { name: blurValidator },
+      });
+
+      const changeValidation = form.validateAsync("name", "change");
+      const blurValidation = form.validateAsync("name", "blur");
+
+      await Promise.resolve();
+
+      expect(form.meta.get().isValidating).toBe(true);
+
+      resolveChange(undefined);
+      await changeValidation;
+
+      expect(form.meta.get().isValidating).toBe(true);
+
+      resolveBlur(undefined);
+      await blurValidation;
+
+      expect(form.meta.get().isValidating).toBe(false);
+    });
+
+    it("clears pending debounced validation when called directly", async () => {
+      vi.useFakeTimers();
+
+      const debouncedValidator = vi.fn(async () => "Debounced error");
+      const directValidator = vi.fn(async () => "Direct error");
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: { name: debouncedValidator },
+        asyncDebounceMs: 100,
+      });
+
+      form.setFieldValue("name", "Jane");
+      form.asyncValidators.change.name = directValidator;
+
+      const errors = await form.validateAsync("name", "change");
+
+      await vi.advanceTimersByTimeAsync(100);
+
+      expect(debouncedValidator).not.toHaveBeenCalled();
+      expect(directValidator).toHaveBeenCalledOnce();
+      expect(errors).toEqual([
+        {
+          path: "name",
+          type: "changeAsync",
+          message: "Direct error",
+          meta: {},
+        },
+      ]);
+
+      vi.useRealTimers();
+    });
+  });
+
   describe("async validation", () => {
     beforeEach(() => {
       vi.useFakeTimers();

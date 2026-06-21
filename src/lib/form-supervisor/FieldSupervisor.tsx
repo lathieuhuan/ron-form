@@ -1,24 +1,16 @@
-import { FieldState } from "@lib/core";
-import { useEffect, useState } from "react";
-import { useFormSupervisor } from "./context";
+import { useFormField } from "@lib/react";
 import { Divider } from "@src/components/Divider";
+import { useFormSupervisor } from "./context";
 import { WatchSection } from "./WatchSection";
 
 export function FieldSupervisor() {
   const { form, watchedField } = useFormSupervisor();
-  const [field, setField] = useState<FieldState<any, any> | null>(null);
+  const field = useFormField({
+    name: watchedField,
+    form,
+  });
 
-  useEffect(() => {
-    if (!watchedField) return;
-
-    setField(form.getFieldState(watchedField));
-
-    return form.subscribeField(watchedField, (state) => {
-      setField(state);
-    });
-  }, [form, watchedField]);
-
-  if (!field) {
+  if (!watchedField) {
     return <div className="w-100 bg-black/20 rounded-md p-3">No field selected</div>;
   }
 

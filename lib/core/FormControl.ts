@@ -26,7 +26,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   onSubmit?: (props: { values: TFormValues }) => void;
   onSubmitFailed?: () => void;
 
-  constructor(options: FormControlOptions<TFormValues>) {
+  constructor(options: FormControlOptions<TFormValues> = {}) {
     super(options);
 
     this.onSubmit = options.onSubmit;
