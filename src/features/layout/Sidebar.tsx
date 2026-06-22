@@ -9,7 +9,7 @@ export function Sidebar({ items }: SidebarProps) {
   const location = useLocation();
 
   return (
-    <div className="w-40 p-4 flex flex-col gap-1 bg-black shrink-0">
+    <div className="w-42 px-2 py-4 flex flex-col gap-1 bg-black shrink-0">
       {items.map((item) => (
         <a
           href={item.path}

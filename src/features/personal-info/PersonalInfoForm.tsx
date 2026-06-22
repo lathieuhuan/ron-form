@@ -1,6 +1,6 @@
 import { ReactFieldStrictApi, useFormField } from "@lib/react";
 import { CITY_OPTIONS, DISTRICT_OPTIONS, WARD_OPTIONS } from "./config";
-import { AddressFormValues, Field, useForm, useFormOptions } from "./context";
+import { PersonalInfoFormValues, Field, useForm, useFormOptions } from "./context";
 
 import { Button } from "@src/components/Button";
 import { Input } from "@src/components/Input";
@@ -8,11 +8,11 @@ import { Select } from "@src/components/Select";
 import { FormField } from "@src/components/form";
 import { Layout } from "./Layout";
 
-export function AddressForm() {
+export function PersonalInfoForm() {
   const form = useForm(useFormOptions);
 
   const cityField = useFormField({
-    name: "city",
+    name: "address.city",
     form,
   });
 
@@ -20,7 +20,10 @@ export function AddressForm() {
     console.log(form.values);
   };
 
-  const handleSelectOpenChange = (open: boolean, field: ReactFieldStrictApi<AddressFormValues>) => {
+  const handleSelectOpenChange = (
+    open: boolean,
+    field: ReactFieldStrictApi<PersonalInfoFormValues>,
+  ) => {
     if (open) {
       form.setFieldMeta(field.name, (meta) => ({
         ...meta,
@@ -34,22 +37,30 @@ export function AddressForm() {
   return (
     <Layout form={form}>
       <div className="grid grid-cols-2 gap-4">
-        <Field name="street">
+        <Field name="name">
           {(field) => (
-            <FormField label="Street" field={field}>
+            <FormField label="Name" field={field}>
               <Input />
             </FormField>
           )}
         </Field>
 
-        <Field name="city">
+        <Field name="citizenId">
+          {(field) => (
+            <FormField label="Citizen ID" field={field}>
+              <Input />
+            </FormField>
+          )}
+        </Field>
+
+        <Field name="address.city">
           {(field) => (
             <FormField label="City" field={field}>
               <Select
                 options={CITY_OPTIONS}
                 onChange={() => {
-                  form.setFieldValue("district", "");
-                  form.setFieldValue("ward", "");
+                  form.setFieldValue("address.district", "");
+                  form.setFieldValue("address.ward", "");
                 }}
                 onOpenChange={(open) => handleSelectOpenChange(open, field)}
               />
@@ -57,14 +68,14 @@ export function AddressForm() {
           )}
         </Field>
 
-        <Field name="district">
+        <Field name="address.district">
           {(field) => (
             <FormField label="District" field={field}>
               <Select
                 options={DISTRICT_OPTIONS}
                 disabled={!cityField.value}
                 onChange={() => {
-                  form.setFieldValue("ward", "");
+                  form.setFieldValue("address.ward", "");
                 }}
                 onOpenChange={(open) => handleSelectOpenChange(open, field)}
               />
@@ -72,9 +83,9 @@ export function AddressForm() {
           )}
         </Field>
 
-        <Field name="district">
+        <Field name="address.district">
           {({ value: districtValue }) => (
-            <Field name="ward">
+            <Field name="address.ward">
               {(field) => (
                 <FormField label="Ward" field={field}>
                   <Select
@@ -85,6 +96,14 @@ export function AddressForm() {
                 </FormField>
               )}
             </Field>
+          )}
+        </Field>
+
+        <Field name="address.street">
+          {(field) => (
+            <FormField label="Street" field={field}>
+              <Input />
+            </FormField>
           )}
         </Field>
       </div>

@@ -1,5 +1,5 @@
+import PersonalInfo from "./features/personal-info";
 import Register from "./features/register";
-import Address from "./features/address";
 import { Route } from "./types";
 
 export const routes: Route[] = [
@@ -9,8 +9,8 @@ export const routes: Route[] = [
     Component: Register,
   },
   {
-    label: "Address Form",
-    path: "/address",
-    Component: Address,
+    label: "Personal Info Form",
+    path: "/personal-info",
+    Component: PersonalInfo,
   },
 ];

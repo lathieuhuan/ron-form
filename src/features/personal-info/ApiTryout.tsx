@@ -1,5 +1,5 @@
 import { Button } from "@src/components/Button";
-import { AddressFormValues } from "./context";
+import { PersonalInfoFormValues } from "./context";
 import { FormApi } from "@lib/core";
 
 type TryoutConfig = {
@@ -8,23 +8,23 @@ type TryoutConfig = {
 };
 
 type ApiTryoutProps = {
-  form: FormApi<AddressFormValues>;
+  form: FormApi<PersonalInfoFormValues>;
 };
 
 export function ApiTryout({ form }: ApiTryoutProps) {
   const tryoutConfigs: TryoutConfig[] = [
     {
-      label: "Set 'street' to '123 Main St'",
-      fn: () => form.setFieldValue("street", "123 Main St"),
+      label: "Set 'name' to 'John Wick'",
+      fn: () => form.setFieldValue("name", "John Wick"),
     },
     {
-      label: "Set 'street' meta to { isTouched: true }",
-      fn: () => form.setFieldMeta("street", (meta) => ({ ...meta, isTouched: true })),
+      label: "Set 'name' meta to { isTouched: true }",
+      fn: () => form.setFieldMeta("name", (meta) => ({ ...meta, isTouched: true })),
     },
     {
-      label: "Validate 'street' sync (also touch & blur)",
+      label: "Validate 'name' sync (also touch & blur)",
       fn: () =>
-        form.validateSync("street", "change", {
+        form.validateSync("name", "change", {
           shouldTouch: true,
           shouldBlur: true,
         }),

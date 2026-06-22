@@ -1,5 +1,5 @@
 import { FormApi } from "@lib/core";
-import { Form, FormMeta, AddressFormValues } from "./context";
+import { Form, FormMeta, PersonalInfoFormValues } from "./context";
 
 import { FieldSupervisor, FormSupervisor, WatchSection } from "@src/lib/form-supervisor";
 import { ApiTryout } from "./ApiTryout";
@@ -8,7 +8,7 @@ export function Layout({
   form,
   children,
 }: {
-  form: FormApi<AddressFormValues>;
+  form: FormApi<PersonalInfoFormValues>;
   children: React.ReactNode;
 }) {
   return (
@@ -16,7 +16,7 @@ export function Layout({
       <Form form={form}>
         <div className="h-screen p-4 overflow-y-auto flex gap-4">
           <div className="w-116 space-y-4">
-            <h1 className="text-2xl font-bold">Address Form</h1>
+            <h1 className="text-2xl font-bold">Personal Info Form</h1>
 
             {children}
 
