@@ -1,5 +1,5 @@
 import type { ErrorMeta } from "../types";
-import { isObject } from "./isObject";
+import { isObject } from "./object";
 
 export function parseRawError(error: unknown): { message: string; meta: ErrorMeta } {
   if (isObject(error) && typeof error.message === "string") {

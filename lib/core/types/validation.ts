@@ -26,7 +26,7 @@ export type FieldErrors<TKey> = {
 
 export type ValidationResult = RawError | RawError[] | null | undefined;
 
-type Validator<TValues, TDeepKey extends DeepKeys<TValues>> = (args: {
+export type Validator<TValues, TDeepKey extends DeepKeys<TValues>> = (args: {
   value: DeepValue<TValues, TDeepKey>;
   form: FormApi<TValues>;
 }) => ValidationResult;

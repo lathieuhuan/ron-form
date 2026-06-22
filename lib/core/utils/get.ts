@@ -1,5 +1,5 @@
 import type { AnyObject } from "../types/utils";
-import { isObject } from "./isObject";
+import { isObject } from "./object";
 
 export function get<T extends AnyObject>(obj: T, path: string, defaultValue: any = undefined) {
   const segments = path.split(".");

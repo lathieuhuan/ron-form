@@ -17,9 +17,9 @@ import { DEFAULT_ERROR_MAP, DEFAULT_FORM_META } from "./constants";
 import { FormCore, FormCoreOptions } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
+import { parseRawError } from "./utils/parseRawError";
 import { set } from "./utils/set";
 import { transformErrors } from "./utils/transformErrors";
-import { parseRawError } from "./utils/parseRawError";
 
 export interface FormControlOptions<TFormValues> extends FormCoreOptions<TFormValues> {
   onSubmit?: (props: { values: TFormValues }) => void;
@@ -37,7 +37,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     this.onSubmitFailed = options.onSubmitFailed;
   }
 
-  _runSyncValidators = <TField extends DeepKeys<TFormValues>>(
+  _runSyncValidator = <TField extends DeepKeys<TFormValues>>(
     cause: ValidationCause,
     field: TField,
     value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
@@ -48,7 +48,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     return transformErrors(field, cause, validator({ value, form: this }));
   };
 
-  _runAsyncValidators = async <TField extends DeepKeys<TFormValues>>(
+  _runAsyncValidator = async <TField extends DeepKeys<TFormValues>>(
     cause: ValidationCause,
     field: TField,
     value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
@@ -65,6 +65,61 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     }
 
     return transformErrors(field, `${cause}Async`, result);
+  };
+
+  _validateSync = <TField extends DeepKeys<TFormValues>>(
+    field: TField,
+    cause: ValidationCause,
+    options: ValidateSyncOptions = {},
+  ) => {
+    const { shouldTouch = false, shouldBlur = false } = options;
+    let fieldMeta = this.getFieldMeta(field);
+
+    if (shouldTouch && !fieldMeta.isTouched) {
+      fieldMeta = {
+        ...fieldMeta,
+        isTouched: true,
+      };
+    }
+
+    if (shouldBlur && !fieldMeta.isBlurred) {
+      fieldMeta = {
+        ...fieldMeta,
+        isBlurred: true,
+      };
+    }
+
+    const errors = this._runSyncValidator(cause, field);
+    let errorMap = this.getFieldErrorMap(field);
+
+    if (errors.length || errorMap[cause]?.length) {
+      errorMap = {
+        ...errorMap,
+        [cause]: errors,
+      };
+    }
+
+    this.updateAndNotifyField(field, {
+      meta: fieldMeta,
+      errorMap,
+    });
+
+    return errors;
+  };
+
+  /**
+   * @public
+   */
+  validateSync = <TField extends DeepKeys<TFormValues>>(
+    field: TField,
+    cause: ValidationCause,
+    options: ValidateSyncOptions = {},
+  ) => {
+    const errors = this._validateSync(field, cause, options);
+
+    this.syncMeta();
+
+    return errors;
   };
 
   _validateAsync = async <TField extends DeepKeys<TFormValues>>(
@@ -90,7 +145,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       this.updateAndNotifyField(field, { meta: newMeta });
     }
 
-    const errors = await this._runAsyncValidators(cause, field);
+    const errors = await this._runAsyncValidator(cause, field);
 
     if (abortCtrl.signal.aborted) {
       return [];
@@ -112,53 +167,6 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     this.updateAndNotifyField(field, {
       meta: newMeta,
       errorMap: newErrorMap,
-    });
-
-    return errors;
-  };
-
-  /**
-   * @public
-   */
-  validateSync = <TField extends DeepKeys<TFormValues>>(
-    field: TField,
-    cause: ValidationCause,
-    options: ValidateSyncOptions = {},
-  ) => {
-    let fieldMeta = this.getFieldMeta(field);
-
-    if (options.shouldTouch && !fieldMeta.isTouched) {
-      fieldMeta = {
-        ...fieldMeta,
-        isTouched: true,
-      };
-    }
-
-    if (options.shouldBlur && !fieldMeta.isBlurred) {
-      fieldMeta = {
-        ...fieldMeta,
-        isBlurred: true,
-      };
-    }
-
-    const errors = this._runSyncValidators(cause, field);
-    let errorMap = this.getFieldErrorMap(field);
-
-    if (errors.length || errorMap[cause]?.length) {
-      errorMap = {
-        ...errorMap,
-        [cause]: errors,
-      };
-    }
-
-    this.updateAndNotifyField(field, {
-      meta: fieldMeta,
-      errorMap,
-    });
-
-    this.meta.set({
-      isBlurred: fieldMeta.isBlurred,
-      isTouched: fieldMeta.isTouched,
     });
 
     return errors;
@@ -202,6 +210,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     value: DeepValue<TFormValues, TField>,
     options: SetFieldValueOptions = {},
   ): boolean => {
+    // TODO clone value if plain object
     const success = set(this._values as AnyObject, field, value);
 
     if (!success) {
@@ -220,8 +229,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     };
 
     if (dontValidate) {
-      // Clear all change errors because they are for the old value.
-      // TODO check if we should clear other errors as well.
+      // TODO check if we should leave existing errors, or clear them, or clear other errors as well.
       const newErrorMap: FieldErrors<TField> = {
         ...this.getFieldErrorMap(field),
         change: [],
@@ -247,7 +255,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     // who kept blur errors on value change and not blur yet.
     let newErrorMap = { ...DEFAULT_ERROR_MAP } as FieldErrors<TField>;
 
-    const errors = this._runSyncValidators("change", field, value);
+    const errors = this._runSyncValidator("change", field, value);
 
     if (errors.length) {
       newErrorMap = {
@@ -342,7 +350,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
         };
       }
 
-      const errors = this._runSyncValidators("change", field);
+      const errors = this._runSyncValidator("change", field);
 
       if (errors.length > 0) {
         isValid = false;
@@ -366,7 +374,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
         };
       }
 
-      const errors = this._runSyncValidators("blur", field);
+      const errors = this._runSyncValidator("blur", field);
 
       if (errors.length > 0) {
         isValid = false;

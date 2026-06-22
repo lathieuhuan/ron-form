@@ -1,4 +1,4 @@
-import { isObject } from "./isObject";
+import { isObject } from "./object";
 
 const indexRegex = /^\d+$/;
 

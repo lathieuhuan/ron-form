@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isObject } from "../isObject";
+import { isObject } from "../object";
 
 describe("isObject", () => {
   const plainObject = { key: "value" };

@@ -1,4 +1,4 @@
-import { isObject } from "./isObject";
+import { isObject } from "./object";
 
 export function isShallowEqual(a: object, b: object) {
   if (!isObject(a) || !isObject(b)) {
