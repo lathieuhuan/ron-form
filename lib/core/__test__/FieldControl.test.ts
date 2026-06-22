@@ -66,7 +66,7 @@ describe("FieldControl", () => {
 
       field.handleChange("");
 
-      expect(validator).toHaveBeenCalledWith({ value: "" });
+      expect(validator).toHaveBeenCalledWith({ value: "", form });
       expect(form.getFieldErrorMap("name").change).toEqual([
         {
           path: "name",
@@ -190,7 +190,7 @@ describe("FieldControl", () => {
 
         field.handleBlur();
 
-        expect(validator).toHaveBeenCalledWith({ value: "john@example.com" });
+        expect(validator).toHaveBeenCalledWith({ value: "john@example.com", form });
         expect(form.getFieldErrorMap("email").blur).toEqual([
           {
             path: "email",
@@ -244,7 +244,7 @@ describe("FieldControl", () => {
 
         await vi.advanceTimersByTimeAsync(100);
 
-        expect(asyncValidator).toHaveBeenCalledWith({ value: "John" });
+        expect(asyncValidator).toHaveBeenCalledWith({ value: "John", form });
         expect(form.getFieldErrorMap("name").blurAsync).toEqual([
           {
             path: "name",

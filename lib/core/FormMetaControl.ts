@@ -45,9 +45,3 @@ export class FormMetaControl {
     return this.subject.subscribe(subscriber);
   };
 }
-
-export type FormMetaApi = {
-  get(): FormMeta;
-  set(changes: Partial<FormMeta> | ((meta: FormMeta) => Partial<FormMeta>)): void;
-  subscribe(subscriber: (meta: FormMeta) => void): () => void;
-};

@@ -1,4 +1,5 @@
 import { createContexts, UseFormOptions } from "@lib/react";
+import { getAddressByCitizenId } from "./service";
 
 export interface PersonalInfoFormValues {
   name: string;
@@ -36,6 +37,18 @@ export const useFormOptions: UseFormOptions<PersonalInfoFormValues> = {
     "address.ward": require,
     "address.district": require,
     "address.city": require,
+  },
+  blurAsyncValidators: {
+    citizenId: async ({ value, form }) => {
+      const address = await getAddressByCitizenId(value);
+
+      if (address !== null) {
+        form.setFieldValue("address", address);
+        return null;
+      }
+
+      return "Invalid citizen ID";
+    },
   },
   onSubmit: ({ values }) => {
     console.log("Submit success");

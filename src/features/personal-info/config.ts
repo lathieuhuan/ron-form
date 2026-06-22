@@ -1,3 +1,5 @@
+export const VALID_CITIZEN_ID = "1234567890";
+
 export const CITY_OPTIONS = [
   {
     label: "Hà Nội",
@@ -16,29 +18,29 @@ export const CITY_OPTIONS = [
 export const DISTRICT_OPTIONS = [
   {
     label: "Quận 1",
-    value: "quan1",
+    value: "district1",
   },
   {
     label: "Quận 2",
-    value: "quan2",
+    value: "district2",
   },
   {
     label: "Quận 3",
-    value: "quan3",
+    value: "district3",
   },
 ];
 
 export const WARD_OPTIONS = [
   {
     label: "Phường 1",
-    value: "phuong1",
+    value: "ward1",
   },
   {
     label: "Phường 2",
-    value: "phuong2",
+    value: "ward2",
   },
   {
     label: "Phường 3",
-    value: "phuong3",
+    value: "ward3",
   },
 ];

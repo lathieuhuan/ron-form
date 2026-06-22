@@ -1,5 +1,4 @@
-import { FormApi } from "@lib/core/FormControl";
-import { DeepKeys } from "@lib/core/types";
+import { DeepKeys, FormApi } from "@lib/core";
 import { createContext, useContext } from "react";
 
 export interface FormSupervisorContextValue<TFormValues> {

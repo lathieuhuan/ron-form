@@ -1,6 +1,7 @@
-import { Button } from "@src/components/Button";
-import { PersonalInfoFormValues } from "./context";
 import { FormApi } from "@lib/core";
+import { Button } from "@src/components/Button";
+import { VALID_CITIZEN_ID } from "./config";
+import { PersonalInfoFormValues } from "./context";
 
 type TryoutConfig = {
   label: string;
@@ -14,20 +15,24 @@ type ApiTryoutProps = {
 export function ApiTryout({ form }: ApiTryoutProps) {
   const tryoutConfigs: TryoutConfig[] = [
     {
-      label: "Set 'name' to 'John Wick'",
-      fn: () => form.setFieldValue("name", "John Wick"),
-    },
-    {
-      label: "Set 'name' meta to { isTouched: true }",
+      label: "Set 'Name' meta to { isTouched: true }",
       fn: () => form.setFieldMeta("name", (meta) => ({ ...meta, isTouched: true })),
     },
     {
-      label: "Validate 'name' sync (also touch & blur)",
+      label: "Validate sync (change) 'Name' (also touch & blur)",
       fn: () =>
         form.validateSync("name", "change", {
           shouldTouch: true,
           shouldBlur: true,
         }),
+    },
+    {
+      label: "Set 'Citizen ID' to the valid value",
+      fn: () => form.setFieldValue("citizenId", VALID_CITIZEN_ID),
+    },
+    {
+      label: "Validate async (blur) 'Citizen ID'",
+      fn: () => form.validateAsync("citizenId", "blur"),
     },
     {
       label: "Reset form",

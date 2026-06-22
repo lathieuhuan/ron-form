@@ -55,7 +55,7 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
     if (syncValidator != null) {
       const value = form.getFieldValue(name);
 
-      errors = transformErrors(name, "blur", syncValidator({ value }));
+      errors = transformErrors(name, "blur", syncValidator({ value, form }));
 
       if (errors.length || errorMap.blur?.length) {
         errorMap = {

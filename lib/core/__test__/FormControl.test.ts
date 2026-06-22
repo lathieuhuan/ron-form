@@ -79,7 +79,7 @@ describe("FormControl", () => {
 
       form.setFieldValue("name", "");
 
-      expect(validator).toHaveBeenCalledWith({ value: "" });
+      expect(validator).toHaveBeenCalledWith({ value: "", form });
       expect(form.getFieldErrorMap("name").change).toEqual([
         {
           path: "name",
@@ -379,10 +379,10 @@ describe("FormControl", () => {
       form.handleSubmit();
 
       expect(changeValidator).toHaveBeenCalledTimes(2);
-      expect(changeValidator.mock.calls).toEqual([[{ value: "" }], [{ value: "" }]]);
+      expect(changeValidator.mock.calls).toEqual([[{ value: "", form }], [{ value: "", form }]]);
 
       expect(blurValidator).toHaveBeenCalledTimes(2);
-      expect(blurValidator.mock.calls).toEqual([[{ value: "" }], [{ value: 0 }]]);
+      expect(blurValidator.mock.calls).toEqual([[{ value: "", form }], [{ value: 0, form }]]);
     });
 
     it("stores sync validation errors in field error maps", () => {

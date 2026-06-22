@@ -1,3 +1,4 @@
+import type { FormApi } from "./form-api";
 import type { DeepKeys, DeepValue } from "./key-value";
 
 export type ValidationCause = "change" | "blur";
@@ -27,6 +28,7 @@ export type ValidationResult = RawError | RawError[] | null | undefined;
 
 type Validator<TValues, TDeepKey extends DeepKeys<TValues>> = (args: {
   value: DeepValue<TValues, TDeepKey>;
+  form: FormApi<TValues>;
 }) => ValidationResult;
 
 export type FormValidators<TFormValues> = {
@@ -35,6 +37,7 @@ export type FormValidators<TFormValues> = {
 
 export type AsyncValidator<TValues, TDeepKey> = (args: {
   value: DeepValue<TValues, TDeepKey>;
+  form: FormApi<TValues>;
 }) => Promise<ValidationResult>;
 
 export type FormAsyncValidators<TFormValues> = {

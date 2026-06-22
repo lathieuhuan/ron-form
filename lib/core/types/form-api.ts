@@ -1,14 +1,13 @@
-import type { FormMetaApi } from "./FormMetaControl";
-import type {
-  DeepKeys,
-  DeepValue,
-  FieldError,
-  FieldErrors,
-  FieldMeta,
-  FieldState,
-  Updater,
-  ValidationCause,
-} from "./types";
+import type { DeepKeys, DeepValue } from "./key-value";
+import type { FieldMeta, FieldState, FormMeta } from "./state";
+import type { Updater } from "./utils";
+import type { FieldError, FieldErrors, ValidationCause } from "./validation";
+
+export type FormMetaApi = {
+  get(): FormMeta;
+  set(changes: Partial<FormMeta> | ((meta: FormMeta) => Partial<FormMeta>)): void;
+  subscribe(subscriber: (meta: FormMeta) => void): () => void;
+};
 
 export type SetFieldValueOptions = {
   dontTouch?: boolean;

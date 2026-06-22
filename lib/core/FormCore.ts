@@ -3,25 +3,22 @@ import type {
   AsyncValidatorMap,
   DeepKeys,
   DeepValue,
-  FieldError,
   FieldErrors,
   FieldMeta,
   FieldState,
   FormAsyncValidators,
+  FormMetaApi,
   FormValidators,
   ValidationCause,
-  ValidationResult,
   ValidatorMap,
 } from "./types";
 
 import { DEFAULT_ERROR_MAP, DEFAULT_META } from "./constants";
-import { FormMetaControl, type FormMetaApi } from "./FormMetaControl";
+import { FormMetaControl } from "./FormMetaControl";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
 import { createSubject, Subject } from "./utils/createSubject";
 import { get } from "./utils/get";
-import { parseRawError } from "./utils/parseRawError";
-import { transformErrors } from "./utils/transformErrors";
 
 type FieldSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
   TKey,
@@ -214,85 +211,5 @@ export class FormCore<TFormValues> {
       isDirty,
       isValidating,
     });
-  };
-
-  _runSyncValidators = <TField extends DeepKeys<TFormValues>>(
-    cause: ValidationCause,
-    field: TField,
-    value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
-  ) => {
-    const validator = this.validators[cause][field];
-    if (validator == null) return [];
-
-    return transformErrors(field, cause, validator({ value }));
-  };
-
-  _runAsyncValidators = async <TField extends DeepKeys<TFormValues>>(
-    cause: ValidationCause,
-    field: TField,
-    value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
-  ) => {
-    const validator = this.asyncValidators[cause][field];
-    if (validator == null) return [];
-
-    let result: ValidationResult;
-
-    try {
-      result = await validator({ value });
-    } catch (e) {
-      result = parseRawError(e);
-    }
-
-    return transformErrors(field, `${cause}Async`, result);
-  };
-
-  _validateAsync = async <TField extends DeepKeys<TFormValues>>(
-    field: TField,
-    cause: ValidationCause,
-    abortCtrl: AbortController,
-  ): Promise<FieldError<TField>[]> => {
-    if (this.asyncValidators[cause][field] == null) {
-      return [];
-    }
-
-    this.runningValidatorMap.add(field, cause);
-
-    // Update field meta
-    let newMeta = this.getFieldMeta(field);
-
-    if (!newMeta.isValidating) {
-      newMeta = {
-        ...newMeta,
-        isValidating: true,
-      };
-
-      this.updateAndNotifyField(field, { meta: newMeta });
-    }
-
-    const errors = await this._runAsyncValidators(cause, field);
-
-    if (abortCtrl.signal.aborted) {
-      return [];
-    }
-
-    this.runningValidatorMap.remove(field, cause);
-
-    // Update field state
-    newMeta = {
-      ...this.getFieldMeta(field),
-      isValidating: this.runningValidatorMap.isAnyRunning(field),
-    };
-
-    const newErrorMap: FieldErrors<TField> = {
-      ...this.getFieldErrorMap(field),
-      [`${cause}Async`]: errors,
-    };
-
-    this.updateAndNotifyField(field, {
-      meta: newMeta,
-      errorMap: newErrorMap,
-    });
-
-    return errors;
   };
 }
