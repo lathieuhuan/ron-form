@@ -339,7 +339,11 @@ describe("FormControl validation", () => {
 
       form.subscribeField("name", fieldSubscriber);
 
-      const errors = form._validateSync("name", "change");
+      const errors = form._validateSync("name", "change", {
+        shouldBlur: false,
+        shouldTouch: false,
+        shouldDirty: false,
+      });
 
       expect(errors).toEqual([]);
       expect(form.getFieldErrorMap("name").change).toEqual([]);
@@ -356,7 +360,11 @@ describe("FormControl validation", () => {
 
       form.subscribeField("name", fieldSubscriber);
 
-      const errors = form._validateSync("name", "change");
+      const errors = form._validateSync("name", "change", {
+        shouldBlur: false,
+        shouldTouch: false,
+        shouldDirty: false,
+      });
 
       expect(validator).toHaveBeenCalledWith({ value: "John", form });
       expect(errors).toEqual([
@@ -384,7 +392,11 @@ describe("FormControl validation", () => {
         blurValidators: { email: validator },
       });
 
-      const errors = form._validateSync("email", "blur");
+      const errors = form._validateSync("email", "blur", {
+        shouldBlur: false,
+        shouldTouch: false,
+        shouldDirty: false,
+      });
 
       expect(validator).toHaveBeenCalledWith({ value: "john@example.com", form });
       expect(errors).toEqual([
@@ -418,7 +430,11 @@ describe("FormControl validation", () => {
         blurAsync: [],
       });
 
-      const errors = form._validateSync("name", "change");
+      const errors = form._validateSync("name", "change", {
+        shouldBlur: false,
+        shouldTouch: false,
+        shouldDirty: false,
+      });
 
       expect(errors).toEqual([]);
       expect(form.getFieldErrorMap("name").change).toEqual([]);
@@ -444,7 +460,11 @@ describe("FormControl validation", () => {
         blurAsync: [],
       });
 
-      form._validateSync("name", "change");
+      form._validateSync("name", "change", {
+        shouldBlur: false,
+        shouldTouch: false,
+        shouldDirty: false,
+      });
 
       expect(form.getFieldErrorMap("name").change).toEqual([
         {
@@ -467,7 +487,11 @@ describe("FormControl validation", () => {
     it("sets isTouched on field and form meta when shouldTouch is true", () => {
       const form = new FormControl({ defaultValues });
 
-      form._validateSync("name", "change", { shouldTouch: true });
+      form._validateSync("name", "change", {
+        shouldBlur: false,
+        shouldTouch: true,
+        shouldDirty: false,
+      });
 
       expect(form.getFieldMeta("name").isTouched).toBe(true);
     });
@@ -475,7 +499,11 @@ describe("FormControl validation", () => {
     it("sets isBlurred on field and form meta when shouldBlur is true", () => {
       const form = new FormControl({ defaultValues });
 
-      form._validateSync("name", "change", { shouldBlur: true });
+      form._validateSync("name", "change", {
+        shouldBlur: true,
+        shouldTouch: false,
+        shouldDirty: false,
+      });
 
       expect(form.getFieldMeta("name").isBlurred).toBe(true);
     });
@@ -493,6 +521,7 @@ describe("FormControl validation", () => {
       form._validateSync("name", "change", {
         shouldTouch: true,
         shouldBlur: true,
+        shouldDirty: false,
       });
 
       expect(form.getFieldMeta("name")).toEqual({

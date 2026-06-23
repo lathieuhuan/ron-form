@@ -16,8 +16,9 @@ export type SetFieldValueOptions = {
 };
 
 export type ValidateSyncOptions = {
-  shouldBlur?: boolean;
-  shouldTouch?: boolean;
+  shouldBlur: boolean;
+  shouldTouch: boolean;
+  shouldDirty: boolean;
 };
 
 export interface FormApi<TFormValues> {

@@ -13,11 +13,11 @@ import type {
   ValidationResult,
 } from "./types";
 
-import { DEFAULT_ERROR_MAP, DEFAULT_FORM_META } from "./constants";
+import { DEFAULT_FORM_META } from "./constants";
 import { FormCore, FormCoreOptions } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
-import { isPlainObject } from "./utils/object";
+import { isPlainObject, keys } from "./utils/object";
 import { parseRawError } from "./utils/parseRawError";
 import { set } from "./utils/set";
 import { transformErrors } from "./utils/transformErrors";
@@ -71,23 +71,18 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   _validateSync = <TField extends DeepKeys<TFormValues>>(
     field: TField,
     cause: ValidationCause,
-    options: ValidateSyncOptions = {},
+    options: ValidateSyncOptions,
   ) => {
-    const { shouldTouch = false, shouldBlur = false } = options;
     let fieldMeta = this.getFieldMeta(field);
 
-    if (shouldTouch && !fieldMeta.isTouched) {
-      fieldMeta = {
-        ...fieldMeta,
-        isTouched: true,
-      };
+    if (options.shouldBlur && !fieldMeta.isBlurred) {
+      fieldMeta = { ...fieldMeta, isBlurred: true };
     }
-
-    if (shouldBlur && !fieldMeta.isBlurred) {
-      fieldMeta = {
-        ...fieldMeta,
-        isBlurred: true,
-      };
+    if (options.shouldTouch && !fieldMeta.isTouched) {
+      fieldMeta = { ...fieldMeta, isTouched: true };
+    }
+    if (options.shouldDirty && !fieldMeta.isDirty) {
+      fieldMeta = { ...fieldMeta, isDirty: true };
     }
 
     const errors = this._runSyncValidator(cause, field);
@@ -110,13 +105,19 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
   /**
    * @public
+   * @options Default: { shouldBlur: false, shouldTouch: true, shouldDirty: false }
    */
   validateSync = <TField extends DeepKeys<TFormValues>>(
     field: TField,
     cause: ValidationCause,
-    options: ValidateSyncOptions = {},
+    options: Partial<ValidateSyncOptions> = {},
   ) => {
-    const errors = this._validateSync(field, cause, options);
+    const { shouldBlur = false, shouldTouch = true, shouldDirty = false } = options;
+    const errors = this._validateSync(field, cause, {
+      shouldBlur,
+      shouldTouch,
+      shouldDirty,
+    });
 
     this.syncMeta();
 
@@ -250,43 +251,41 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
     // ===== VALIDATE =====
 
-    // Reset all errors even errors by other causes
-    // because those errors are for the old value.
-    // This behaviour is different from tanstack form v1.33.0
-    // who kept blur errors on value change and not blur yet.
-    let newErrorMap = { ...DEFAULT_ERROR_MAP } as FieldErrors<TField>;
+    const asyncValidateFields = new Set(keys(this.asyncValidators.change));
 
-    const errors = this._runSyncValidator("change", field, value);
+    for (const validateField of keys(this.validators.change)) {
+      if (!validateField.startsWith(field)) {
+        // not the field itself or a nested field
+        continue;
+      }
 
-    if (errors.length) {
-      newErrorMap = {
-        ...newErrorMap,
-        change: errors,
-      };
+      // TODO check if we should reset other errors in _validateSync
+      const errors = this._validateSync(validateField, "change", {
+        shouldBlur: false,
+        shouldTouch: !dontTouch,
+        shouldDirty: !dontDirty,
+      });
+
+      // TODO add an option to validate async even if there are sync errors
+      if (errors.length !== 0) {
+        asyncValidateFields.delete(validateField);
+      }
     }
-
-    this.updateAndNotifyField(field, {
-      value,
-      meta: newMeta,
-      errorMap: newErrorMap,
-    });
 
     this.syncMeta();
 
     // ===== ASYNC VALIDATION =====
 
-    let timeoutId = this.timeoutIdMaps.change.get(field);
+    for (const field of asyncValidateFields) {
+      let timeoutId = this.timeoutIdMaps.change.get(field);
 
-    if (timeoutId !== undefined) {
-      clearTimeout(timeoutId);
-    }
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
 
-    this.abortCtrlMaps.change.get(field)?.abort();
-
-    // TODO add an option to validate async even if there are sync errors
-    if (errors.length === 0 && this.asyncValidators.change[field] != null) {
       const abortCtrl = new AbortController();
 
+      this.abortCtrlMaps.change.get(field)?.abort();
       this.abortCtrlMaps.change.set(field, abortCtrl);
 
       timeoutId = setTimeout(async () => {
