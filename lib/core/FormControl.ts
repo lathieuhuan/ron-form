@@ -17,6 +17,7 @@ import { DEFAULT_ERROR_MAP, DEFAULT_FORM_META } from "./constants";
 import { FormCore, FormCoreOptions } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
+import { isPlainObject } from "./utils/object";
 import { parseRawError } from "./utils/parseRawError";
 import { set } from "./utils/set";
 import { transformErrors } from "./utils/transformErrors";
@@ -210,8 +211,8 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     value: DeepValue<TFormValues, TField>,
     options: SetFieldValueOptions = {},
   ): boolean => {
-    // TODO clone value if plain object
-    const success = set(this._values as AnyObject, field, value);
+    const clonedValue = isPlainObject(value) ? clone(value) : value;
+    const success = set(this._values as AnyObject, field, clonedValue);
 
     if (!success) {
       console.error(`Field ${field} not found in values`);
@@ -237,7 +238,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       };
 
       this.updateAndNotifyField(field, {
-        value,
+        value: clonedValue,
         meta: newMeta,
         errorMap: newErrorMap,
       });

@@ -21,6 +21,17 @@ describe("FormControl", () => {
       expect(form.values.name).toBe("Jane");
     });
 
+    it("clones the value if it is a plain object", () => {
+      const form = new FormControl({ defaultValues });
+      const newProfile = { age: 1 };
+
+      form.setFieldValue("profile", newProfile, { dontValidate: true });
+      newProfile.age = 2;
+
+      expect(form.getFieldValue("profile.age")).toBe(1);
+      expect(form.getFieldValue("profile")).not.toBe(newProfile);
+    });
+
     it("returns false and logs an error when the field path cannot be set", () => {
       const form = new FormControl({ defaultValues });
       const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
