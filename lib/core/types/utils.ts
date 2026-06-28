@@ -1,4 +1,4 @@
-export type AnyObject = Record<string, unknown>;
+export type AnyObject = Record<PropertyKey, unknown>;
 
 export type Noop = () => void;
 

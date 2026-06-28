@@ -17,7 +17,7 @@ import { DEFAULT_FORM_META } from "./constants";
 import { FormCore, FormCoreOptions } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
-import { isPlainObject, keys } from "./utils/object";
+import { isPlainObject, extractFields } from "./utils/object";
 import { parseRawError } from "./utils/parseRawError";
 import { set } from "./utils/set";
 import { transformErrors } from "./utils/transformErrors";
@@ -73,29 +73,29 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     cause: ValidationCause,
     options: ValidateSyncOptions,
   ) => {
-    let fieldMeta = this.getFieldMeta(field);
+    const fieldMeta = {
+      ...this.getFieldMeta(field),
+    };
 
     if (options.shouldBlur && !fieldMeta.isBlurred) {
-      fieldMeta = { ...fieldMeta, isBlurred: true };
+      fieldMeta.isBlurred = true;
     }
     if (options.shouldTouch && !fieldMeta.isTouched) {
-      fieldMeta = { ...fieldMeta, isTouched: true };
+      fieldMeta.isTouched = true;
     }
     if (options.shouldDirty && !fieldMeta.isDirty) {
-      fieldMeta = { ...fieldMeta, isDirty: true };
+      fieldMeta.isDirty = true;
     }
 
-    const errors = this._runSyncValidator(cause, field);
-    let errorMap = this.getFieldErrorMap(field);
-
-    if (errors.length || errorMap[cause]?.length) {
-      errorMap = {
-        ...errorMap,
-        [cause]: errors,
-      };
-    }
+    const value = this.getFieldValue(field);
+    const errors = this._runSyncValidator(cause, field, value);
+    const errorMap = {
+      ...this.getFieldErrorMap(field),
+      [cause]: errors,
+    };
 
     this.updateAndNotifyField(field, {
+      value,
       meta: fieldMeta,
       errorMap,
     });
@@ -251,24 +251,21 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
     // ===== VALIDATE =====
 
-    const asyncValidateFields = new Set(keys(this.asyncValidators.change));
+    const asyncValidators = this.asyncValidators.change;
+    const asyncValidateFields = new Set<DeepKeys<TFormValues>>();
 
-    for (const validateField of keys(this.validators.change)) {
-      if (!validateField.startsWith(field)) {
-        // not the field itself or a nested field
-        continue;
-      }
+    const subFields = extractFields(value, field) || [field];
 
-      // TODO check if we should reset other errors in _validateSync
-      const errors = this._validateSync(validateField, "change", {
+    for (const subField of subFields) {
+      const errors = this._validateSync(subField, "change", {
         shouldBlur: false,
         shouldTouch: !dontTouch,
         shouldDirty: !dontDirty,
       });
 
       // TODO add an option to validate async even if there are sync errors
-      if (errors.length !== 0) {
-        asyncValidateFields.delete(validateField);
+      if (errors.length === 0 && asyncValidators[subField] != null) {
+        asyncValidateFields.add(subField);
       }
     }
 

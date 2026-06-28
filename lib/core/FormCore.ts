@@ -159,7 +159,7 @@ export class FormCore<TFormValues> {
     field: TField,
     changes: Partial<FieldState<TFormValues, TField>>,
   ) => {
-    let { value, meta, errorMap } = changes;
+    let { meta, errorMap } = changes;
     const valueChanged = "value" in changes;
 
     const currentMeta = this.getFieldMeta(field);
@@ -174,15 +174,15 @@ export class FormCore<TFormValues> {
     }
 
     // TODO write test for value === undefined/null (e.g. clear value)
-    if (!valueChanged) {
-      value = this.getFieldValue(field);
-    }
+    const value = valueChanged
+      ? (changes.value as DeepValue<TFormValues, TField>)
+      : this.getFieldValue(field);
 
     this.fieldMetaMap.set(field, meta);
     this.fieldErrorMap.set(field, errorMap);
 
     this.fieldSubjects.get(field)?.next({
-      value: value as DeepValue<TFormValues, TField>,
+      value,
       meta,
       errorMap,
     });
