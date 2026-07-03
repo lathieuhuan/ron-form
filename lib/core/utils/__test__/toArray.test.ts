@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toArray } from "../toArray";
+import { toArray } from "../array";
 
 describe("toArray", () => {
   const singleValue = "only";

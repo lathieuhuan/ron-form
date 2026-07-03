@@ -17,9 +17,8 @@ import { DEFAULT_FORM_META } from "./constants";
 import { FormCore, FormCoreOptions } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
-import { isPlainObject, extractFields } from "./utils/object";
+import { extractFields, isPlainObject, set } from "./utils/object";
 import { parseRawError } from "./utils/parseRawError";
-import { set } from "./utils/set";
 import { transformErrors } from "./utils/transformErrors";
 
 export interface FormControlOptions<TFormValues> extends FormCoreOptions<TFormValues> {
@@ -221,28 +220,31 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     }
 
     const { dontTouch = false, dontDirty = false, dontValidate = false } = options;
-
-    const meta = this.getFieldMeta(field);
-    const newMeta: FieldMeta = {
-      isBlurred: meta.isBlurred,
-      isTouched: dontTouch ? meta.isTouched : true,
-      isDirty: dontDirty ? meta.isDirty : true,
-      isValidating: false,
-    };
+    const subFields = extractFields(value, field) || [field];
 
     if (dontValidate) {
-      // TODO check if we should leave existing errors, or clear them, or clear other errors as well.
-      const newErrorMap: FieldErrors<TField> = {
-        ...this.getFieldErrorMap(field),
-        change: [],
-        changeAsync: [],
-      };
+      for (const subField of subFields) {
+        const meta = this.getFieldMeta(subField);
+        const newMeta: FieldMeta = {
+          isBlurred: meta.isBlurred,
+          isTouched: dontTouch ? meta.isTouched : true,
+          isDirty: dontDirty ? meta.isDirty : true,
+          isValidating: false,
+        };
 
-      this.updateAndNotifyField(field, {
-        value: clonedValue,
-        meta: newMeta,
-        errorMap: newErrorMap,
-      });
+        // TODO check if we should leave existing errors, or clear them, or clear other errors as well.
+        const newErrorMap: FieldErrors<DeepKeys<TFormValues>> = {
+          ...this.getFieldErrorMap(subField),
+          change: [],
+          changeAsync: [],
+        };
+
+        this.updateAndNotifyField(subField, {
+          value: clonedValue,
+          meta: newMeta,
+          errorMap: newErrorMap,
+        });
+      }
 
       this.syncMeta();
 
@@ -253,8 +255,6 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
     const asyncValidators = this.asyncValidators.change;
     const asyncValidateFields = new Set<DeepKeys<TFormValues>>();
-
-    const subFields = extractFields(value, field) || [field];
 
     for (const subField of subFields) {
       const errors = this._validateSync(subField, "change", {

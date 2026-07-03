@@ -1,6 +1,6 @@
 import type { FormMeta } from "./types";
 import { createSubject } from "./utils/createSubject";
-import { isShallowEqual } from "./utils/isShallowEqual";
+import { isShallowEqual } from "./utils/object";
 
 export class FormMetaControl {
   private meta: FormMeta;

@@ -56,7 +56,7 @@ export interface FormApi<TFormValues> {
   validateSync<TField extends DeepKeys<TFormValues>>(
     field: TField,
     cause: ValidationCause,
-    options: ValidateSyncOptions,
+    options: Partial<ValidateSyncOptions>,
   ): FieldError<TField>[];
 
   validateAsync<TField extends DeepKeys<TFormValues>>(

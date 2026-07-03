@@ -18,7 +18,7 @@ import { FormMetaControl } from "./FormMetaControl";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
 import { createSubject, Subject } from "./utils/createSubject";
-import { get } from "./utils/get";
+import { get } from "./utils/object";
 
 type FieldSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
   TKey,

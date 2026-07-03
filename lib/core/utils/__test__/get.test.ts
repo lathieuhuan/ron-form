@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { get } from "../get";
+import { get } from "../object";
 
 describe("get", () => {
   const nestedObject = {

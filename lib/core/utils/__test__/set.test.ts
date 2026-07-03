@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { set } from "../set";
+import { set } from "../object";
 
 describe("set", () => {
   const leafValue = "updated";

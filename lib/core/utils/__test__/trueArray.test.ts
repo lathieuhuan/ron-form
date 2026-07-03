@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { trueArray } from "../trueArray";
+import { trueArray } from "../array";
 
 describe("trueArray", () => {
   const mixedArray = ["a", null, "b", undefined, "c"];
