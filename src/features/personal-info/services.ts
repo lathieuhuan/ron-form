@@ -1,4 +1,4 @@
-import { VALID_CITIZEN_ID } from "./config";
+import { VALID_CITIZEN_ID } from "./constants";
 
 type Address = {
   street: string;

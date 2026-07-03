@@ -1,6 +1,6 @@
 import { FormApi } from "@lib/core";
 import { Button } from "@src/components/Button";
-import { VALID_CITIZEN_ID } from "./config";
+import { VALID_CITIZEN_ID } from "./constants";
 import { PersonalInfoFormValues } from "./context";
 
 type TryoutConfig = {

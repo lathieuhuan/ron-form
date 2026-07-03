@@ -1,5 +1,5 @@
 import { createContexts, UseFormOptions } from "@lib/react";
-import { getAddressByCitizenId } from "./service";
+import { getAddressByCitizenId } from "./services";
 
 export interface PersonalInfoFormValues {
   name: string;

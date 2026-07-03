@@ -1,5 +1,5 @@
 import { ReactFieldStrictApi, useFormField } from "@lib/react";
-import { CITY_OPTIONS, DISTRICT_OPTIONS, WARD_OPTIONS } from "./config";
+import { CITY_OPTIONS, DISTRICT_OPTIONS, WARD_OPTIONS } from "./constants";
 import { PersonalInfoFormValues, Field, useForm, useFormOptions } from "./context";
 
 import { Button } from "@src/components/Button";

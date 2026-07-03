@@ -2,7 +2,7 @@ import { FormApi } from "@lib/core";
 import { Form, FormMeta, RegisterFormValues } from "./context";
 
 import { FieldSupervisor, FormSupervisor, WatchSection } from "@src/lib/form-supervisor";
-import { USED_EMAIL, USED_USERNAME } from "./config";
+import { USED_EMAIL, USED_USERNAME } from "./constants";
 
 export function Layout(props: { form: FormApi<RegisterFormValues>; children: React.ReactNode }) {
   return (

@@ -1,4 +1,4 @@
-import { USED_EMAIL, USED_USERNAME } from "./config";
+import { USED_EMAIL, USED_USERNAME } from "./constants";
 
 export async function isEmailValid(email: string) {
   return new Promise((resolve) => {

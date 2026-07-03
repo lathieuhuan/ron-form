@@ -1,5 +1,5 @@
 import { createContexts, UseFormOptions } from "@lib/react";
-import { isEmailAvailable, isEmailValid, isUsernameAvailable } from "./service";
+import { isEmailAvailable, isEmailValid, isUsernameAvailable } from "./services";
 
 export interface RegisterFormValues {
   email: string;
@@ -8,7 +8,7 @@ export interface RegisterFormValues {
   confirmPassword: string;
 }
 
-export const { FormContext, Form, FormMeta, Field, useForm, useFormInstance, useFormField } =
+export const { FormContext, Form, FormMeta, Field, useForm, useFormInstance } =
   createContexts<RegisterFormValues>();
 
 export const useFormOptions: UseFormOptions<RegisterFormValues> = {
