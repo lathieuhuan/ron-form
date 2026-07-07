@@ -17,7 +17,7 @@ import { DEFAULT_FORM_META } from "./constants";
 import { FormCore, FormCoreOptions } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
-import { extractFields, isPlainObject, set } from "./utils/object";
+import { collectFieldPaths, isPlainObject, set } from "./utils/object";
 import { parseRawError } from "./utils/parseRawError";
 import { transformErrors } from "./utils/transformErrors";
 
@@ -220,7 +220,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     }
 
     const { dontTouch = false, dontDirty = false, dontValidate = false } = options;
-    const subFields = extractFields(value, field) || [field];
+    const subFields = collectFieldPaths(value, field, [field]) || [field];
 
     if (dontValidate) {
       for (const subField of subFields) {
@@ -232,17 +232,9 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
           isValidating: false,
         };
 
-        // TODO check if we should leave existing errors, or clear them, or clear other errors as well.
-        const newErrorMap: FieldErrors<DeepKeys<TFormValues>> = {
-          ...this.getFieldErrorMap(subField),
-          change: [],
-          changeAsync: [],
-        };
-
         this.updateAndNotifyField(subField, {
           value: clonedValue,
           meta: newMeta,
-          errorMap: newErrorMap,
         });
       }
 

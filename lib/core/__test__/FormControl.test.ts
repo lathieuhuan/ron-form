@@ -55,6 +55,25 @@ describe("FormControl", () => {
       });
     });
 
+    it("marks parent and nested subFields as touched and dirty when setting an object value", () => {
+      const form = new FormControl({ defaultValues });
+
+      form.setFieldValue("profile", { age: 25 }, { dontValidate: true });
+
+      expect(form.getFieldMeta("profile")).toEqual({
+        isBlurred: false,
+        isTouched: true,
+        isDirty: true,
+        isValidating: false,
+      });
+      expect(form.getFieldMeta("profile.age")).toEqual({
+        isBlurred: false,
+        isTouched: true,
+        isDirty: true,
+        isValidating: false,
+      });
+    });
+
     it("respects dontTouch and dontDirty options", () => {
       const form = new FormControl({ defaultValues });
 
@@ -72,6 +91,46 @@ describe("FormControl", () => {
       });
 
       expect(form.getFieldMeta("name")).toEqual({
+        isBlurred: false,
+        isTouched: false,
+        isDirty: false,
+        isValidating: false,
+      });
+    });
+
+    it("respects dontTouch and dontDirty options on nested subFields", () => {
+      const form = new FormControl({ defaultValues });
+
+      form.setFieldMeta("profile", {
+        isBlurred: false,
+        isTouched: false,
+        isDirty: false,
+        isValidating: false,
+      });
+      form.setFieldMeta("profile.age", {
+        isBlurred: false,
+        isTouched: false,
+        isDirty: false,
+        isValidating: false,
+      });
+
+      form.setFieldValue(
+        "profile",
+        { age: 25 },
+        {
+          dontTouch: true,
+          dontDirty: true,
+          dontValidate: true,
+        },
+      );
+
+      expect(form.getFieldMeta("profile")).toEqual({
+        isBlurred: false,
+        isTouched: false,
+        isDirty: false,
+        isValidating: false,
+      });
+      expect(form.getFieldMeta("profile.age")).toEqual({
         isBlurred: false,
         isTouched: false,
         isDirty: false,
@@ -101,6 +160,30 @@ describe("FormControl", () => {
       ]);
     });
 
+    it("runs change validators on nested subFields when setting a parent object", () => {
+      const profileAgeValidator = vi.fn(({ value }: { value: number }) =>
+        value < 18 ? "Must be 18+" : null,
+      );
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          "profile.age": profileAgeValidator,
+        },
+      });
+
+      form.setFieldValue("profile", { age: 16 });
+
+      expect(profileAgeValidator).toHaveBeenCalledWith({ value: 16, form });
+      expect(form.getFieldErrorMap("profile.age").change).toEqual([
+        {
+          path: "profile.age",
+          type: "change",
+          message: "Must be 18+",
+          meta: {},
+        },
+      ]);
+    });
+
     it("skips async validation when sync validation fails", () => {
       const asyncValidator = vi.fn(async () => "Async error");
       const form = new FormControl({
@@ -119,14 +202,44 @@ describe("FormControl", () => {
       expect(asyncValidator).not.toHaveBeenCalled();
     });
 
-    it("clears change & changeAsync errors and calls syncMeta when dontValidate is enabled", async () => {
+    it("keeps change errors when dontValidate is enabled", async () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: ({ value }) => (value.length < 3 ? "Error" : null),
+        },
+      });
+
+      form.setFieldValue("name", "Na");
+
+      const errorMap1 = form.getFieldErrorMap("name");
+      expect(errorMap1.change).toEqual([
+        {
+          path: "name",
+          type: "change",
+          message: "Error",
+          meta: {},
+        },
+      ]);
+
+      form.setFieldValue("name", "Joel", { dontValidate: true });
+
+      const errorMap2 = form.getFieldErrorMap("name");
+      expect(errorMap2.change).toEqual([
+        {
+          path: "name",
+          type: "change",
+          message: "Error",
+          meta: {},
+        },
+      ]);
+    });
+
+    it("keeps changeAsync errors when dontValidate is enabled", async () => {
       vi.useFakeTimers();
 
       const form = new FormControl({
         defaultValues,
-        changeValidators: {
-          name: ({ value }) => (value.length < 3 ? "Sync error" : null),
-        },
         changeAsyncValidators: {
           name: async ({ value }) => (value.length < 4 ? "Async error" : null),
         },
@@ -136,9 +249,9 @@ describe("FormControl", () => {
       form.setFieldValue("name", "Joe");
       await vi.advanceTimersByTimeAsync(100);
 
-      const errorMap = form.getFieldErrorMap("name");
-      expect(errorMap.change).toEqual([]);
-      expect(errorMap.changeAsync).toEqual([
+      const errorMap1 = form.getFieldErrorMap("name");
+      expect(errorMap1.change).toEqual([]);
+      expect(errorMap1.changeAsync).toEqual([
         {
           path: "name",
           type: "changeAsync",
@@ -147,17 +260,89 @@ describe("FormControl", () => {
         },
       ]);
 
-      const syncMeta = vi.spyOn(form, "syncMeta");
-
-      form.setFieldValue("name", "Na", { dontValidate: true });
+      form.setFieldValue("name", "Joel", { dontValidate: true });
       await vi.advanceTimersByTimeAsync(100);
 
-      const newErrorMap = form.getFieldErrorMap("name");
-      expect(newErrorMap.change).toEqual([]);
-      expect(newErrorMap.changeAsync).toEqual([]);
-      expect(syncMeta).toHaveBeenCalledOnce();
+      const errorMap2 = form.getFieldErrorMap("name");
+      expect(errorMap2.change).toEqual([]);
+      expect(errorMap2.changeAsync).toEqual([
+        {
+          path: "name",
+          type: "changeAsync",
+          message: "Async error",
+          meta: {},
+        },
+      ]);
 
       vi.useRealTimers();
+    });
+
+    it("keeps change errors on all subFields when dontValidate is enabled", async () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          "profile.age": ({ value }: { value: number }) => (value < 18 ? "Too young" : null),
+        },
+      });
+
+      form.setFieldValue("profile", { age: 16 });
+
+      expect(form.getFieldErrorMap("profile.age").change).toEqual([
+        {
+          path: "profile.age",
+          type: "change",
+          message: "Too young",
+          meta: {},
+        },
+      ]);
+
+      form.setFieldValue("profile", { age: 20 }, { dontValidate: true });
+
+      expect(form.getFieldErrorMap("profile.age").change).toEqual([
+        {
+          path: "profile.age",
+          type: "change",
+          message: "Too young",
+          meta: {},
+        },
+      ]);
+    });
+
+    it("keeps changeAsync errors on all subFields when dontValidate is enabled", async () => {
+      vi.useFakeTimers();
+
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: {
+          "profile.age": async ({ value }: { value: number }) =>
+            value < 21 ? "Too young" : null,
+        },
+        asyncDebounceMs: 100,
+      });
+
+      form.setFieldValue("profile", { age: 16 });
+      await vi.advanceTimersByTimeAsync(100);
+
+      expect(form.getFieldErrorMap("profile.age").changeAsync).toEqual([
+        {
+          path: "profile.age",
+          type: "changeAsync",
+          message: "Too young",
+          meta: {},
+        },
+      ]);
+
+      form.setFieldValue("profile", { age: 24 }, { dontValidate: true });
+      await vi.advanceTimersByTimeAsync(100);
+
+      expect(form.getFieldErrorMap("profile.age").changeAsync).toEqual([
+        {
+          path: "profile.age",
+          type: "changeAsync",
+          message: "Too young",
+          meta: {},
+        },
+      ]);
     });
 
     it("notifies field subscribers", () => {
@@ -177,6 +362,45 @@ describe("FormControl", () => {
           value: "Jane",
         }),
       );
+    });
+
+    it("notifies subscribers on nested subFields when setting a parent object", () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          "profile.age": () => null,
+        },
+      });
+      const profileAgeSubscriber = vi.fn();
+
+      form.subscribeField("profile.age", profileAgeSubscriber);
+      form.setFieldValue("profile", { age: 25 });
+
+      expect(profileAgeSubscriber).toHaveBeenCalledWith(
+        expect.objectContaining({
+          value: 25,
+        }),
+      );
+    });
+
+    it("schedules async validation on nested subFields when setting a parent object", async () => {
+      vi.useFakeTimers();
+
+      const asyncValidator = vi.fn(async () => null);
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: {
+          "profile.age": asyncValidator,
+        },
+        asyncDebounceMs: 100,
+      });
+
+      form.setFieldValue("profile", { age: 25 });
+      await vi.advanceTimersByTimeAsync(100);
+
+      expect(asyncValidator).toHaveBeenCalledWith({ value: 25, form });
+
+      vi.useRealTimers();
     });
 
     it("updates form meta after sync validation", () => {

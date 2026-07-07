@@ -93,7 +93,7 @@ export function entries<T extends object>(obj: T) {
   return Object.entries(obj) as [keyof T, T[keyof T]][];
 }
 
-export function extractFields<T = unknown>(
+export function collectFieldPaths<T = unknown>(
   obj: T,
   prefix = "",
   acc: DeepKeys<T>[] = [],
@@ -104,7 +104,7 @@ export function extractFields<T = unknown>(
     const path = prefix ? `${prefix}.${key}` : key;
 
     acc.push(path);
-    extractFields(value, path, acc);
+    collectFieldPaths(value, path, acc);
   }
 
   return acc;
