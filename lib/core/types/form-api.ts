@@ -1,3 +1,4 @@
+import type { FormControl } from "../FormControl";
 import type { DeepKeys, DeepValue } from "./key-value";
 import type { FieldMeta, FieldState, FormMeta } from "./state";
 import type { Updater } from "./utils";
@@ -9,10 +10,20 @@ export type FormMetaApi = {
   subscribe(subscriber: (meta: FormMeta) => void): () => void;
 };
 
+export type ChangeCause = "user" | "programmatic";
+
+export type ValueChangeData<TFormValues, TKey extends DeepKeys<TFormValues>> = {
+  value: DeepValue<TFormValues, TKey>;
+  oldValue: DeepValue<TFormValues, TKey>;
+  cause: ChangeCause;
+  form: FormControl<TFormValues>;
+};
+
 export type SetFieldValueOptions = {
   dontTouch?: boolean;
   dontDirty?: boolean;
   dontValidate?: boolean;
+  cause?: ChangeCause;
 };
 
 export type ValidateSyncOptions = {
@@ -40,6 +51,11 @@ export interface FormApi<TFormValues> {
   subscribeField<TField extends DeepKeys<TFormValues>>(
     key: TField,
     subscriber: (field: FieldState<TFormValues, TField>) => void,
+  ): () => void;
+
+  subscribeFieldValue<TField extends DeepKeys<TFormValues>>(
+    field: TField,
+    subscriber: (props: ValueChangeData<TFormValues, TField>) => void,
   ): () => void;
 
   setFieldValue<TField extends DeepKeys<TFormValues>>(

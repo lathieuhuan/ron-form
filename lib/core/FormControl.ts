@@ -11,17 +11,28 @@ import type {
   ValidateSyncOptions,
   ValidationCause,
   ValidationResult,
+  ValueChangeData,
 } from "./types";
 
-import { DEFAULT_FORM_META } from "./constants";
+import { DEFAULT_CHANGE_CAUSE, DEFAULT_FORM_META } from "./constants";
 import { FormCore, FormCoreOptions } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
-import { collectFieldPaths, isPlainObject, set } from "./utils/object";
+import { collectFieldPaths, entries, get, isPlainObject, set } from "./utils/object";
 import { parseRawError } from "./utils/parseRawError";
 import { transformErrors } from "./utils/transformErrors";
+import { createSubject, Observer, Subject } from "./utils/createSubject";
+
+type ValueSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = {
+  [key in TKey]?: Subject<ValueChangeData<TFormValues, TKey>>;
+};
+
+type ValueSubscribers<TFormValues> = {
+  [key in DeepKeys<TFormValues>]?: (props: ValueChangeData<TFormValues, key>) => void;
+};
 
 export interface FormControlOptions<TFormValues> extends FormCoreOptions<TFormValues> {
+  valueSubscribers?: ValueSubscribers<TFormValues>;
   onSubmit?: (props: { values: TFormValues }) => void;
   onSubmitFailed?: () => void;
 }
@@ -30,12 +41,43 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   onSubmit?: (props: { values: TFormValues }) => void;
   onSubmitFailed?: () => void;
 
+  valueSubjects: ValueSubjects<TFormValues, DeepKeys<TFormValues>> = {};
+  // TODO check if needed
+  unsubscribers: (() => void)[] = [];
+
   constructor(options: FormControlOptions<TFormValues> = {}) {
     super(options);
 
     this.onSubmit = options.onSubmit;
     this.onSubmitFailed = options.onSubmitFailed;
+
+    const { valueSubscribers } = options;
+
+    if (valueSubscribers) {
+      for (const [field, subscriber] of entries(valueSubscribers)) {
+        if (!subscriber) continue;
+
+        const unsubscribe = this.subscribeFieldValue(field, subscriber);
+
+        this.unsubscribers.push(unsubscribe);
+      }
+    }
   }
+
+  subscribeFieldValue = <TField extends DeepKeys<TFormValues>>(
+    field: TField,
+    subscriber: Observer<ValueChangeData<TFormValues, TField>>,
+  ) => {
+    const subject = this.valueSubjects[field] || createSubject();
+
+    const unsubscribe = subject.subscribe(
+      subscriber as Observer<ValueChangeData<TFormValues, DeepKeys<TFormValues>>>,
+    );
+
+    this.valueSubjects[field] = subject;
+
+    return unsubscribe;
+  };
 
   _runSyncValidator = <TField extends DeepKeys<TFormValues>>(
     cause: ValidationCause,
@@ -212,6 +254,8 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     options: SetFieldValueOptions = {},
   ): boolean => {
     const clonedValue = isPlainObject(value) ? clone(value) : value;
+    const clonedOldValues = clone(this._values);
+
     const success = set(this._values as AnyObject, field, clonedValue);
 
     if (!success) {
@@ -221,6 +265,17 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
     const { dontTouch = false, dontDirty = false, dontValidate = false } = options;
     const subFields = collectFieldPaths(value, field, [field]) || [field];
+
+    const notifyValueChange = () => {
+      for (const subField of subFields) {
+        this.valueSubjects[subField]?.next({
+          value: this.getFieldValue(subField),
+          oldValue: get(clonedOldValues as AnyObject, subField),
+          form: this,
+          cause: options.cause || DEFAULT_CHANGE_CAUSE,
+        });
+      }
+    };
 
     if (dontValidate) {
       for (const subField of subFields) {
@@ -238,6 +293,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
         });
       }
 
+      notifyValueChange();
       this.syncMeta();
 
       return true;
@@ -261,6 +317,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       }
     }
 
+    notifyValueChange();
     this.syncMeta();
 
     // ===== ASYNC VALIDATION =====

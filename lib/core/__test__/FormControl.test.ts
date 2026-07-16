@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { FormControl } from "../FormControl";
-import { DEFAULT_FORM_META, DEFAULT_META } from "../constants";
+import { DEFAULT_CHANGE_CAUSE, DEFAULT_FORM_META, DEFAULT_META } from "../constants";
 
 const defaultValues = {
   name: "",
@@ -11,6 +11,26 @@ const defaultValues = {
 };
 
 describe("FormControl", () => {
+  describe("constructor", () => {
+    it("creates valueSubjects and registers subscribers for configured fields", () => {
+      const nameSubscriber = vi.fn();
+      const profileAgeSubscriber = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        valueSubscribers: {
+          name: nameSubscriber,
+          "profile.age": profileAgeSubscriber,
+        },
+      });
+
+      expect(form.valueSubjects.name).toBeDefined();
+      expect(form.valueSubjects["profile.age"]).toBeDefined();
+      expect(form.valueSubjects.name?.observers).toContain(nameSubscriber);
+      expect(form.valueSubjects["profile.age"]?.observers).toContain(profileAgeSubscriber);
+      expect(form.unsubscribers).toHaveLength(2);
+    });
+  });
+
   describe("setFieldValue", () => {
     it("updates the field value", () => {
       const form = new FormControl({ defaultValues });
@@ -314,8 +334,7 @@ describe("FormControl", () => {
       const form = new FormControl({
         defaultValues,
         changeAsyncValidators: {
-          "profile.age": async ({ value }: { value: number }) =>
-            value < 21 ? "Too young" : null,
+          "profile.age": async ({ value }: { value: number }) => (value < 21 ? "Too young" : null),
         },
         asyncDebounceMs: 100,
       });
@@ -440,6 +459,144 @@ describe("FormControl", () => {
         isDirty: true,
         isValidating: false,
         submitCount: 0,
+      });
+    });
+
+    // ===== NOTIFY VALUE CHANGE =====
+
+    it("notifies the value subscriber with value, oldValue, form, and default cause", () => {
+      const subscriber = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        valueSubscribers: {
+          name: subscriber,
+        },
+      });
+
+      form.setFieldValue("name", "Jane");
+
+      expect(subscriber).toHaveBeenCalledOnce();
+      expect(subscriber).toHaveBeenCalledWith({
+        value: "Jane",
+        oldValue: "",
+        form,
+        cause: DEFAULT_CHANGE_CAUSE,
+      });
+    });
+
+    it("notifies the value subscriber with the provided cause", () => {
+      const subscriber = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        valueSubscribers: {
+          name: subscriber,
+        },
+      });
+
+      form.setFieldValue("name", "Jane", { cause: "user" });
+
+      expect(subscriber).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cause: "user",
+        }),
+      );
+    });
+
+    it("does not notify when the field path cannot be set", () => {
+      const subscriber = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        valueSubscribers: {
+          name: subscriber,
+        },
+      });
+      vi.spyOn(console, "error").mockImplementation(() => {});
+
+      form.setFieldValue("profile.age.name" as "name", "invalid" as never);
+
+      expect(subscriber).not.toHaveBeenCalled();
+    });
+
+    it("does not notify subscribers when set value of another field", () => {
+      const nameSubscriber = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        valueSubscribers: {
+          name: nameSubscriber,
+        },
+      });
+
+      form.setFieldValue("email", "jane@example.com");
+
+      expect(nameSubscriber).not.toHaveBeenCalled();
+    });
+
+    it("notifies nested subField value subscribers when setting a parent object", () => {
+      const profileAgeSubscriber = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        valueSubscribers: {
+          "profile.age": profileAgeSubscriber,
+        },
+      });
+
+      form.setFieldValue("profile", { age: 25 });
+
+      expect(profileAgeSubscriber).toHaveBeenCalledOnce();
+      expect(profileAgeSubscriber).toHaveBeenCalledWith({
+        value: 25,
+        oldValue: 0,
+        form,
+        cause: DEFAULT_CHANGE_CAUSE,
+      });
+    });
+
+    it("notifies each configured subField value subscriber when setting a parent object", () => {
+      const profileSubscriber = vi.fn();
+      const profileAgeSubscriber = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        valueSubscribers: {
+          profile: profileSubscriber,
+          "profile.age": profileAgeSubscriber,
+        },
+      });
+
+      form.setFieldValue("profile", { age: 25 });
+
+      expect(profileSubscriber).toHaveBeenCalledOnce();
+      expect(profileSubscriber).toHaveBeenCalledWith({
+        value: { age: 25 },
+        oldValue: { age: 0 },
+        form,
+        cause: DEFAULT_CHANGE_CAUSE,
+      });
+      expect(profileAgeSubscriber).toHaveBeenCalledOnce();
+      expect(profileAgeSubscriber).toHaveBeenCalledWith({
+        value: 25,
+        oldValue: 0,
+        form,
+        cause: DEFAULT_CHANGE_CAUSE,
+      });
+    });
+
+    it("notifies value subscribers even when dontValidate is enabled", () => {
+      const subscriber = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        valueSubscribers: {
+          name: subscriber,
+        },
+      });
+
+      form.setFieldValue("name", "Jane", { dontValidate: true });
+
+      expect(subscriber).toHaveBeenCalledOnce();
+      expect(subscriber).toHaveBeenCalledWith({
+        value: "Jane",
+        oldValue: "",
+        form,
+        cause: DEFAULT_CHANGE_CAUSE,
       });
     });
   });

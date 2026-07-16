@@ -1,4 +1,6 @@
-import type { FieldErrors, FieldMeta, FormMeta } from "./types";
+import type { ChangeCause, FieldErrors, FieldMeta, FormMeta } from "./types";
+
+export const DEFAULT_CHANGE_CAUSE = "programmatic" as const satisfies ChangeCause;
 
 export const DEFAULT_ERROR_MAP: FieldErrors<string> = {
   change: [],

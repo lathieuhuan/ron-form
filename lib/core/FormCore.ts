@@ -17,7 +17,7 @@ import { DEFAULT_ERROR_MAP, DEFAULT_META } from "./constants";
 import { FormMetaControl } from "./FormMetaControl";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
-import { createSubject, Subject } from "./utils/createSubject";
+import { createSubject, Observer, Subject } from "./utils/createSubject";
 import { get } from "./utils/object";
 
 type FieldSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
@@ -136,7 +136,7 @@ export class FormCore<TFormValues> {
    */
   subscribeField = <TField extends DeepKeys<TFormValues>>(
     key: TField,
-    subscriber: (field: FieldState<TFormValues, TField>) => void,
+    subscriber: Observer<FieldState<TFormValues, TField>>,
   ) => {
     let subject = this.fieldSubjects.get(key);
 

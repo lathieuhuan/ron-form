@@ -1,6 +1,10 @@
 import type { FormControl } from "./FormControl";
-import type { DeepKeys, DeepValue, FieldError } from "./types";
+import type { ChangeCause, DeepKeys, DeepValue, FieldError } from "./types";
 import { transformErrors } from "./utils/transformErrors";
+
+export type HandleChangeOptions = {
+  cause?: ChangeCause;
+};
 
 export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
   form: FormControl<TFormValues>;
@@ -11,8 +15,10 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
     this.name = field;
   }
 
-  handleChange = (value: DeepValue<TFormValues, TField>) => {
-    this.form.setFieldValue(this.name, value);
+  handleChange = (value: DeepValue<TFormValues, TField>, options?: HandleChangeOptions) => {
+    this.form.setFieldValue(this.name, value, {
+      cause: options?.cause,
+    });
   };
 
   handleBlur = () => {

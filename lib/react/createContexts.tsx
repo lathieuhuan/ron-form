@@ -7,6 +7,7 @@ import type {
   FieldState,
   FormApi,
   FormMeta,
+  HandleChangeOptions,
 } from "@lib/core";
 
 import { FormControl } from "@lib/core";
@@ -34,7 +35,7 @@ export interface ReactFieldLooseApi<TFormValues> {
   errorMap: FieldErrors<string>;
   errors: FieldError<string>[];
   form: FormApi<TFormValues>;
-  handleChange(value: any): void;
+  handleChange(value: any, options?: HandleChangeOptions): void;
   handleBlur(): void;
 }
 
@@ -46,7 +47,7 @@ export interface ReactFieldStrictApi<
   name: TKey;
   errors: FieldError<TKey>[];
   form: FormApi<TFormValues>;
-  handleChange(value: DeepValue<TFormValues, TKey>): void;
+  handleChange(value: DeepValue<TFormValues, TKey>, options?: HandleChangeOptions): void;
   handleBlur(): void;
 }
 
@@ -120,7 +121,16 @@ export function createContexts<TFormValues>() {
 
     // console.log(`render Field "${name}"`);
 
-    return children(field);
+    const handleChange: typeof field.handleChange = (value, options) => {
+      field.handleChange(value, {
+        cause: options?.cause || "user",
+      });
+    };
+
+    return children({
+      ...field,
+      handleChange,
+    });
   }
 
   return {
