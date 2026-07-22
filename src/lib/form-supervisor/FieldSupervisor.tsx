@@ -1,11 +1,11 @@
-import { useFormField } from "@lib/react";
+import { useField } from "@lib/react";
 import { Divider } from "@src/components/Divider";
 import { useFormSupervisor } from "./context";
 import { WatchSection } from "./WatchSection";
 
 export function FieldSupervisor() {
   const { form, watchedField } = useFormSupervisor();
-  const field = useFormField({
+  const field = useField({
     name: watchedField,
     form,
   });

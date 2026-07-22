@@ -6,6 +6,7 @@ import type {
   FieldErrors,
   FieldMeta,
   FieldState,
+  Noop,
   SetFieldValueOptions,
   Updater,
   ValidateSyncOptions,
@@ -18,10 +19,10 @@ import { DEFAULT_CHANGE_CAUSE, DEFAULT_FORM_META } from "./constants";
 import { FormCore, FormCoreOptions } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
+import { createSubject, Observer, Subject } from "./utils/createSubject";
 import { collectFieldPaths, entries, get, isPlainObject, set } from "./utils/object";
 import { parseRawError } from "./utils/parseRawError";
 import { transformErrors } from "./utils/transformErrors";
-import { createSubject, Observer, Subject } from "./utils/createSubject";
 
 type ValueSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = {
   [key in TKey]?: Subject<ValueChangeData<TFormValues, TKey>>;
@@ -42,8 +43,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   onSubmitFailed?: () => void;
 
   valueSubjects: ValueSubjects<TFormValues, DeepKeys<TFormValues>> = {};
-  // TODO check if needed
-  unsubscribers: (() => void)[] = [];
+  unsubscribers: Noop[] = [];
 
   constructor(options: FormControlOptions<TFormValues> = {}) {
     super(options);
@@ -64,19 +64,18 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     }
   }
 
+  /**
+   * @public
+   */
   subscribeFieldValue = <TField extends DeepKeys<TFormValues>>(
     field: TField,
     subscriber: Observer<ValueChangeData<TFormValues, TField>>,
   ) => {
     const subject = this.valueSubjects[field] || createSubject();
 
-    const unsubscribe = subject.subscribe(
-      subscriber as Observer<ValueChangeData<TFormValues, DeepKeys<TFormValues>>>,
-    );
-
     this.valueSubjects[field] = subject;
 
-    return unsubscribe;
+    return (subject as Subject<ValueChangeData<TFormValues, TField>>).subscribe(subscriber);
   };
 
   _runSyncValidator = <TField extends DeepKeys<TFormValues>>(

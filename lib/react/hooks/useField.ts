@@ -5,7 +5,7 @@ import type { ReactFieldStrictApi, UseFormFieldProps } from "../createContexts";
 
 import { FieldControl } from "@lib/core";
 
-export function useFormField<TFormValues, TKey extends DeepKeys<TFormValues>>({
+export function useField<TFormValues, TKey extends DeepKeys<TFormValues>>({
   name,
   form,
 }: UseFormFieldProps<TFormValues, TKey>): ReactFieldStrictApi<TFormValues, TKey> {

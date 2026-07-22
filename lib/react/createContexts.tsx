@@ -13,7 +13,7 @@ import type {
 import { FormControl } from "@lib/core";
 import { createContext, ReactElement, useContext, useSyncExternalStore } from "react";
 import { useForm } from "./hooks";
-import { useFormField } from "./hooks/useFormField";
+import { useField } from "./hooks/useField";
 
 export interface UseFormFieldProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
   name: TKey;
@@ -79,7 +79,7 @@ export function createContexts<TFormValues>() {
     children,
   }: FieldProps<TFormValues, TKey>) {
     const form = useContext(FormContext);
-    const field = useFormField({ name, form });
+    const field = useField({ name, form });
 
     if (children == null) {
       return null;

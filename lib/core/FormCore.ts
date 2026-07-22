@@ -138,13 +138,9 @@ export class FormCore<TFormValues> {
     key: TField,
     subscriber: Observer<FieldState<TFormValues, TField>>,
   ) => {
-    let subject = this.fieldSubjects.get(key);
+    const subject = this.fieldSubjects.get(key) || createSubject();
 
-    if (subject === undefined) {
-      subject = createSubject();
-
-      this.fieldSubjects.set(key, subject);
-    }
+    this.fieldSubjects.set(key, subject);
 
     return (subject as Subject<FieldState<TFormValues, TField>>).subscribe(subscriber);
   };

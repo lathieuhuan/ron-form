@@ -1,4 +1,4 @@
-import { useFormField } from "@lib/react";
+import { useFieldValue } from "@lib/react";
 import { renderInputField, renderSelectField } from "@src/utils/form.utils";
 import { CITY_OPTIONS, DISTRICT_OPTIONS, WARD_OPTIONS } from "./constants";
 import { Field, useForm, useFormOptions } from "./context";
@@ -12,7 +12,7 @@ import { Layout } from "./Layout";
 export function PersonalInfoForm() {
   const form = useForm(useFormOptions);
 
-  const cityField = useFormField({
+  const cityValue = useFieldValue({
     name: "address.city",
     form,
   });
@@ -61,7 +61,7 @@ export function PersonalInfoForm() {
             <FormField label="District" {...fieldProps}>
               <Select
                 options={DISTRICT_OPTIONS}
-                disabled={!cityField.value}
+                disabled={!cityValue}
                 {...selectProps}
                 onChange={(value) => {
                   form.setFieldValue("address.ward", "");
