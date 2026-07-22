@@ -11,14 +11,7 @@ import type {
 } from "@lib/core";
 
 import { FormControl } from "@lib/core";
-import {
-  createContext,
-  ReactElement,
-  useContext,
-  useEffect,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { createContext, ReactElement, useContext, useSyncExternalStore } from "react";
 import { useForm } from "./hooks";
 import { useFormField } from "./hooks/useFormField";
 
@@ -61,8 +54,6 @@ export interface FieldProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
   children?: (props: ReactFieldStrictApi<TFormValues, TKey>) => React.ReactElement;
 }
 
-export const defaultFieldStateSelector = <T,>(state: T) => state;
-
 export function createContexts<TFormValues>() {
   const FormContext = createContext<FormApi<TFormValues>>(new FormControl<TFormValues>());
 
@@ -81,31 +72,6 @@ export function createContexts<TFormValues>() {
     const meta = useSyncExternalStore(form.meta.subscribe, form.meta.get);
 
     return props.children(meta, form);
-  }
-
-  function useFieldState<TKey extends DeepKeys<TFormValues>, K = FieldState<TFormValues, TKey>>(
-    name: TKey,
-    form: FormApi<TFormValues>,
-    selector: (state: FieldState<TFormValues, TKey>) => K,
-  ) {
-    const selectFn = selector || defaultFieldStateSelector<K>;
-
-    const [state, setState] = useState<K>(() => selectFn(form.getFieldState(name)));
-
-    useEffect(() => {
-      const unsubscribe = form.subscribeField(name, (field) => {
-        setState((prev) => {
-          const next = selectFn(field);
-          return next === prev ? prev : next;
-        });
-      });
-
-      return () => {
-        unsubscribe();
-      };
-    }, [form, name]);
-
-    return state;
   }
 
   function Field<TKey extends DeepKeys<TFormValues>>({
@@ -140,6 +106,5 @@ export function createContexts<TFormValues>() {
     Field,
     useForm: useForm as typeof useForm<TFormValues>,
     useFormInstance,
-    useFieldState,
   };
 }
