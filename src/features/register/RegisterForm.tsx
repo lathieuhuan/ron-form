@@ -1,3 +1,4 @@
+import { renderInputField } from "@src/utils/form.utils";
 import { Field, useForm, useFormOptions } from "./context";
 
 import { Button } from "@src/components/Button";
@@ -16,35 +17,35 @@ export function RegisterForm() {
     <Layout form={form}>
       <div className="grid grid-cols-2 gap-4">
         <Field name="email">
-          {(field) => (
-            <FormField label="Email" field={field}>
-              <Input />
+          {renderInputField(({ fieldProps, inputProps }) => (
+            <FormField label="Email" {...fieldProps}>
+              <Input {...inputProps} />
             </FormField>
-          )}
+          ))}
         </Field>
 
         <Field name="username">
-          {(field) => (
-            <FormField label="Username" field={field}>
-              <Input />
+          {renderInputField(({ fieldProps, inputProps }) => (
+            <FormField label="Username" {...fieldProps}>
+              <Input {...inputProps} />
             </FormField>
-          )}
+          ))}
         </Field>
 
         <Field name="password">
-          {(field) => (
-            <FormField label="Password" field={field}>
-              <Input />
+          {renderInputField(({ fieldProps, inputProps }) => (
+            <FormField label="Password" {...fieldProps}>
+              <Input {...inputProps} />
             </FormField>
-          )}
+          ))}
         </Field>
 
         <Field name="confirmPassword">
-          {(field) => (
-            <FormField label="Confirm Password" field={field}>
-              <Input />
+          {renderInputField(({ fieldProps, inputProps }) => (
+            <FormField label="Confirm Password" {...fieldProps}>
+              <Input {...inputProps} />
             </FormField>
-          )}
+          ))}
         </Field>
       </div>
 

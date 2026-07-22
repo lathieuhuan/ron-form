@@ -1,6 +1,7 @@
-import { ReactFieldStrictApi, useFormField } from "@lib/react";
+import { useFormField } from "@lib/react";
+import { renderInputField, renderSelectField } from "@src/utils/form.utils";
 import { CITY_OPTIONS, DISTRICT_OPTIONS, WARD_OPTIONS } from "./constants";
-import { PersonalInfoFormValues, Field, useForm, useFormOptions } from "./context";
+import { Field, useForm, useFormOptions } from "./context";
 
 import { Button } from "@src/components/Button";
 import { Input } from "@src/components/Input";
@@ -20,91 +21,75 @@ export function PersonalInfoForm() {
     console.log(form.values);
   };
 
-  const handleSelectOpenChange = (
-    open: boolean,
-    field: ReactFieldStrictApi<PersonalInfoFormValues>,
-  ) => {
-    if (open) {
-      form.setFieldMeta(field.name, (meta) => ({
-        ...meta,
-        isTouched: true,
-      }));
-    } else {
-      field.handleBlur();
-    }
-  };
-
   return (
     <Layout form={form}>
       <div className="grid grid-cols-2 gap-4">
         <Field name="name">
-          {(field) => (
-            <FormField label="Name" field={field}>
-              <Input />
+          {renderInputField(({ fieldProps, inputProps }) => (
+            <FormField label="Name" {...fieldProps}>
+              <Input {...inputProps} />
             </FormField>
-          )}
+          ))}
         </Field>
 
         <Field name="citizenId">
-          {(field) => (
-            <FormField label="Citizen ID" field={field}>
-              <Input />
+          {renderInputField(({ fieldProps, inputProps }) => (
+            <FormField label="Citizen ID" {...fieldProps}>
+              <Input {...inputProps} />
             </FormField>
-          )}
+          ))}
         </Field>
 
         <Field name="address.city">
-          {(field) => (
-            <FormField label="City" field={field}>
+          {renderSelectField(({ fieldProps, selectProps }) => (
+            <FormField label="City" {...fieldProps}>
               <Select
                 options={CITY_OPTIONS}
-                onChange={() => {
+                {...selectProps}
+                onChange={(value) => {
                   form.setFieldValue("address.district", "");
                   form.setFieldValue("address.ward", "");
+                  selectProps.onChange(value);
                 }}
-                onOpenChange={(open) => handleSelectOpenChange(open, field)}
               />
             </FormField>
-          )}
+          ))}
         </Field>
 
         <Field name="address.district">
-          {(field) => (
-            <FormField label="District" field={field}>
+          {renderSelectField(({ fieldProps, selectProps }) => (
+            <FormField label="District" {...fieldProps}>
               <Select
                 options={DISTRICT_OPTIONS}
                 disabled={!cityField.value}
-                onChange={() => {
+                {...selectProps}
+                onChange={(value) => {
                   form.setFieldValue("address.ward", "");
+                  selectProps.onChange(value);
                 }}
-                onOpenChange={(open) => handleSelectOpenChange(open, field)}
               />
             </FormField>
-          )}
+          ))}
         </Field>
 
         <Field name="address.district">
           {({ value: districtValue }) => (
             <Field name="address.ward">
-              {(field) => (
-                <FormField label="Ward" field={field}>
-                  <Select
-                    options={WARD_OPTIONS}
-                    disabled={!districtValue}
-                    onOpenChange={(open) => handleSelectOpenChange(open, field)}
-                  />
+              {renderSelectField(({ fieldProps, selectProps }) => (
+                <FormField label="Ward" {...fieldProps}>
+                  <Select options={WARD_OPTIONS} disabled={!districtValue} {...selectProps} />
                 </FormField>
-              )}
+              ))}
             </Field>
           )}
         </Field>
 
         <Field name="address.street">
-          {(field) => (
-            <FormField label="Street" field={field}>
-              <Input />
+          {renderInputField(({ fieldProps, inputProps }) => (
+            <FormField label="Street" {...fieldProps}>
+              <Input {...inputProps} />
             </FormField>
-          )}
+          ))}
         </Field>
       </div>
 
