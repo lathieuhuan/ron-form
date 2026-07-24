@@ -97,8 +97,8 @@ export function collectFieldPaths<T = unknown>(
   obj: T,
   prefix = "",
   acc: DeepKeys<T>[] = [],
-): DeepKeys<T>[] | null {
-  if (!isPlainObject(obj)) return null;
+): DeepKeys<T>[] {
+  if (!isPlainObject(obj)) return acc;
 
   for (const [key, value] of Object.entries(obj)) {
     const path = prefix ? `${prefix}.${key}` : key;

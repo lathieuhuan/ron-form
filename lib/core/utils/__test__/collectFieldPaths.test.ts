@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { collectFieldPaths } from "../object";
 
 describe("collectFieldPaths", () => {
-  it("returns null for non-plain objects", () => {
-    expect(collectFieldPaths(null)).toBeNull();
-    expect(collectFieldPaths(undefined)).toBeNull();
-    expect(collectFieldPaths("text")).toBeNull();
-    expect(collectFieldPaths(42)).toBeNull();
-    expect(collectFieldPaths([])).toBeNull();
-    expect(collectFieldPaths(new Date())).toBeNull();
+  it("returns an empty array for non-plain objects", () => {
+    expect(collectFieldPaths(null)).toEqual([]);
+    expect(collectFieldPaths(undefined)).toEqual([]);
+    expect(collectFieldPaths("text")).toEqual([]);
+    expect(collectFieldPaths(42)).toEqual([]);
+    expect(collectFieldPaths([])).toEqual([]);
+    expect(collectFieldPaths(new Date())).toEqual([]);
   });
 
   it("returns an empty array for an empty plain object", () => {

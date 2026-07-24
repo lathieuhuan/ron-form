@@ -304,7 +304,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       dontValidate = false,
       cause = DEFAULT_CHANGE_CAUSE,
     } = options;
-    const subFields = collectFieldPaths(value, field, [field]) || [field];
+    const subFields = collectFieldPaths(value, field, [field]);
 
     if (dontValidate) {
       for (const subField of subFields) {
