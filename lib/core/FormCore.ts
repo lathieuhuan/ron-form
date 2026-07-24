@@ -7,7 +7,6 @@ import type {
   FieldMeta,
   FieldState,
   FormAsyncValidators,
-  FormMetaApi,
   FormValidators,
   ValidationCause,
   ValidatorMap,
@@ -45,7 +44,7 @@ export interface FormCoreOptions<TFormValues> {
 export class FormCore<TFormValues> {
   _defaultValues: TFormValues;
   _values: TFormValues;
-  meta: FormMetaApi;
+  meta: FormMetaControl;
 
   fieldMetaMap: Map<DeepKeys<TFormValues>, FieldMeta> = new Map();
   fieldErrorMap: Map<DeepKeys<TFormValues>, FieldErrors<DeepKeys<TFormValues>>> = new Map();

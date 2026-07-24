@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 
 import type { DeepKeys, FieldState, FormControl } from "@lib/core";
-import type { ReactFieldStrictApi, UseFormFieldProps } from "../createContexts";
+import type { UseFormFieldProps } from "../createContexts";
+import type { ReactFieldStrictApi } from "../types";
 
 import { FieldControl } from "@lib/core";
 
@@ -32,13 +33,8 @@ export function useField<TFormValues, TKey extends DeepKeys<TFormValues>>({
       setState({ value, meta, errorMap });
     }
 
-    const unsubscribe = form.subscribeField(name, (newField) => {
-      setState(newField);
-    });
-
-    return () => {
-      unsubscribe();
-    };
+    return form.subscribeField(name, setState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, name]);
 
   return {
