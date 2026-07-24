@@ -18,15 +18,17 @@ import type {
 import { DEFAULT_CHANGE_CAUSE, DEFAULT_FORM_META } from "./constants";
 import { FormCore, FormCoreOptions } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
+import { cache } from "./utils/cache";
 import { clone } from "./utils/clone";
 import { createSubject, Observer, Subject } from "./utils/createSubject";
 import { collectFieldPaths, entries, get, isPlainObject, set } from "./utils/object";
 import { parseRawError } from "./utils/parseRawError";
 import { transformErrors } from "./utils/transformErrors";
 
-type ValueSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = {
-  [key in TKey]?: Subject<ValueChangeData<TFormValues, TKey>>;
-};
+type ValueSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
+  TKey,
+  Subject<ValueChangeData<TFormValues, TKey>>
+>;
 
 type ValueSubscribers<TFormValues> = {
   [key in DeepKeys<TFormValues>]?: (props: ValueChangeData<TFormValues, key>) => void;
@@ -42,7 +44,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   onSubmit?: (props: { values: TFormValues }) => void;
   onSubmitFailed?: () => void;
 
-  valueSubjects: ValueSubjects<TFormValues, DeepKeys<TFormValues>> = {};
+  valueSubjects: ValueSubjects<TFormValues, DeepKeys<TFormValues>> = new Map();
   unsubscribers: Noop[] = [];
 
   constructor(options: FormControlOptions<TFormValues> = {}) {
@@ -71,9 +73,9 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     field: TField,
     subscriber: Observer<ValueChangeData<TFormValues, TField>>,
   ) => {
-    const subject = this.valueSubjects[field] || createSubject();
+    const subject = this.valueSubjects.get(field) || createSubject();
 
-    this.valueSubjects[field] = subject;
+    this.valueSubjects.set(field, subject);
 
     return (subject as Subject<ValueChangeData<TFormValues, TField>>).subscribe(subscriber);
   };
@@ -244,6 +246,40 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     return errors;
   };
 
+  scheduleAsyncValidation = (field: DeepKeys<TFormValues>, cause: ValidationCause) => {
+    let timeoutId = this.timeoutIdMaps[cause].get(field);
+
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+
+    const abortCtrl = new AbortController();
+
+    this.abortCtrlMaps[cause].get(field)?.abort();
+    this.abortCtrlMaps[cause].set(field, abortCtrl);
+
+    timeoutId = setTimeout(async () => {
+      if (abortCtrl.signal.aborted) {
+        return;
+      }
+
+      this.meta.set({ isValidating: true });
+
+      await this._validateAsync(field, cause, abortCtrl);
+
+      this.meta.set({
+        isValidating: this.runningValidatorMap.isAnyRunning(),
+      });
+    }, this.asyncDebounceMs);
+
+    this.timeoutIdMaps[cause].set(field, timeoutId);
+
+    return {
+      timeoutId,
+      abortCtrl,
+    };
+  };
+
   /**
    * @public
    */
@@ -253,7 +289,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     options: SetFieldValueOptions = {},
   ): boolean => {
     const clonedValue = isPlainObject(value) ? clone(value) : value;
-    const clonedOldValues = clone(this._values);
+    const oldValues = clone(this._values);
 
     const success = set(this._values as AnyObject, field, clonedValue);
 
@@ -262,19 +298,13 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       return false;
     }
 
-    const { dontTouch = false, dontDirty = false, dontValidate = false } = options;
+    const {
+      dontTouch = false,
+      dontDirty = false,
+      dontValidate = false,
+      cause = DEFAULT_CHANGE_CAUSE,
+    } = options;
     const subFields = collectFieldPaths(value, field, [field]) || [field];
-
-    const notifyValueChange = () => {
-      for (const subField of subFields) {
-        this.valueSubjects[subField]?.next({
-          value: this.getFieldValue(subField),
-          oldValue: get(clonedOldValues as AnyObject, subField),
-          form: this,
-          cause: options.cause || DEFAULT_CHANGE_CAUSE,
-        });
-      }
-    };
 
     if (dontValidate) {
       for (const subField of subFields) {
@@ -290,9 +320,14 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
           value: clonedValue,
           meta: newMeta,
         });
+        this.valueSubjects.get(subField)?.next({
+          value: this.getFieldValue(subField),
+          oldValue: get(oldValues as AnyObject, subField),
+          form: this,
+          cause,
+        });
       }
 
-      notifyValueChange();
       this.syncMeta();
 
       return true;
@@ -310,44 +345,25 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
         shouldDirty: !dontDirty,
       });
 
+      this.valueSubjects.get(subField)?.next({
+        value: this.getFieldValue(subField),
+        oldValue: get(oldValues as AnyObject, subField),
+        form: this,
+        cause,
+      });
+
       // TODO add an option to validate async even if there are sync errors
       if (errors.length === 0 && asyncValidators[subField] != null) {
         asyncValidateFields.add(subField);
       }
     }
 
-    notifyValueChange();
     this.syncMeta();
 
     // ===== ASYNC VALIDATION =====
 
     for (const field of asyncValidateFields) {
-      let timeoutId = this.timeoutIdMaps.change.get(field);
-
-      if (timeoutId !== undefined) {
-        clearTimeout(timeoutId);
-      }
-
-      const abortCtrl = new AbortController();
-
-      this.abortCtrlMaps.change.get(field)?.abort();
-      this.abortCtrlMaps.change.set(field, abortCtrl);
-
-      timeoutId = setTimeout(async () => {
-        if (abortCtrl.signal.aborted) {
-          return;
-        }
-
-        this.meta.set({ isValidating: true });
-
-        await this._validateAsync(field, "change", abortCtrl);
-
-        this.meta.set({
-          isValidating: this.runningValidatorMap.isAnyRunning(),
-        });
-      }, this.asyncDebounceMs);
-
-      this.timeoutIdMaps.change.set(field, timeoutId);
+      this.scheduleAsyncValidation(field, "change");
     }
 
     return true;
@@ -450,6 +466,8 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
    * @public
    */
   reset = () => {
+    const oldValues = clone(this._values);
+
     this._values = clone(this._defaultValues);
 
     for (const cause of <ValidationCause[]>["change", "blur"]) {
@@ -466,11 +484,22 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     this.fieldMetaMap.clear();
     this.fieldErrorMap.clear();
 
+    const values = cache((field: DeepKeys<TFormValues>) => this.getFieldValue(field));
+
     for (const [field, subject] of this.fieldSubjects.entries()) {
       subject.next({
-        value: this.getFieldValue(field),
+        value: values.get(field),
         meta: this.getFieldMeta(field),
         errorMap: this.getFieldErrorMap(field),
+      });
+    }
+
+    for (const [field, subject] of this.valueSubjects.entries()) {
+      subject.next({
+        value: values.get(field),
+        oldValue: get(oldValues as AnyObject, field),
+        form: this,
+        cause: DEFAULT_CHANGE_CAUSE,
       });
     }
 

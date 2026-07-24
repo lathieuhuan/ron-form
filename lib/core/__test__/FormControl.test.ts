@@ -23,10 +23,10 @@ describe("FormControl", () => {
         },
       });
 
-      expect(form.valueSubjects.name).toBeDefined();
-      expect(form.valueSubjects["profile.age"]).toBeDefined();
-      expect(form.valueSubjects.name?.observers).toContain(nameSubscriber);
-      expect(form.valueSubjects["profile.age"]?.observers).toContain(profileAgeSubscriber);
+      expect(form.valueSubjects.get("name")).toBeDefined();
+      expect(form.valueSubjects.get("profile.age")).toBeDefined();
+      expect(form.valueSubjects.get("name")?.observers).toContain(nameSubscriber);
+      expect(form.valueSubjects.get("profile.age")?.observers).toContain(profileAgeSubscriber);
       expect(form.unsubscribers).toHaveLength(2);
     });
   });
