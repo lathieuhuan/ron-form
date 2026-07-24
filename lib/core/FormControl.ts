@@ -152,7 +152,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   validateSync = <TField extends DeepKeys<TFormValues>>(
     field: TField,
     cause: ValidationCause,
-    options: Partial<ValidateSyncOptions> = {},
+    options: ValidateSyncOptions = {},
   ) => {
     const { shouldBlur = false, shouldTouch = true, shouldDirty = false } = options;
     const errors = this._validateSync(field, cause, {

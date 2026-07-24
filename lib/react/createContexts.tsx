@@ -2,7 +2,7 @@ import type { DeepKeys, FormApi, FormMeta } from "@lib/core";
 import type { ReactFieldStrictApi } from "./types";
 
 import { FormControl } from "@lib/core";
-import { createContext, ReactElement, useContext, useSyncExternalStore } from "react";
+import { createContext, ReactElement, ReactNode, useContext, useSyncExternalStore } from "react";
 import { useForm } from "./hooks";
 import { useField } from "./hooks/useField";
 
@@ -13,7 +13,7 @@ export interface UseFormFieldProps<TFormValues, TKey extends DeepKeys<TFormValue
 
 export interface FieldProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
   name: TKey;
-  children?: (props: ReactFieldStrictApi<TFormValues, TKey>) => React.ReactElement;
+  children?: (props: ReactFieldStrictApi<TFormValues, TKey>) => ReactElement;
 }
 
 export function createContexts<TFormValues>() {
@@ -23,7 +23,7 @@ export function createContexts<TFormValues>() {
     return useContext(FormContext);
   }
 
-  function Form(props: { form: FormApi<TFormValues>; children?: React.ReactNode }) {
+  function Form(props: { form: FormApi<TFormValues>; children?: ReactNode }) {
     return <FormContext.Provider value={props.form}>{props.children}</FormContext.Provider>;
   }
 

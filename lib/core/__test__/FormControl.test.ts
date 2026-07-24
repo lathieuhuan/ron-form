@@ -972,6 +972,26 @@ describe("FormControl", () => {
       });
     });
 
+    it("notifies value subscribers with default values", () => {
+      const form = new FormControl({
+        defaultValues,
+      });
+      const subscriber = vi.fn();
+
+      form.subscribeFieldValue("name", subscriber);
+      form.setFieldValue("name", "Jane");
+      subscriber.mockClear();
+
+      form.reset();
+
+      expect(subscriber).toHaveBeenCalledOnce();
+      expect(subscriber).toHaveBeenCalledWith(
+        expect.objectContaining({
+          value: defaultValues.name,
+        }),
+      );
+    });
+
     it("clears pending async validation timers", async () => {
       vi.useFakeTimers();
 
