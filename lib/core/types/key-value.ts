@@ -139,3 +139,6 @@ export type DeepValue<TValue, TAccessor> = unknown extends TValue
   : TAccessor extends DeepKeys<TValue>
     ? DeepRecord<TValue>[TAccessor]
     : never;
+
+export type DeepItemValue<TValues, TField> =
+  DeepValue<TValues, TField> extends Array<infer TItem> ? TItem : never;
