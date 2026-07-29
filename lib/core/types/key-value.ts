@@ -8,7 +8,7 @@ interface AnyDeepKeyAndValue<K extends string = string, V = any> {
 // ===== ARRAY =====
 
 type ArrayAccessor<TParent extends AnyDeepKeyAndValue> =
-  `${TParent["key"] extends never ? "" : TParent["key"]}${number}`;
+  `${TParent["key"] extends never ? "" : TParent["key"]}.${number}`;
 
 interface ArrayDeepKeyAndValue<
   in out TParent extends AnyDeepKeyAndValue,
