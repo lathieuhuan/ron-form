@@ -19,4 +19,6 @@ export interface FieldArrayApi<
   value: TItemValue[];
 
   insert(value: TItemValue, index?: number, options?: ArrayUpdateOptions): TItemValue[] | null;
+
+  remove(index: number, options?: ArrayUpdateOptions): TItemValue[] | null;
 }

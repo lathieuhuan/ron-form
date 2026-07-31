@@ -26,37 +26,29 @@ export class FieldArrayControl<
     return Array.isArray(value);
   };
 
-  /**
-   * @public
-   */
-  insert = (
-    value: TItemValue,
-    index?: number,
-    options: ArrayUpdateOptions = {},
+  get resolvedValue(): TItemValue[] | null {
+    let value = this.form.getFieldValue(this.name);
+
+    if (value == null) {
+      value = [] as DeepValue<TFormValues, TField>;
+    }
+
+    if (!this.isArrayValue(value)) {
+      return null;
+    }
+
+    return value;
+  }
+
+  update = (
+    newValue: TItemValue[],
+    oldValue: TItemValue[],
+    affectedItemPath: string,
+    affectedItemValue: unknown,
+    options: ArrayUpdateOptions,
   ): TItemValue[] | null => {
     const { form, name } = this;
-    let currentArrayValue = form.getFieldValue(name);
-
-    if (currentArrayValue == null) {
-      currentArrayValue = [] as DeepValue<TFormValues, TField>;
-    }
-    if (!this.isArrayValue(currentArrayValue)) {
-      return null;
-    }
-
-    const insertIndex = index ?? currentArrayValue.length;
-
-    if (insertIndex < 0 || insertIndex > currentArrayValue.length) {
-      return null;
-    }
-
-    const arrayValue = [
-      ...currentArrayValue.slice(0, insertIndex),
-      value,
-      ...currentArrayValue.slice(insertIndex),
-    ];
-
-    const success = set(form._values as AnyObject, name, arrayValue);
+    const success = set(form._values as AnyObject, name, newValue);
 
     if (!success) {
       return null;
@@ -64,10 +56,9 @@ export class FieldArrayControl<
 
     const { dontValidate = false, cause = DEFAULT_CHANGE_CAUSE } = options;
     const oldValues = clone(form._values);
-    // also notify this array field if dontValidate
     const notifiedFields = collectFieldPaths(
-      value,
-      `${name}.${insertIndex}`,
+      affectedItemValue,
+      affectedItemPath,
       dontValidate ? [name] : [],
     );
 
@@ -90,7 +81,7 @@ export class FieldArrayControl<
     if (dontValidate) {
       form.syncMeta();
 
-      return arrayValue;
+      return newValue;
     }
 
     const errors = form._validateSync(name, "change", {
@@ -99,8 +90,8 @@ export class FieldArrayControl<
     });
 
     form.valueSubjects.get(name)?.next({
-      value: arrayValue as DeepValue<TFormValues, TField>,
-      oldValue: currentArrayValue,
+      value: newValue as DeepValue<TFormValues, TField>,
+      oldValue: oldValue as DeepValue<TFormValues, TField>,
       form,
       cause,
     });
@@ -111,10 +102,57 @@ export class FieldArrayControl<
       form.scheduleAsyncValidation(name, "change");
     }
 
-    return arrayValue;
+    return newValue;
   };
 
-  remove = () => {
-    // TODO
+  /**
+   * @public
+   */
+  insert = (
+    value: TItemValue,
+    index?: number,
+    options: ArrayUpdateOptions = {},
+  ): TItemValue[] | null => {
+    const { name } = this;
+    const currentValue = this.resolvedValue;
+
+    if (currentValue == null) {
+      return null;
+    }
+
+    const insertIndex = index ?? currentValue.length;
+
+    if (insertIndex < 0 || insertIndex > currentValue.length) {
+      return null;
+    }
+
+    const arrayValue = [
+      ...currentValue.slice(0, insertIndex),
+      value,
+      ...currentValue.slice(insertIndex),
+    ];
+
+    return this.update(arrayValue, currentValue, `${name}.${insertIndex}`, value, options);
+  };
+
+  /**
+   * @public
+   */
+  remove = (index: number, options: ArrayUpdateOptions = {}): TItemValue[] | null => {
+    const { name } = this;
+    const currentValue = this.resolvedValue;
+
+    if (currentValue == null) {
+      return null;
+    }
+
+    if (index < 0 || index >= currentValue.length) {
+      return null;
+    }
+
+    const removedItem = currentValue[index];
+    const newValue = [...currentValue.slice(0, index), ...currentValue.slice(index + 1)];
+
+    return this.update(newValue, currentValue, `${name}.${index}`, removedItem, options);
   };
 }

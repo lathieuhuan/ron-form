@@ -288,4 +288,271 @@ describe("FieldArrayControl", () => {
       });
     });
   });
+
+  describe("remove", () => {
+    it("removes the item at the specified index", () => {
+      const form = new FormControl({ defaultValues });
+      const fieldArray = new FieldArrayControl("tags", form);
+
+      form.setFieldValue("tags", ["a", "b", "c"], { dontValidate: true });
+
+      const result = fieldArray.remove(1, { dontValidate: true });
+
+      expect(result).toEqual(["a", "c"]);
+      expect(form.getFieldValue("tags")).toEqual(["a", "c"]);
+    });
+
+    it("removes the first item", () => {
+      const form = new FormControl({ defaultValues });
+      const fieldArray = new FieldArrayControl("tags", form);
+
+      form.setFieldValue("tags", ["a", "b"], { dontValidate: true });
+
+      const result = fieldArray.remove(0, { dontValidate: true });
+
+      expect(result).toEqual(["b"]);
+      expect(form.getFieldValue("tags")).toEqual(["b"]);
+    });
+
+    it("removes the last item", () => {
+      const form = new FormControl({ defaultValues });
+      const fieldArray = new FieldArrayControl("tags", form);
+
+      form.setFieldValue("tags", ["a", "b"], { dontValidate: true });
+
+      const result = fieldArray.remove(1, { dontValidate: true });
+
+      expect(result).toEqual(["a"]);
+      expect(form.getFieldValue("tags")).toEqual(["a"]);
+    });
+
+    it("returns null when the current value is not an array", () => {
+      const form = new FormControl({ defaultValues });
+      const fieldArray = new FieldArrayControl("notArray", form);
+
+      const result = fieldArray.remove(0, { dontValidate: true });
+
+      expect(result).toBeNull();
+      expect(form.getFieldValue("notArray")).toBe("");
+    });
+
+    it("returns null when the index is out of bounds", () => {
+      const form = new FormControl({ defaultValues });
+      const fieldArray = new FieldArrayControl("tags", form);
+
+      form.setFieldValue("tags", ["a"], { dontValidate: true });
+
+      expect(fieldArray.remove(-1, { dontValidate: true })).toBeNull();
+      expect(fieldArray.remove(1, { dontValidate: true })).toBeNull();
+      expect(form.getFieldValue("tags")).toEqual(["a"]);
+    });
+
+    it("returns null when the field path cannot be set", () => {
+      const form = new FormControl({ defaultValues });
+      const fieldArray = new FieldArrayControl("tags", form);
+      const setSpy = vi.spyOn(objectUtils, "set").mockReturnValue(false);
+
+      form.setFieldValue("tags", ["a"], { dontValidate: true });
+
+      const result = fieldArray.remove(0, { dontValidate: true });
+
+      expect(result).toBeNull();
+      setSpy.mockRestore();
+    });
+
+    it("notifies the array field value subscriber when dontValidate is enabled", () => {
+      const subscriber = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        valueSubscribers: {
+          tags: subscriber,
+        },
+      });
+      const fieldArray = new FieldArrayControl("tags", form);
+
+      form.setFieldValue("tags", ["a", "b"], { dontValidate: true });
+      subscriber.mockClear();
+
+      fieldArray.remove(1, { dontValidate: true });
+
+      expect(subscriber).toHaveBeenCalledOnce();
+      expect(subscriber).toHaveBeenCalledWith({
+        value: ["a"],
+        oldValue: ["a"],
+        form,
+        cause: DEFAULT_CHANGE_CAUSE,
+      });
+    });
+
+    it("notifies nested field subscribers when removing an object item with dontValidate", () => {
+      const nameSubscriber = vi.fn();
+      const emailSubscriber = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        valueSubscribers: {
+          "contacts.0.name": nameSubscriber,
+          "contacts.0.email": emailSubscriber,
+        },
+      });
+      const fieldArray = new FieldArrayControl("contacts", form);
+
+      form.setFieldValue(
+        "contacts",
+        [{ name: "Jane", email: "jane@example.com" }],
+        { dontValidate: true },
+      );
+
+      fieldArray.remove(0, { dontValidate: true });
+
+      expect(nameSubscriber).toHaveBeenCalledOnce();
+      expect(emailSubscriber).toHaveBeenCalledOnce();
+    });
+
+    it("marks the array field as touched and dirty by default", () => {
+      const form = new FormControl({ defaultValues });
+      const fieldArray = new FieldArrayControl("tags", form);
+
+      form.setFieldValue("tags", ["a", "b"], { dontValidate: true });
+
+      fieldArray.remove(0);
+
+      expect(form.getFieldMeta("tags")).toEqual({
+        isBlurred: false,
+        isTouched: true,
+        isDirty: true,
+        isValidating: false,
+      });
+    });
+
+    it("runs change validators on the array field", () => {
+      const validator = vi.fn(() => "At least one tag is required");
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          tags: validator,
+        },
+      });
+      const fieldArray = new FieldArrayControl("tags", form);
+
+      form.setFieldValue("tags", ["a"], { dontValidate: true });
+
+      fieldArray.remove(0);
+
+      expect(validator).toHaveBeenCalledWith({
+        value: [],
+        form,
+      });
+      expect(form.getFieldErrorMap("tags").change).toEqual([
+        {
+          path: "tags",
+          type: "change",
+          message: "At least one tag is required",
+          meta: {},
+        },
+      ]);
+    });
+
+    it("notifies the array field value subscriber after validation", () => {
+      const subscriber = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        valueSubscribers: {
+          tags: subscriber,
+        },
+      });
+      const fieldArray = new FieldArrayControl("tags", form);
+
+      form.setFieldValue("tags", ["a", "b"], { dontValidate: true });
+      subscriber.mockClear();
+
+      fieldArray.remove(1);
+
+      expect(subscriber).toHaveBeenCalledOnce();
+      expect(subscriber).toHaveBeenCalledWith({
+        value: ["a"],
+        oldValue: ["a", "b"],
+        form,
+        cause: DEFAULT_CHANGE_CAUSE,
+      });
+    });
+
+    it("respects a custom cause option", () => {
+      const subscriber = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        valueSubscribers: {
+          tags: subscriber,
+        },
+      });
+      const fieldArray = new FieldArrayControl("tags", form);
+
+      form.setFieldValue("tags", ["a", "b"], { dontValidate: true });
+      subscriber.mockClear();
+
+      fieldArray.remove(1, { dontValidate: true, cause: "user" });
+
+      expect(subscriber).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cause: "user",
+        }),
+      );
+    });
+
+    describe("async validation", () => {
+      beforeEach(() => {
+        vi.useFakeTimers();
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it("schedules async validation when sync validation passes", async () => {
+        const asyncValidator = vi.fn(async () => "Async error");
+        const form = new FormControl({
+          defaultValues,
+          changeAsyncValidators: {
+            tags: asyncValidator,
+          },
+          asyncDebounceMs: 100,
+        });
+        const fieldArray = new FieldArrayControl("tags", form);
+
+        form.setFieldValue("tags", ["a"], { dontValidate: true });
+
+        fieldArray.remove(0);
+
+        expect(asyncValidator).not.toHaveBeenCalled();
+
+        await vi.advanceTimersByTimeAsync(100);
+
+        expect(asyncValidator).toHaveBeenCalledWith({
+          value: [],
+          form,
+        });
+      });
+
+      it("does not schedule async validation when sync validation fails", async () => {
+        const asyncValidator = vi.fn(async () => "Async error");
+        const form = new FormControl({
+          defaultValues,
+          changeValidators: {
+            tags: () => "Sync error",
+          },
+          changeAsyncValidators: {
+            tags: asyncValidator,
+          },
+          asyncDebounceMs: 100,
+        });
+        const fieldArray = new FieldArrayControl("tags", form);
+
+        form.setFieldValue("tags", ["a"], { dontValidate: true });
+
+        fieldArray.remove(0);
+        await vi.advanceTimersByTimeAsync(100);
+
+        expect(asyncValidator).not.toHaveBeenCalled();
+      });
+    });
+  });
 });
