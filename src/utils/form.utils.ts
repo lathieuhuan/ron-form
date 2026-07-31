@@ -19,7 +19,7 @@ function makeFieldRenderer<TField extends ReactFieldStrictApi<any, any>, TSelect
   };
 }
 
-function selectFieldProps<TValues, TKey extends DeepKeys<TValues>>(
+export function selectFieldProps<TValues, TKey extends DeepKeys<TValues>>(
   field: ReactFieldStrictApi<TValues, TKey>,
 ) {
   const error = field.errors.at(0);
