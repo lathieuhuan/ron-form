@@ -1,8 +1,17 @@
-import type { ChangeCause, FieldErrors, FieldMeta, FormMeta } from "./types";
+import type { ChangeCause, ErrorCauseType, FieldErrors, FieldMeta, FormMeta } from "./types";
 
 export const DEFAULT_CHANGE_CAUSE = "programmatic" as const satisfies ChangeCause;
 
-export const DEFAULT_ERROR_MAP: FieldErrors<string> = {
+const ERROR_CAUSE_MAP: Record<ErrorCauseType, true> = {
+  change: true,
+  blur: true,
+  changeAsync: true,
+  blurAsync: true,
+};
+
+export const ERROR_CAUSES = Object.keys(ERROR_CAUSE_MAP) as ErrorCauseType[];
+
+export const DEFAULT_ERROR_MAP: FieldErrors<any> = {
   change: [],
   blur: [],
   changeAsync: [],

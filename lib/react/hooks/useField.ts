@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 
-import type { DeepKeys, FieldState, FormControl } from "@lib/core";
+import type { DeepKeys, FieldError, FieldState, FormControl } from "@lib/core";
 import type { UseFormFieldProps } from "../createContexts";
 import type { ReactFieldStrictApi } from "../types";
 
-import { FieldControl } from "@lib/core";
+import { ERROR_CAUSES, FieldControl } from "@lib/core";
 
 export function useField<TFormValues, TKey extends DeepKeys<TFormValues>>({
   name,
@@ -45,10 +45,11 @@ export function useField<TFormValues, TKey extends DeepKeys<TFormValues>>({
     errorMap: state.errorMap,
     form,
     get errors() {
-      const { errorMap } = state;
-      const { change = [], blur = [], changeAsync = [], blurAsync = [] } = errorMap;
-
-      return change.concat(blur, changeAsync, blurAsync);
+      return ERROR_CAUSES.reduce<FieldError<TKey>[]>((acc, cause) => {
+        const errors = state.errorMap[cause] || [];
+        acc.push(...errors);
+        return acc;
+      }, []);
     },
     handleChange: api.handleChange,
     handleBlur: api.handleBlur,

@@ -51,10 +51,11 @@ export const useFormOptions: UseFormOptions<PersonalInfoFormValues> = {
     },
   },
   onSubmit: ({ values }) => {
-    console.log("Submit success");
+    console.log("onSubmit");
     console.log(values);
   },
-  onSubmitFailed: () => {
-    console.log("Submit failed");
+  onSubmitFailed: ({ errors }) => {
+    console.log("onSubmitFailed");
+    console.log(errors);
   },
 };

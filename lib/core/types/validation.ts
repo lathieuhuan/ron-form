@@ -19,7 +19,7 @@ export interface FieldError<TKey> {
 }
 
 export type FieldErrors<TKey> = {
-  [type in ErrorCauseType]?: FieldError<TKey>[];
+  [type in ErrorCauseType]: FieldError<TKey>[];
 };
 
 // ===== VALIDATORS =====

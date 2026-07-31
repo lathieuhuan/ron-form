@@ -58,9 +58,11 @@ export const useFormOptions: UseFormOptions<RegisterFormValues> = {
     },
   },
   onSubmit: ({ values }) => {
+    console.log("onSubmit");
     console.log(values);
   },
-  onSubmitFailed: () => {
-    console.log("Submit failed");
+  onSubmitFailed: ({ errors }) => {
+    console.log("onSubmitFailed");
+    console.log(errors);
   },
 };

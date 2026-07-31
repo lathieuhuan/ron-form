@@ -106,6 +106,7 @@ describe("FormCore", () => {
 
       form.updateAndNotifyField("email", {
         errorMap: {
+          ...DEFAULT_ERROR_MAP,
           change: [
             {
               path: "email",

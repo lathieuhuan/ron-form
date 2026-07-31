@@ -672,6 +672,7 @@ describe("FormControl", () => {
           email: "jane@example.com",
           profile: { age: 0 },
         },
+        form,
       });
     });
 
@@ -682,7 +683,7 @@ describe("FormControl", () => {
       form.handleSubmit();
 
       expect(onSubmit).toHaveBeenCalledOnce();
-      expect(onSubmit).toHaveBeenCalledWith({ values: defaultValues });
+      expect(onSubmit).toHaveBeenCalledWith({ values: defaultValues, form });
     });
 
     it("does not call onSubmit when change validation fails", () => {
@@ -701,6 +702,12 @@ describe("FormControl", () => {
 
       expect(onSubmit).not.toHaveBeenCalled();
       expect(onSubmitFailed).toHaveBeenCalledOnce();
+      expect(onSubmitFailed).toHaveBeenCalledWith({
+        form,
+        errors: {
+          name: form.getFieldErrorMap("name"),
+        },
+      });
     });
 
     it("does not call onSubmit when blur validation fails", () => {
@@ -719,6 +726,12 @@ describe("FormControl", () => {
 
       expect(onSubmit).not.toHaveBeenCalled();
       expect(onSubmitFailed).toHaveBeenCalledOnce();
+      expect(onSubmitFailed).toHaveBeenCalledWith({
+        form,
+        errors: {
+          email: form.getFieldErrorMap("email"),
+        },
+      });
     });
 
     it("calls onSubmitFailed when any validator fails", () => {
@@ -737,6 +750,39 @@ describe("FormControl", () => {
       form.handleSubmit();
 
       expect(onSubmitFailed).toHaveBeenCalledOnce();
+      expect(onSubmitFailed).toHaveBeenCalledWith({
+        form,
+        errors: {
+          name: form.getFieldErrorMap("name"),
+          email: form.getFieldErrorMap("email"),
+        },
+      });
+    });
+
+    it("does not pass field with no errors into errors argument of onSubmitFailed", () => {
+      const onSubmitFailed = vi.fn();
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: ({ value }) => (value.length > 0 ? null : "Name is required"),
+          email: () => "Email is required",
+        },
+        onSubmitFailed,
+      });
+
+      form.handleSubmit();
+      onSubmitFailed.mockClear();
+      form.setFieldValue("name", "Jane");
+      form.handleSubmit();
+
+      expect(onSubmitFailed).toHaveBeenCalledOnce();
+      expect(onSubmitFailed).toHaveBeenCalledWith({
+        form,
+        errors: {
+          email: form.getFieldErrorMap("email"),
+          // no name error here
+        },
+      });
     });
 
     it("runs change and blur validators for all registered fields", () => {
@@ -850,6 +896,7 @@ describe("FormControl", () => {
 
       expect(asyncValidator).not.toHaveBeenCalled();
       expect(onSubmit).toHaveBeenCalledOnce();
+      expect(onSubmit).toHaveBeenCalledWith({ values: defaultValues, form });
 
       vi.useRealTimers();
     });

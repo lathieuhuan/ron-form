@@ -113,8 +113,8 @@ export class FormCore<TFormValues> {
   /**
    * @public
    */
-  getFieldErrorMap = <TField extends DeepKeys<TFormValues>>(field: TField) => {
-    return (this.fieldErrorMap.get(field) || { ...DEFAULT_ERROR_MAP }) as FieldErrors<TField>;
+  getFieldErrorMap = <TField extends DeepKeys<TFormValues>>(field: TField): FieldErrors<TField> => {
+    return this.fieldErrorMap.get(field) || { ...DEFAULT_ERROR_MAP };
   };
 
   /**

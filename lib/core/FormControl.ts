@@ -15,7 +15,7 @@ import type {
   ValueChangeData,
 } from "./types";
 
-import { DEFAULT_CHANGE_CAUSE, DEFAULT_FORM_META } from "./constants";
+import { DEFAULT_CHANGE_CAUSE, DEFAULT_FORM_META, ERROR_CAUSES } from "./constants";
 import { FormCore, FormCoreOptions } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { cache } from "./utils/cache";
@@ -34,15 +34,29 @@ type ValueSubscribers<TFormValues> = {
   [key in DeepKeys<TFormValues>]?: (props: ValueChangeData<TFormValues, key>) => void;
 };
 
+interface OnSubmitData<TFormValues> {
+  values: TFormValues;
+  form: FormControl<TFormValues>;
+}
+
+type AllFieldErrors<TFormValues> = Partial<
+  Record<DeepKeys<TFormValues>, FieldErrors<DeepKeys<TFormValues>>>
+>;
+
+interface OnSubmitFailedData<TFormValues> {
+  errors: AllFieldErrors<TFormValues>;
+  form: FormControl<TFormValues>;
+}
+
 export interface FormControlOptions<TFormValues> extends FormCoreOptions<TFormValues> {
   valueSubscribers?: ValueSubscribers<TFormValues>;
-  onSubmit?: (props: { values: TFormValues }) => void;
-  onSubmitFailed?: () => void;
+  onSubmit?: (data: OnSubmitData<TFormValues>) => void;
+  onSubmitFailed?: (data: OnSubmitFailedData<TFormValues>) => void;
 }
 
 export class FormControl<TFormValues> extends FormCore<TFormValues> {
-  onSubmit?: (props: { values: TFormValues }) => void;
-  onSubmitFailed?: () => void;
+  onSubmit?: FormControlOptions<TFormValues>["onSubmit"];
+  onSubmitFailed?: FormControlOptions<TFormValues>["onSubmitFailed"];
 
   valueSubjects: ValueSubjects<TFormValues, DeepKeys<TFormValues>> = new Map();
   unsubscribers: Noop[] = [];
@@ -385,10 +399,19 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     this.syncMeta();
   };
 
+  isFieldError = <TField extends DeepKeys<TFormValues>>(field: TField) => {
+    const errorMap = this.getFieldErrorMap(field);
+    return ERROR_CAUSES.some((cause) => {
+      const errors = errorMap[cause] || [];
+      return errors.length > 0;
+    });
+  };
+
   /**
    * @public
    */
   handleSubmit = () => {
+    // TODO this also notify
     this.meta.set(({ submitCount }) => ({
       isTouched: true,
       submitCount: submitCount + 1,
@@ -456,9 +479,23 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     this.syncMeta();
 
     if (isValid) {
-      this.onSubmit?.({ values: clone(this._values) });
-    } else {
-      this.onSubmitFailed?.();
+      this.onSubmit?.({
+        values: clone(this._values),
+        form: this,
+      });
+    } else if (this.onSubmitFailed) {
+      const errors: AllFieldErrors<TFormValues> = {};
+
+      for (const [field, errorMap] of this.fieldErrorMap.entries()) {
+        if (this.isFieldError(field)) {
+          errors[field] = errorMap;
+        }
+      }
+
+      this.onSubmitFailed({
+        errors,
+        form: this,
+      });
     }
   };
 
