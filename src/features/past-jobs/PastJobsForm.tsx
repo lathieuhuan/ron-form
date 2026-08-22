@@ -79,7 +79,7 @@ export function PastJobsForm() {
 
               <Field name={`pastJobs.${index}.startYear`}>
                 {renderInputField(({ fieldProps, inputProps }) => (
-                  <FormField label="Start Date" {...fieldProps}>
+                  <FormField label="Start Year" {...fieldProps}>
                     <InputNumber {...inputProps} />
                   </FormField>
                 ))}

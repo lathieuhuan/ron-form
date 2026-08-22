@@ -13,6 +13,14 @@ export interface PastJobsFormValues {
 export const { FormContext, Form, FormMeta, Field, useForm, useFormInstance } =
   createContexts<PastJobsFormValues>();
 
+const require = ({ value }: { value?: string | number | null }) => {
+  if (value == null || (typeof value === "string" && value.trim() === "")) {
+    return "Required";
+  }
+
+  return null;
+};
+
 export const useFormOptions: UseFormOptions<PastJobsFormValues> = {
   defaultValues: {
     pastJobs: [],
@@ -21,6 +29,8 @@ export const useFormOptions: UseFormOptions<PastJobsFormValues> = {
     pastJobs: ({ value }) => {
       return value.length > 0 ? null : "At least one past job is required";
     },
+    "pastJobs.[n].companyName": require,
+    "pastJobs.[n].startYear": require,
   },
   onSubmit: ({ values }) => {
     console.log("onSubmit");
