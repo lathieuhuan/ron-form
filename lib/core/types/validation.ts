@@ -1,5 +1,5 @@
 import type { FormApi } from "./form-api";
-import type { WildcardDeepKeys, DeepValue } from "./key-value";
+import type { DeepValue, WildcardDeepKeys } from "./key-value";
 
 export type ValidationCause = "change" | "blur";
 
@@ -26,12 +26,12 @@ export type FieldErrors<TKey> = {
 
 export type ValidationResult = RawError | RawError[] | null | undefined;
 
-type Validator<TValues, TDeepKey extends WildcardDeepKeys<TValues>> = (args: {
+export type Validator<TValues, TDeepKey extends WildcardDeepKeys<TValues>> = (args: {
   value: DeepValue<TValues, TDeepKey>;
   form: FormApi<TValues>;
 }) => ValidationResult;
 
-export type ValidatorKey<TFormValues> = WildcardDeepKeys<TFormValues>
+export type ValidatorKey<TFormValues> = WildcardDeepKeys<TFormValues>;
 
 export type FormValidators<TFormValues> = {
   [AK in ValidatorKey<TFormValues>]?: Validator<TFormValues, AK>;

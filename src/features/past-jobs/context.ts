@@ -32,6 +32,9 @@ export const useFormOptions: UseFormOptions<PastJobsFormValues> = {
     },
     "pastJobs.[n].companyName": require,
   },
+  blurValidators: {
+    "pastJobs.[n].startYear": require,
+  },
   blurAsyncValidators: {
     "pastJobs.[n].startYear": async ({ value }) => {
       await delay(500);

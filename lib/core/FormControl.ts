@@ -16,7 +16,7 @@ import type {
 } from "./types";
 
 import { DEFAULT_CHANGE_CAUSE, DEFAULT_FORM_META, ERROR_CAUSES } from "./constants";
-import { AsyncValidationSpec, FormCore, FormCoreOptions } from "./FormCore";
+import { AsyncValidationSpec, FormCore, FormCoreOptions, ValidationSpec } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { cache } from "./utils/cache";
 import { clone } from "./utils/clone";
@@ -25,7 +25,6 @@ import { createSubject, Observer, Subject } from "./utils/createSubject";
 import { entries, get, isPlainObject, keys, set } from "./utils/object";
 import { parseRawError } from "./utils/parseRawError";
 import { parseWildcardDeepKeys } from "./utils/parseWildcardDeepKeys";
-import { toWildCardDeepKey } from "./utils/toWildCardDeepKey";
 import { transformErrors } from "./utils/transformErrors";
 
 type ValueSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
@@ -98,16 +97,15 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   };
 
   _runSyncValidator = <TField extends DeepKeys<TFormValues>>(
-    cause: ValidationCause,
-    field: TField,
-    value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
+    spec: ValidationSpec<TFormValues, TField>,
   ): FieldError<TField>[] => {
-    const validatorKey = toWildCardDeepKey<TFormValues>(field);
-    const validator = this.validators[cause][validatorKey];
+    if (spec.validator == null) return [];
 
-    if (validator == null) return [];
-
-    return transformErrors(field, cause, validator({ value, form: this }));
+    return transformErrors(
+      spec.field,
+      spec.cause,
+      spec.validator({ value: spec.value, form: this }),
+    );
   };
 
   _runAsyncValidator = async <TField extends DeepKeys<TFormValues>>(
@@ -127,10 +125,11 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   };
 
   _validateSync = <TField extends DeepKeys<TFormValues>>(
-    field: TField,
-    cause: ValidationCause,
+    spec: ValidationSpec<TFormValues, TField>,
     options: ValidateSyncOptions,
-  ) => {
+  ): FieldError<TField>[] => {
+    // TODO recheck performance: if before and after validation no errors, then should not notify
+    const { cause, field } = spec;
     const fieldMeta = {
       ...this.getFieldMeta(field),
     };
@@ -146,7 +145,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     }
 
     const value = this.getFieldValue(field);
-    const errors = this._runSyncValidator(cause, field, value);
+    const errors = this._runSyncValidator(spec);
     const errorMap = {
       ...this.getFieldErrorMap(field),
       [cause]: errors,
@@ -171,7 +170,8 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     options: ValidateSyncOptions = {},
   ) => {
     const { shouldBlur = false, shouldTouch = true, shouldDirty = false } = options;
-    const errors = this._validateSync(field, cause, {
+    const validationSpec = this.validationSpec(cause, field);
+    const errors = this._validateSync(validationSpec, {
       shouldBlur,
       shouldTouch,
       shouldDirty,
@@ -363,7 +363,8 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     const asyncValidateSpecs: AsyncValidationSpec<TFormValues, DeepKeys<TFormValues>>[] = [];
 
     for (const subField of subFields) {
-      const errors = this._validateSync(subField, "change", {
+      const validationSpec = this.validationSpec("change", subField);
+      const errors = this._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: !dontTouch,
         shouldDirty: !dontDirty,
@@ -447,7 +448,8 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
         };
       }
 
-      const errors = this._runSyncValidator(cause, field);
+      const validationSpec = this.validationSpec(cause, field);
+      const errors = this._runSyncValidator(validationSpec);
 
       if (errors.length > 0) {
         isValid = false;

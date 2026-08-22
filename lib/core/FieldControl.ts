@@ -1,6 +1,5 @@
 import type { FormControl } from "./FormControl";
-import type { ChangeCause, DeepKeys, DeepValue, FieldError } from "./types";
-import { transformErrors } from "./utils/transformErrors";
+import type { ChangeCause, DeepKeys, DeepValue } from "./types";
 
 export type HandleChangeOptions = {
   cause?: ChangeCause;
@@ -24,7 +23,16 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
   handleBlur = () => {
     const { name, form } = this;
 
-    // ===== CLEANUP =====
+    // ===== VALIDATE SYNC =====
+
+    const errors = form.validateSync(name, "blur", {
+      shouldBlur: true,
+      shouldTouch: true,
+      shouldDirty: false,
+    });
+
+    // ===== VALIDATE ASYNC =====
+    // TODO recheck logic
 
     form.abortCtrlMaps.blur.get(name)?.abort();
 
@@ -33,50 +41,6 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
     if (timeoutId !== undefined) {
       clearTimeout(timeoutId);
     }
-
-    // ===== MAIN LOGIC =====
-
-    let meta = form.getFieldMeta(name);
-    let errorMap = form.getFieldErrorMap(name);
-
-    if (!meta.isBlurred || !meta.isTouched) {
-      meta = {
-        ...meta,
-        isBlurred: true,
-        isTouched: true,
-      };
-    }
-
-    // Clear blur async errors if any
-    if (errorMap.blurAsync != null && errorMap.blurAsync.length) {
-      errorMap = {
-        ...errorMap,
-        blurAsync: [],
-      };
-    }
-
-    const syncValidator = form.validators.blur[name];
-    let errors: FieldError<TField>[] = [];
-
-    if (syncValidator != null) {
-      const value = form.getFieldValue(name);
-
-      errors = transformErrors(name, "blur", syncValidator({ value, form }));
-
-      if (errors.length || errorMap.blur?.length) {
-        errorMap = {
-          ...errorMap,
-          blur: errors,
-        };
-      }
-    }
-
-    form.updateAndNotifyField(name, {
-      meta,
-      errorMap,
-    });
-
-    form.syncMeta();
 
     const validationSpec = form.asyncValidationSpec("blur", name);
 

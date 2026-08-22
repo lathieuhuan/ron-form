@@ -352,7 +352,8 @@ describe("FormControl validation", () => {
 
       form.subscribeField("name", fieldSubscriber);
 
-      const errors = form._validateSync("name", "change", {
+      const validationSpec = form.validationSpec("change", "name");
+      const errors = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -373,7 +374,8 @@ describe("FormControl validation", () => {
 
       form.subscribeField("name", fieldSubscriber);
 
-      const errors = form._validateSync("name", "change", {
+      const validationSpec = form.validationSpec("change", "name");
+      const errors = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -405,7 +407,8 @@ describe("FormControl validation", () => {
         blurValidators: { email: validator },
       });
 
-      const errors = form._validateSync("email", "blur", {
+      const validationSpec = form.validationSpec("blur", "email");
+      const errors = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -443,7 +446,8 @@ describe("FormControl validation", () => {
         blurAsync: [],
       });
 
-      const errors = form._validateSync("name", "change", {
+      const validationSpec = form.validationSpec("change", "name");
+      const errors = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -473,7 +477,8 @@ describe("FormControl validation", () => {
         blurAsync: [],
       });
 
-      form._validateSync("name", "change", {
+      const validationSpec = form.validationSpec("change", "name");
+      form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -500,7 +505,8 @@ describe("FormControl validation", () => {
     it("sets isTouched on field and form meta when shouldTouch is true", () => {
       const form = new FormControl({ defaultValues });
 
-      form._validateSync("name", "change", {
+      const validationSpec = form.validationSpec("change", "name");
+      form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: true,
         shouldDirty: false,
@@ -512,7 +518,8 @@ describe("FormControl validation", () => {
     it("sets isBlurred on field and form meta when shouldBlur is true", () => {
       const form = new FormControl({ defaultValues });
 
-      form._validateSync("name", "change", {
+      const validationSpec = form.validationSpec("change", "name");
+      form._validateSync(validationSpec, {
         shouldBlur: true,
         shouldTouch: false,
         shouldDirty: false,
@@ -531,7 +538,8 @@ describe("FormControl validation", () => {
         isValidating: false,
       });
 
-      form._validateSync("name", "change", {
+      const validationSpec = form.validationSpec("change", "name");
+      form._validateSync(validationSpec, {
         shouldTouch: true,
         shouldBlur: true,
         shouldDirty: false,
@@ -550,7 +558,8 @@ describe("FormControl validation", () => {
     it("returns an empty array when no sync validator is registered", () => {
       const form = new FormControl({ defaultValues });
 
-      const errors = form._runSyncValidator("change", "name");
+      const validationSpec = form.validationSpec("change", "name");
+      const errors = form._runSyncValidator(validationSpec);
 
       expect(errors).toEqual([]);
     });
@@ -562,7 +571,8 @@ describe("FormControl validation", () => {
         changeValidators: { name: validator },
       });
 
-      form._runSyncValidator("change", "name");
+      const validationSpec = form.validationSpec("change", "name");
+      form._runSyncValidator(validationSpec);
 
       expect(validator).toHaveBeenCalledWith({ value: "John", form });
     });
@@ -574,7 +584,8 @@ describe("FormControl validation", () => {
         changeValidators: { name: validator },
       });
 
-      form._runSyncValidator("change", "name", "");
+      const validationSpec = form.validationSpec("change", "name");
+      form._runSyncValidator(validationSpec);
 
       expect(validator).toHaveBeenCalledWith({ value: "", form });
     });
@@ -586,7 +597,8 @@ describe("FormControl validation", () => {
         blurValidators: { email: validator },
       });
 
-      const errors = form._runSyncValidator("blur", "email");
+      const validationSpec = form.validationSpec("blur", "email");
+      const errors = form._runSyncValidator(validationSpec);
 
       expect(validator).toHaveBeenCalledWith({ value: "john@example.com", form });
       expect(errors).toEqual([
@@ -605,7 +617,8 @@ describe("FormControl validation", () => {
         changeValidators: { name: () => undefined },
       });
 
-      const errors = form._runSyncValidator("change", "name");
+      const validationSpec = form.validationSpec("change", "name");
+      const errors = form._runSyncValidator(validationSpec);
 
       expect(errors).toEqual([]);
     });
@@ -622,7 +635,8 @@ describe("FormControl validation", () => {
         },
       });
 
-      const errors = form._runSyncValidator("change", "contacts.0.name");
+      const validationSpec = form.validationSpec("change", "contacts.0.name");
+      const errors = form._runSyncValidator(validationSpec);
 
       expect(validator).toHaveBeenCalledWith({ value: "Alice", form });
       expect(errors).toEqual([
@@ -646,7 +660,8 @@ describe("FormControl validation", () => {
         },
       });
 
-      const errors = form._runSyncValidator("change", "name");
+      const validationSpec = form.validationSpec("change", "name");
+      const errors = form._runSyncValidator(validationSpec);
 
       expect(nameValidator).toHaveBeenCalledOnce();
       expect(emailValidator).not.toHaveBeenCalled();

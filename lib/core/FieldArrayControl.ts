@@ -85,7 +85,8 @@ export class FieldArrayControl<
       return newValue;
     }
 
-    const errors = form._validateSync(name, "change", {
+    const validationSpec = form.validationSpec("change", name);
+    const errors = form._validateSync(validationSpec, {
       shouldTouch: true,
       shouldDirty: true,
     });

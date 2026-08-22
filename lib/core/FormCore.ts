@@ -10,6 +10,7 @@ import type {
   FormAsyncValidators,
   FormValidators,
   ValidationCause,
+  Validator,
   ValidatorMap,
 } from "./types";
 
@@ -32,6 +33,13 @@ type TimeoutIDMapByCause<TFormValues> = {
 
 type AbortControllerMapByCause<TFormValues> = {
   [key in ValidationCause]: Map<DeepKeys<TFormValues>, AbortController>;
+};
+
+export type ValidationSpec<TFormValues, TField extends DeepKeys<TFormValues>> = {
+  cause: ValidationCause;
+  field: TField;
+  value: DeepValue<TFormValues, TField>;
+  validator: Validator<TFormValues, TField> | undefined;
 };
 
 export type AsyncValidationSpec<TFormValues, TField extends DeepKeys<TFormValues>> = {
@@ -102,6 +110,21 @@ export class FormCore<TFormValues> {
   get values() {
     return this._values;
   }
+
+  validationSpec = <TField extends DeepKeys<TFormValues>>(
+    cause: ValidationCause,
+    field: TField,
+    value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
+  ): ValidationSpec<TFormValues, TField> => {
+    const validatorKey = toWildCardDeepKey<TFormValues>(field);
+
+    return {
+      cause,
+      field,
+      value,
+      validator: this.validators[cause][validatorKey],
+    };
+  };
 
   asyncValidationSpec = <TField extends DeepKeys<TFormValues>>(
     cause: ValidationCause,
