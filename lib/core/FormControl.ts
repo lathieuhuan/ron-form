@@ -21,9 +21,10 @@ import { RunningValidatorMap } from "./RunningValidatorMap";
 import { cache } from "./utils/cache";
 import { clone } from "./utils/clone";
 import { createSubject, Observer, Subject } from "./utils/createSubject";
-import { collectFieldPaths, entries, get, isPlainObject, set } from "./utils/object";
+import { collectFieldPaths, entries, get, isPlainObject, keys, set } from "./utils/object";
 import { parseRawError } from "./utils/parseRawError";
 import { transformErrors } from "./utils/transformErrors";
+import { parseWildcardDeepKeys } from "./utils/parseWildcardDeepKeys";
 
 type ValueSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
   TKey,
@@ -99,7 +100,12 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     field: TField,
     value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
   ): FieldError<TField>[] => {
-    const validator = this.validators[cause][field];
+    const validatorKey = field
+      .split(".")
+      .map((segment) => (/^\d+$/.test(segment) ? "[n]" : segment))
+      .join(".") as DeepKeys<TFormValues>;
+    const validator = this.validators[cause][validatorKey];
+
     if (validator == null) return [];
 
     return transformErrors(field, cause, validator({ value, form: this }));
@@ -424,7 +430,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       FieldState<TFormValues, DeepKeys<TFormValues>>
     >();
 
-    for (const field of Object.keys(this.validators.change) as DeepKeys<TFormValues>[]) {
+    const updateField = (field: DeepKeys<TFormValues>, cause: ValidationCause) => {
       const update = updateMap.get(field) || this.getFieldState(field);
 
       if (!update.meta.isTouched) {
@@ -434,42 +440,30 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
         };
       }
 
-      const errors = this._runSyncValidator("change", field);
+      const errors = this._runSyncValidator(cause, field);
 
       if (errors.length > 0) {
         isValid = false;
 
         update.errorMap = {
           ...update.errorMap,
-          change: errors,
+          [cause]: errors,
         };
       }
 
       updateMap.set(field, update);
+    };
+
+    for (const field of keys(this.validators.change)) {
+      for (const subField of parseWildcardDeepKeys<TFormValues>(field, this._values as AnyObject)) {
+        updateField(subField, "change");
+      }
     }
 
-    for (const field of Object.keys(this.validators.blur) as DeepKeys<TFormValues>[]) {
-      const update = updateMap.get(field) || this.getFieldState(field);
-
-      if (!update.meta.isTouched) {
-        update.meta = {
-          ...update.meta,
-          isTouched: true,
-        };
+    for (const field of keys(this.validators.blur)) {
+      for (const subField of parseWildcardDeepKeys<TFormValues>(field, this._values as AnyObject)) {
+        updateField(subField, "blur");
       }
-
-      const errors = this._runSyncValidator("blur", field);
-
-      if (errors.length > 0) {
-        isValid = false;
-
-        update.errorMap = {
-          ...update.errorMap,
-          blur: errors,
-        };
-      }
-
-      updateMap.set(field, update);
     }
 
     for (const [field, update] of updateMap.entries()) {

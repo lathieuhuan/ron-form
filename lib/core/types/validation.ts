@@ -1,5 +1,5 @@
 import type { FormApi } from "./form-api";
-import type { DeepKeys, DeepValue } from "./key-value";
+import type { WildcardDeepKeys, DeepValue } from "./key-value";
 
 export type ValidationCause = "change" | "blur";
 
@@ -26,13 +26,15 @@ export type FieldErrors<TKey> = {
 
 export type ValidationResult = RawError | RawError[] | null | undefined;
 
-export type Validator<TValues, TDeepKey extends DeepKeys<TValues>> = (args: {
+type Validator<TValues, TDeepKey extends WildcardDeepKeys<TValues>> = (args: {
   value: DeepValue<TValues, TDeepKey>;
   form: FormApi<TValues>;
 }) => ValidationResult;
 
+export type ValidatorKey<TFormValues> = WildcardDeepKeys<TFormValues>
+
 export type FormValidators<TFormValues> = {
-  [K in DeepKeys<TFormValues>]?: Validator<TFormValues, K>;
+  [AK in ValidatorKey<TFormValues>]?: Validator<TFormValues, AK>;
 };
 
 export type AsyncValidator<TValues, TDeepKey> = (args: {
@@ -41,7 +43,7 @@ export type AsyncValidator<TValues, TDeepKey> = (args: {
 }) => Promise<ValidationResult>;
 
 export type FormAsyncValidators<TFormValues> = {
-  [K in DeepKeys<TFormValues>]?: AsyncValidator<TFormValues, K>;
+  [K in ValidatorKey<TFormValues>]?: AsyncValidator<TFormValues, K>;
 };
 
 export type ValidatorMap<TFormValues> = Record<ValidationCause, FormValidators<TFormValues>>;

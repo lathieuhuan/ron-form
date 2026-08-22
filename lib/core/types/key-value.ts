@@ -94,7 +94,7 @@ export type DeepKeyAndValueObject<
     >
   : never;
 
-// =====  =====
+// ===== UNKNOWN =====
 
 type UnknownAccessor<TParent extends AnyDeepKeyAndValue> = TParent["key"] extends never
   ? string
@@ -104,6 +104,8 @@ interface UnknownDeepKeyAndValue<TParent extends AnyDeepKeyAndValue> extends Any
   key: UnknownAccessor<TParent>;
   value: unknown;
 }
+
+// ===== IMPLEMENTATION =====
 
 export type DeepKeysAndValuesImpl<
   T,
@@ -138,7 +140,89 @@ export type DeepValue<TValue, TAccessor> = unknown extends TValue
   ? TValue
   : TAccessor extends DeepKeys<TValue>
     ? DeepRecord<TValue>[TAccessor]
-    : never;
+    : TAccessor extends WildcardDeepKeys<TValue>
+      ? WildcardDeepRecord<TValue>[TAccessor]
+      : never;
 
 export type DeepItemValue<TValues, TField> =
   DeepValue<TValues, TField> extends Array<infer TItem> ? TItem : never;
+
+// ===== WILDCARD ARRAY KEY - VALUE =====
+
+type WildcardArrayAccessor<TParent extends AnyDeepKeyAndValue> =
+  `${TParent["key"] extends never ? "" : TParent["key"]}.[n]`;
+
+interface WildcardArrayDeepKeyAndValue<
+  in out TParent extends AnyDeepKeyAndValue,
+  in out T extends ReadonlyArray<any>,
+> extends AnyDeepKeyAndValue {
+  key: WildcardArrayAccessor<TParent>;
+  value: T[number] | Nullable<TParent["value"]>;
+}
+
+type WildcardDeepKeyAndValueArray<
+  TParent extends AnyDeepKeyAndValue,
+  T extends ReadonlyArray<any>,
+  TAcc,
+> = WildcardDeepKeysAndValuesImpl<
+  NonNullable<T[number]>,
+  WildcardArrayDeepKeyAndValue<TParent, T>,
+  TAcc | WildcardArrayDeepKeyAndValue<TParent, T>
+>;
+
+type WildcardDeepKeyAndValueObject<
+  TParent extends AnyDeepKeyAndValue,
+  T,
+  TAcc,
+  TAllKeys extends AllObjectKeys<T> = AllObjectKeys<T>,
+> = TAllKeys extends any
+  ? WildcardDeepKeysAndValuesImpl<
+      NonNullable<T[TAllKeys]>,
+      ObjectDeepKeyAndValue<TParent, T, TAllKeys>,
+      TAcc | ObjectDeepKeyAndValue<TParent, T, TAllKeys>
+    >
+  : never;
+
+type WildcardDeepKeysAndValues<T> =
+  WildcardDeepKeysAndValuesImpl<T> extends AnyDeepKeyAndValue
+    ? WildcardDeepKeysAndValuesImpl<T>
+    : never;
+
+type WildcardDeepRecord<T> = {
+  [TRecord in WildcardDeepKeysAndValues<T> as TRecord["key"]]: TRecord["value"];
+};
+
+type WildcardDeepKeysAndValuesImpl<
+  T,
+  TParent extends AnyDeepKeyAndValue = never,
+  TAcc = never,
+> = unknown extends T
+  ? TAcc | UnknownDeepKeyAndValue<TParent>
+  : unknown extends T // this stops runaway recursion when T is any
+    ? T
+    : T extends string | number | boolean | bigint | Date
+      ? TAcc
+      : T extends ReadonlyArray<any>
+        ? number extends T["length"]
+          ? WildcardDeepKeyAndValueArray<TParent, T, TAcc>
+          : never
+        : keyof T extends never
+          ? TAcc | UnknownDeepKeyAndValue<TParent>
+          : T extends object
+            ? WildcardDeepKeyAndValueObject<TParent, T, TAcc>
+            : TAcc;
+
+export type WildcardDeepKeys<T> = unknown extends T ? string : WildcardDeepKeysAndValues<T>["key"];
+
+// type Values = {
+//   array: Array<{
+//     name: string;
+//     age: number | null;
+//   }>;
+// };
+
+// type Keys = WildcardDeepKeys<Values>;
+// type Value = DeepValue<Values, "array.N.age">;
+
+// const keys: Keys[] = ["array.N.age", "array"];
+// const value: Value = 1;

@@ -8,6 +8,7 @@ const defaultValues = {
   profile: {
     age: 0,
   },
+  links: ["https://abc.com", "https://xyz.com"],
 };
 
 describe("FormControl", () => {
@@ -671,6 +672,7 @@ describe("FormControl", () => {
           name: "Jane",
           email: "jane@example.com",
           profile: { age: 0 },
+          links: defaultValues.links,
         },
         form,
       });
@@ -785,14 +787,14 @@ describe("FormControl", () => {
       });
     });
 
-    it("runs change and blur validators for all registered fields", () => {
+    it("runs all change and blur validators", () => {
       const changeValidator = vi.fn(() => null);
       const blurValidator = vi.fn(() => null);
+
       const form = new FormControl({
         defaultValues,
         changeValidators: {
-          name: changeValidator,
-          email: changeValidator,
+          "links.[n]": changeValidator,
         },
         blurValidators: {
           name: blurValidator,
@@ -800,13 +802,19 @@ describe("FormControl", () => {
         },
       });
 
+      const runSyncValidator = vi.spyOn(form, "_runSyncValidator");
+
       form.handleSubmit();
 
-      expect(changeValidator).toHaveBeenCalledTimes(2);
-      expect(changeValidator.mock.calls).toEqual([[{ value: "", form }], [{ value: "", form }]]);
+      expect(changeValidator).toHaveBeenCalledTimes(defaultValues.links.length);
+      expect(changeValidator.mock.calls).toEqual(
+        defaultValues.links.map((link) => [{ value: link, form }]),
+      );
 
       expect(blurValidator).toHaveBeenCalledTimes(2);
       expect(blurValidator.mock.calls).toEqual([[{ value: "", form }], [{ value: 0, form }]]);
+
+      expect(runSyncValidator).toHaveBeenCalledTimes(defaultValues.links.length + 2);
     });
 
     it("stores sync validation errors in field error maps", () => {

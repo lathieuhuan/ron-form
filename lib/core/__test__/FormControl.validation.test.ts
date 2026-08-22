@@ -533,6 +533,121 @@ describe("FormControl validation", () => {
     });
   });
 
+  describe("_runSyncValidator", () => {
+    it("returns an empty array when no sync validator is registered", () => {
+      const form = new FormControl({ defaultValues });
+
+      const errors = form._runSyncValidator("change", "name");
+
+      expect(errors).toEqual([]);
+    });
+
+    it("validates with the current field value by default", () => {
+      const validator = vi.fn(() => undefined);
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: { name: validator },
+      });
+
+      form._runSyncValidator("change", "name");
+
+      expect(validator).toHaveBeenCalledWith({ value: "John", form });
+    });
+
+    it("validates with the provided value when passed explicitly", () => {
+      const validator = vi.fn(() => undefined);
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: { name: validator },
+      });
+
+      form._runSyncValidator("change", "name", "");
+
+      expect(validator).toHaveBeenCalledWith({ value: "", form });
+    });
+
+    it("validates with blur validators when cause is blur", () => {
+      const validator = vi.fn(() => "Email is invalid");
+      const form = new FormControl({
+        defaultValues,
+        blurValidators: { email: validator },
+      });
+
+      const errors = form._runSyncValidator("blur", "email");
+
+      expect(validator).toHaveBeenCalledWith({ value: "john@example.com", form });
+      expect(errors).toEqual([
+        {
+          path: "email",
+          type: "blur",
+          message: "Email is invalid",
+          meta: {},
+        },
+      ]);
+    });
+
+    it("returns an empty array when the validator returns undefined", () => {
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: { name: () => undefined },
+      });
+
+      const errors = form._runSyncValidator("change", "name");
+
+      expect(errors).toEqual([]);
+    });
+
+    it("runs wildcard validators for matching array item paths", () => {
+      const arrayDefaultValues = {
+        contacts: [{ name: "Alice" }, { name: "Bob" }],
+      };
+      const validator = vi.fn(() => "Name is required");
+      const form = new FormControl({
+        defaultValues: arrayDefaultValues,
+        changeValidators: {
+          "contacts.[n].name": validator,
+        },
+      });
+
+      const errors = form._runSyncValidator("change", "contacts.0.name");
+
+      expect(validator).toHaveBeenCalledWith({ value: "Alice", form });
+      expect(errors).toEqual([
+        {
+          path: "contacts.0.name",
+          type: "change",
+          message: "Name is required",
+          meta: {},
+        },
+      ]);
+    });
+
+    it("does not run validators that do not match the field path", () => {
+      const nameValidator = vi.fn(() => "Name error");
+      const emailValidator = vi.fn(() => "Email error");
+      const form = new FormControl({
+        defaultValues,
+        changeValidators: {
+          name: nameValidator,
+          email: emailValidator,
+        },
+      });
+
+      const errors = form._runSyncValidator("change", "name");
+
+      expect(nameValidator).toHaveBeenCalledOnce();
+      expect(emailValidator).not.toHaveBeenCalled();
+      expect(errors).toEqual([
+        {
+          path: "name",
+          type: "change",
+          message: "Name error",
+          meta: {},
+        },
+      ]);
+    });
+  });
+
   describe("validateSync", () => {
     it("sets isTouched on field and form meta when shouldTouch is true", () => {
       const form = new FormControl({ defaultValues });
