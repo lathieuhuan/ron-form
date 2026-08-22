@@ -15,7 +15,8 @@ describe("FormControl validation", () => {
       const form = new FormControl({ defaultValues });
       const updateAndNotifyField = vi.spyOn(form, "updateAndNotifyField");
 
-      const errors = await form._validateAsync("name", "change", new AbortController());
+      const validationSpec = form.asyncValidationSpec("change", "name");
+      const errors = await form._validateAsync(validationSpec, new AbortController());
 
       expect(errors).toEqual([]);
       expect(updateAndNotifyField).not.toHaveBeenCalled();
@@ -32,7 +33,8 @@ describe("FormControl validation", () => {
 
       form.subscribeField("name", fieldSubscriber);
 
-      await form._validateAsync("name", "change", new AbortController());
+      const validationSpec = form.asyncValidationSpec("change", "name");
+      await form._validateAsync(validationSpec, new AbortController());
 
       expect(validator).toHaveBeenCalledWith({ value: "John", form });
       expect(form.getFieldErrorMap("name").changeAsync).toEqual([
@@ -76,7 +78,8 @@ describe("FormControl validation", () => {
 
       const updateAndNotifyField = vi.spyOn(form, "updateAndNotifyField");
 
-      await form._validateAsync("name", "change", new AbortController());
+      const validationSpec = form.asyncValidationSpec("change", "name");
+      await form._validateAsync(validationSpec, new AbortController());
 
       const validatingOnlyUpdates = updateAndNotifyField.mock.calls.filter(
         ([, changes]) =>
@@ -110,7 +113,8 @@ describe("FormControl validation", () => {
         blurAsync: [],
       });
 
-      const validation = form._validateAsync("name", "change", abortCtrl);
+      const validationSpec = form.asyncValidationSpec("change", "name");
+      const validation = form._validateAsync(validationSpec, abortCtrl);
       abortCtrl.abort();
       await validation;
 
@@ -132,7 +136,8 @@ describe("FormControl validation", () => {
         changeAsyncValidators: { name: validator },
       });
 
-      const errors = await form._validateAsync("name", "change", new AbortController());
+      const validationSpec = form.asyncValidationSpec("change", "name");
+      const errors = await form._validateAsync(validationSpec, new AbortController());
 
       expect(errors).toEqual([
         {
@@ -160,7 +165,8 @@ describe("FormControl validation", () => {
 
       form.subscribeField("name", fieldSubscriber);
 
-      const validation = form._validateAsync("name", "change", new AbortController());
+      const validationSpec = form.asyncValidationSpec("change", "name");
+      const validation = form._validateAsync(validationSpec, new AbortController());
 
       await Promise.resolve();
 
@@ -186,7 +192,8 @@ describe("FormControl validation", () => {
         blurAsyncValidators: { email: validator },
       });
 
-      const errors = await form._validateAsync("email", "blur", new AbortController());
+      const validationSpec = form.asyncValidationSpec("blur", "email");
+      const errors = await form._validateAsync(validationSpec, new AbortController());
 
       expect(validator).toHaveBeenCalledWith({ value: "john@example.com", form });
       expect(errors).toEqual([
@@ -221,7 +228,8 @@ describe("FormControl validation", () => {
         blurAsync: [],
       });
 
-      const errors = await form._validateAsync("name", "change", new AbortController());
+      const validationSpec = form.asyncValidationSpec("change", "name");
+      const errors = await form._validateAsync(validationSpec, new AbortController());
 
       expect(errors).toEqual([]);
       expect(form.getFieldErrorMap("name").changeAsync).toEqual([]);
@@ -248,7 +256,8 @@ describe("FormControl validation", () => {
         ],
       });
 
-      await form._validateAsync("name", "change", new AbortController());
+      const validationSpec = form.asyncValidationSpec("change", "name");
+      await form._validateAsync(validationSpec, new AbortController());
 
       expect(form.getFieldErrorMap("name").changeAsync).toEqual([
         {
@@ -277,7 +286,8 @@ describe("FormControl validation", () => {
         changeAsyncValidators: { name: validator },
       });
 
-      const errors = await form._validateAsync("name", "change", new AbortController());
+      const validationSpec = form.asyncValidationSpec("change", "name");
+      const errors = await form._validateAsync(validationSpec, new AbortController());
 
       expect(errors).toEqual([
         {
@@ -313,8 +323,11 @@ describe("FormControl validation", () => {
         blurAsyncValidators: { name: blurValidator },
       });
 
-      const changeValidation = form._validateAsync("name", "change", new AbortController());
-      const blurValidation = form._validateAsync("name", "blur", new AbortController());
+      const changeValidationSpec = form.asyncValidationSpec("change", "name");
+      const changeValidation = form._validateAsync(changeValidationSpec, new AbortController());
+
+      const blurValidationSpec = form.asyncValidationSpec("blur", "name");
+      const blurValidation = form._validateAsync(blurValidationSpec, new AbortController());
 
       await Promise.resolve();
 

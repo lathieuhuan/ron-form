@@ -1,3 +1,4 @@
+import { delay } from "@lib/core/utils/delay";
 import { createContexts, UseFormOptions } from "@lib/react";
 
 export type PastJob = {
@@ -30,7 +31,12 @@ export const useFormOptions: UseFormOptions<PastJobsFormValues> = {
       return value.length > 0 ? null : "At least one past job is required";
     },
     "pastJobs.[n].companyName": require,
-    "pastJobs.[n].startYear": require,
+  },
+  blurAsyncValidators: {
+    "pastJobs.[n].startYear": async ({ value }) => {
+      await delay(500);
+      return value == null || value < 2021 ? null : "Start year must be before 2021";
+    },
   },
   onSubmit: ({ values }) => {
     console.log("onSubmit");

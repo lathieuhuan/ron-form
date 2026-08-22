@@ -16,15 +16,17 @@ import type {
 } from "./types";
 
 import { DEFAULT_CHANGE_CAUSE, DEFAULT_FORM_META, ERROR_CAUSES } from "./constants";
-import { FormCore, FormCoreOptions } from "./FormCore";
+import { AsyncValidationSpec, FormCore, FormCoreOptions } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { cache } from "./utils/cache";
 import { clone } from "./utils/clone";
+import { collectFieldPaths } from "./utils/collectFieldPaths";
 import { createSubject, Observer, Subject } from "./utils/createSubject";
-import { collectFieldPaths, entries, get, isPlainObject, keys, set } from "./utils/object";
+import { entries, get, isPlainObject, keys, set } from "./utils/object";
 import { parseRawError } from "./utils/parseRawError";
-import { transformErrors } from "./utils/transformErrors";
 import { parseWildcardDeepKeys } from "./utils/parseWildcardDeepKeys";
+import { toWildCardDeepKey } from "./utils/toWildCardDeepKey";
+import { transformErrors } from "./utils/transformErrors";
 
 type ValueSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
   TKey,
@@ -100,10 +102,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     field: TField,
     value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
   ): FieldError<TField>[] => {
-    const validatorKey = field
-      .split(".")
-      .map((segment) => (/^\d+$/.test(segment) ? "[n]" : segment))
-      .join(".") as DeepKeys<TFormValues>;
+    const validatorKey = toWildCardDeepKey<TFormValues>(field);
     const validator = this.validators[cause][validatorKey];
 
     if (validator == null) return [];
@@ -112,22 +111,19 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   };
 
   _runAsyncValidator = async <TField extends DeepKeys<TFormValues>>(
-    cause: ValidationCause,
-    field: TField,
-    value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
+    spec: AsyncValidationSpec<TFormValues, TField>,
   ): Promise<FieldError<TField>[]> => {
-    const validator = this.asyncValidators[cause][field];
-    if (validator == null) return [];
+    if (spec.validator == null) return [];
 
     let result: ValidationResult;
 
     try {
-      result = await validator({ value, form: this });
+      result = await spec.validator({ value: spec.value, form: this });
     } catch (e) {
       result = parseRawError(e);
     }
 
-    return transformErrors(field, `${cause}Async`, result);
+    return transformErrors(spec.field, `${spec.cause}Async`, result);
   };
 
   _validateSync = <TField extends DeepKeys<TFormValues>>(
@@ -187,13 +183,14 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   };
 
   _validateAsync = async <TField extends DeepKeys<TFormValues>>(
-    field: TField,
-    cause: ValidationCause,
+    spec: AsyncValidationSpec<TFormValues, TField>,
     abortCtrl: AbortController,
   ): Promise<FieldError<TField>[]> => {
-    if (this.asyncValidators[cause][field] == null) {
+    if (spec.validator == null) {
       return [];
     }
+
+    const { field, cause } = spec;
 
     this.runningValidatorMap.add(field, cause);
 
@@ -209,7 +206,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       this.updateAndNotifyField(field, { meta: newMeta });
     }
 
-    const errors = await this._runAsyncValidator(cause, field);
+    const errors = await this._runAsyncValidator(spec);
 
     if (abortCtrl.signal.aborted) {
       return [];
@@ -257,7 +254,8 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
     this.meta.set({ isValidating: true });
 
-    const errors = await this._validateAsync(field, cause, abortCtrl);
+    const validationSpec = this.asyncValidationSpec(cause, field);
+    const errors = await this._validateAsync(validationSpec, abortCtrl);
 
     this.meta.set({
       isValidating: this.runningValidatorMap.isAnyRunning(field),
@@ -266,7 +264,14 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     return errors;
   };
 
-  scheduleAsyncValidation = (field: DeepKeys<TFormValues>, cause: ValidationCause) => {
+  scheduleAsyncValidation = <TField extends DeepKeys<TFormValues>>(
+    spec: AsyncValidationSpec<TFormValues, TField>,
+  ) => {
+    if (spec.validator == null) {
+      return null;
+    }
+
+    const { field, cause } = spec;
     let timeoutId = this.timeoutIdMaps[cause].get(field);
 
     if (timeoutId !== undefined) {
@@ -285,7 +290,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
       this.meta.set({ isValidating: true });
 
-      await this._validateAsync(field, cause, abortCtrl);
+      await this._validateAsync(spec, abortCtrl);
 
       this.meta.set({
         isValidating: this.runningValidatorMap.isAnyRunning(),
@@ -355,8 +360,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
     // ===== VALIDATE =====
 
-    const asyncValidators = this.asyncValidators.change;
-    const asyncValidateFields = new Set<DeepKeys<TFormValues>>();
+    const asyncValidateSpecs: AsyncValidationSpec<TFormValues, DeepKeys<TFormValues>>[] = [];
 
     for (const subField of subFields) {
       const errors = this._validateSync(subField, "change", {
@@ -364,26 +368,29 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
         shouldTouch: !dontTouch,
         shouldDirty: !dontDirty,
       });
+      const subFieldValue = this.getFieldValue(subField);
 
       this.valueSubjects.get(subField)?.next({
-        value: this.getFieldValue(subField),
+        value: subFieldValue,
         oldValue: get(oldValues as AnyObject, subField),
         form: this,
         cause,
       });
 
       // TODO add an option to validate async even if there are sync errors
-      if (errors.length === 0 && asyncValidators[subField] != null) {
-        asyncValidateFields.add(subField);
+      if (errors.length > 0) {
+        continue;
       }
+
+      asyncValidateSpecs.push(this.asyncValidationSpec("change", subField, subFieldValue));
     }
 
     this.syncMeta();
 
     // ===== ASYNC VALIDATION =====
 
-    for (const field of asyncValidateFields) {
-      this.scheduleAsyncValidation(field, "change");
+    for (const spec of asyncValidateSpecs) {
+      this.scheduleAsyncValidation(spec);
     }
 
     return true;

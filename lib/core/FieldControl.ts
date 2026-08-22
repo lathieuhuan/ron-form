@@ -78,8 +78,10 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
 
     form.syncMeta();
 
+    const validationSpec = form.asyncValidationSpec("blur", name);
+
     // TODO add an option to validate async even if there are sync errors
-    if (errors.length === 0 && form.asyncValidators.blur[name] != null) {
+    if (errors.length === 0 && validationSpec.validator != null) {
       const abortCtrl = new AbortController();
 
       form.abortCtrlMaps.blur.set(name, abortCtrl);
@@ -91,7 +93,7 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
 
         form.meta.set({ isValidating: true });
 
-        await form._validateAsync(name, "blur", abortCtrl);
+        await form._validateAsync(validationSpec, abortCtrl);
 
         form.meta.set({
           isValidating: form.runningValidatorMap.isAnyRunning(),

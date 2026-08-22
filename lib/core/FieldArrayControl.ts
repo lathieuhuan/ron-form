@@ -1,9 +1,10 @@
 import type { FormControl } from "./FormControl";
-import type { AnyObject, ArrayUpdateOptions, DeepKeys, DeepItemValue, DeepValue } from "./types";
+import type { AnyObject, ArrayUpdateOptions, DeepItemValue, DeepKeys, DeepValue } from "./types";
 
 import { DEFAULT_CHANGE_CAUSE } from "./constants";
 import { clone } from "./utils/clone";
-import { collectFieldPaths, get, set } from "./utils/object";
+import { collectFieldPaths } from "./utils/collectFieldPaths";
+import { get, set } from "./utils/object";
 
 export class FieldArrayControl<
   TFormValues,
@@ -98,8 +99,9 @@ export class FieldArrayControl<
 
     form.syncMeta();
 
+    // TODO add an option to validate async even if there are sync errors
     if (errors.length === 0) {
-      form.scheduleAsyncValidation(name, "change");
+      form.scheduleAsyncValidation(form.asyncValidationSpec("change", name));
     }
 
     return newValue;

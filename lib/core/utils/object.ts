@@ -1,4 +1,4 @@
-import { AnyObject, DeepKeys } from "../types";
+import type { AnyObject } from "../types";
 
 export function isObject(value: unknown): value is AnyObject {
   return typeof value === "object" && value !== null;
@@ -91,21 +91,4 @@ export function keys<T extends object>(obj: T) {
 
 export function entries<T extends object>(obj: T) {
   return Object.entries(obj) as [keyof T, T[keyof T]][];
-}
-
-export function collectFieldPaths<T = unknown>(
-  obj: T,
-  prefix = "",
-  acc: DeepKeys<T>[] = [],
-): DeepKeys<T>[] {
-  if (!isPlainObject(obj)) return acc;
-
-  for (const [key, value] of Object.entries(obj)) {
-    const path = prefix ? `${prefix}.${key}` : key;
-
-    acc.push(path);
-    collectFieldPaths(value, path, acc);
-  }
-
-  return acc;
 }

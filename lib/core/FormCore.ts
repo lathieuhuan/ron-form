@@ -1,5 +1,6 @@
 import type {
   AnyObject,
+  AsyncValidator,
   AsyncValidatorMap,
   DeepKeys,
   DeepValue,
@@ -18,6 +19,7 @@ import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
 import { createSubject, Observer, Subject } from "./utils/createSubject";
 import { get } from "./utils/object";
+import { toWildCardDeepKey } from "./utils/toWildCardDeepKey";
 
 type FieldSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
   TKey,
@@ -30,6 +32,13 @@ type TimeoutIDMapByCause<TFormValues> = {
 
 type AbortControllerMapByCause<TFormValues> = {
   [key in ValidationCause]: Map<DeepKeys<TFormValues>, AbortController>;
+};
+
+export type AsyncValidationSpec<TFormValues, TField extends DeepKeys<TFormValues>> = {
+  cause: ValidationCause;
+  field: TField;
+  value: DeepValue<TFormValues, TField>;
+  validator: AsyncValidator<TFormValues, TField> | undefined;
 };
 
 export interface FormCoreOptions<TFormValues> {
@@ -93,6 +102,21 @@ export class FormCore<TFormValues> {
   get values() {
     return this._values;
   }
+
+  asyncValidationSpec = <TField extends DeepKeys<TFormValues>>(
+    cause: ValidationCause,
+    field: TField,
+    value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
+  ): AsyncValidationSpec<TFormValues, TField> => {
+    const validatorKey = toWildCardDeepKey<TFormValues>(field);
+
+    return {
+      cause,
+      field,
+      value,
+      validator: this.asyncValidators[cause][validatorKey],
+    };
+  };
 
   /**
    * @public

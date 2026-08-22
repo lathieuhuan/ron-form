@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { collectFieldPaths } from "../object";
+import { collectFieldPaths } from "../collectFieldPaths";
 
 describe("collectFieldPaths", () => {
   it("returns an empty array for non-plain objects", () => {
@@ -31,6 +31,23 @@ describe("collectFieldPaths", () => {
     };
 
     expect(collectFieldPaths(obj)).toEqual(["user", "user.profile", "user.profile.name", "count"]);
+  });
+
+  it("collects paths for arrays", () => {
+    const obj = {
+      pastJobs: [
+        {
+          companyName: "Google",
+          startYear: 2020,
+        },
+      ],
+    };
+
+    expect(collectFieldPaths(obj)).toEqual([
+      "pastJobs",
+      "pastJobs.[n].companyName",
+      "pastJobs.[n].startYear",
+    ]);
   });
 
   it("prefixes paths when a prefix is provided", () => {
