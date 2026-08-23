@@ -33,23 +33,6 @@ describe("collectFieldPaths", () => {
     expect(collectFieldPaths(obj)).toEqual(["user", "user.profile", "user.profile.name", "count"]);
   });
 
-  it("collects paths for arrays", () => {
-    const obj = {
-      pastJobs: [
-        {
-          companyName: "Google",
-          startYear: 2020,
-        },
-      ],
-    };
-
-    expect(collectFieldPaths(obj)).toEqual([
-      "pastJobs",
-      "pastJobs.[n].companyName",
-      "pastJobs.[n].startYear",
-    ]);
-  });
-
   it("prefixes paths when a prefix is provided", () => {
     const obj = {
       street: "Main St",

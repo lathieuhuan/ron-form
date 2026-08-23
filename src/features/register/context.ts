@@ -19,7 +19,7 @@ export const useFormOptions: UseFormOptions<RegisterFormValues> = {
     confirmPassword: "",
   },
   changeValidators: {
-    email: ({ value }) => {
+    email: (value) => {
       const email = value.trim();
 
       if (!email) {
@@ -34,7 +34,7 @@ export const useFormOptions: UseFormOptions<RegisterFormValues> = {
     },
   },
   blurValidators: {
-    username: ({ value }) => {
+    username: (value) => {
       const username = value.trim();
 
       if (!username) {
@@ -45,15 +45,15 @@ export const useFormOptions: UseFormOptions<RegisterFormValues> = {
     },
   },
   changeAsyncValidators: {
-    email: async ({ value }) => {
+    email: async (value) => {
       return (await isEmailValid(value)) ? null : "Please enter a valid email";
     },
   },
   blurAsyncValidators: {
-    email: async ({ value }) => {
+    email: async (value) => {
       return (await isEmailAvailable(value)) ? null : "This email is already in use";
     },
-    username: async ({ value }) => {
+    username: async (value) => {
       return (await isUsernameAvailable(value)) ? null : "This username is already in use";
     },
   },

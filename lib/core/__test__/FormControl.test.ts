@@ -170,7 +170,7 @@ describe("FormControl", () => {
 
       form.setFieldValue("name", "");
 
-      expect(validator).toHaveBeenCalledWith({ value: "", form });
+      expect(validator).toHaveBeenCalledWith("", form);
       expect(form.getFieldErrorMap("name").change).toEqual([
         {
           path: "name",
@@ -182,9 +182,7 @@ describe("FormControl", () => {
     });
 
     it("runs change validators on nested subFields when setting a parent object", () => {
-      const profileAgeValidator = vi.fn(({ value }: { value: number }) =>
-        value < 18 ? "Must be 18+" : null,
-      );
+      const profileAgeValidator = vi.fn((value: number) => (value < 18 ? "Must be 18+" : null));
       const form = new FormControl({
         defaultValues,
         changeValidators: {
@@ -194,7 +192,7 @@ describe("FormControl", () => {
 
       form.setFieldValue("profile", { age: 16 });
 
-      expect(profileAgeValidator).toHaveBeenCalledWith({ value: 16, form });
+      expect(profileAgeValidator).toHaveBeenCalledWith(16, form);
       expect(form.getFieldErrorMap("profile.age").change).toEqual([
         {
           path: "profile.age",
@@ -227,7 +225,7 @@ describe("FormControl", () => {
       const form = new FormControl({
         defaultValues,
         changeValidators: {
-          name: ({ value }) => (value.length < 3 ? "Error" : null),
+          name: (value) => (value.length < 3 ? "Error" : null),
         },
       });
 
@@ -262,7 +260,7 @@ describe("FormControl", () => {
       const form = new FormControl({
         defaultValues,
         changeAsyncValidators: {
-          name: async ({ value }) => (value.length < 4 ? "Async error" : null),
+          name: async (value) => (value.length < 4 ? "Async error" : null),
         },
         asyncDebounceMs: 100,
       });
@@ -302,7 +300,7 @@ describe("FormControl", () => {
       const form = new FormControl({
         defaultValues,
         changeValidators: {
-          "profile.age": ({ value }: { value: number }) => (value < 18 ? "Too young" : null),
+          "profile.age": (value) => (value < 18 ? "Too young" : null),
         },
       });
 
@@ -335,7 +333,7 @@ describe("FormControl", () => {
       const form = new FormControl({
         defaultValues,
         changeAsyncValidators: {
-          "profile.age": async ({ value }: { value: number }) => (value < 21 ? "Too young" : null),
+          "profile.age": async (value) => (value < 21 ? "Too young" : null),
         },
         asyncDebounceMs: 100,
       });
@@ -415,7 +413,7 @@ describe("FormControl", () => {
       form.setFieldValue("profile", { age: 25 });
       await vi.advanceTimersByTimeAsync(100);
 
-      expect(asyncValidator).toHaveBeenCalledWith({ value: 25, form });
+      expect(asyncValidator).toHaveBeenCalledWith(25, form);
 
       vi.useRealTimers();
     });
@@ -650,10 +648,10 @@ describe("FormControl", () => {
       const form = new FormControl({
         defaultValues,
         changeValidators: {
-          name: ({ value }) => (value.length > 0 ? null : "Name is required"),
+          name: (value) => (value.length > 0 ? null : "Name is required"),
         },
         blurValidators: {
-          email: ({ value }) => (value.includes("@") ? null : "Invalid email"),
+          email: (value) => (value.includes("@") ? null : "Invalid email"),
         },
         onSubmit,
       });
@@ -763,7 +761,7 @@ describe("FormControl", () => {
       const form = new FormControl({
         defaultValues,
         changeValidators: {
-          name: ({ value }) => (value.length > 0 ? null : "Name is required"),
+          name: (value) => (value.length > 0 ? null : "Name is required"),
           email: () => "Email is required",
         },
         onSubmitFailed,
@@ -804,12 +802,13 @@ describe("FormControl", () => {
       form.handleSubmit();
 
       expect(changeValidator).toHaveBeenCalledTimes(defaultValues.links.length);
-      expect(changeValidator.mock.calls).toEqual(
-        defaultValues.links.map((link) => [{ value: link, form }]),
-      );
+      expect(changeValidator.mock.calls).toEqual(defaultValues.links.map((link) => [link, form]));
 
       expect(blurValidator).toHaveBeenCalledTimes(2);
-      expect(blurValidator.mock.calls).toEqual([[{ value: "", form }], [{ value: 0, form }]]);
+      expect(blurValidator.mock.calls).toEqual([
+        ["", form],
+        [0, form],
+      ]);
 
       expect(runSyncValidator).toHaveBeenCalledTimes(defaultValues.links.length + 2);
     });

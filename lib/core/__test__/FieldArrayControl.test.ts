@@ -181,10 +181,7 @@ describe("FieldArrayControl", () => {
 
       fieldArray.insert("a");
 
-      expect(validator).toHaveBeenCalledWith({
-        value: ["a"],
-        form,
-      });
+      expect(validator).toHaveBeenCalledWith(["a"], form);
       expect(form.getFieldErrorMap("tags").change).toEqual([
         {
           path: "tags",
@@ -261,10 +258,7 @@ describe("FieldArrayControl", () => {
 
         await vi.advanceTimersByTimeAsync(100);
 
-        expect(asyncValidator).toHaveBeenCalledWith({
-          value: ["a"],
-          form,
-        });
+        expect(asyncValidator).toHaveBeenCalledWith(["a"], form);
       });
 
       it("does not schedule async validation when sync validation fails", async () => {
@@ -396,11 +390,9 @@ describe("FieldArrayControl", () => {
       });
       const fieldArray = new FieldArrayControl("contacts", form);
 
-      form.setFieldValue(
-        "contacts",
-        [{ name: "Jane", email: "jane@example.com" }],
-        { dontValidate: true },
-      );
+      form.setFieldValue("contacts", [{ name: "Jane", email: "jane@example.com" }], {
+        dontValidate: true,
+      });
 
       fieldArray.remove(0, { dontValidate: true });
 
@@ -438,10 +430,7 @@ describe("FieldArrayControl", () => {
 
       fieldArray.remove(0);
 
-      expect(validator).toHaveBeenCalledWith({
-        value: [],
-        form,
-      });
+      expect(validator).toHaveBeenCalledWith([], form);
       expect(form.getFieldErrorMap("tags").change).toEqual([
         {
           path: "tags",
@@ -526,10 +515,7 @@ describe("FieldArrayControl", () => {
 
         await vi.advanceTimersByTimeAsync(100);
 
-        expect(asyncValidator).toHaveBeenCalledWith({
-          value: [],
-          form,
-        });
+        expect(asyncValidator).toHaveBeenCalledWith([], form);
       });
 
       it("does not schedule async validation when sync validation fails", async () => {

@@ -1,4 +1,5 @@
 import { createContexts, UseFormOptions } from "@lib/react";
+import { require } from "@src/utils/validation";
 import { getAddressByCitizenId } from "./services";
 
 export interface PersonalInfoFormValues {
@@ -14,10 +15,6 @@ export interface PersonalInfoFormValues {
 
 export const { FormContext, Form, FormMeta, Field, useForm, useFormInstance } =
   createContexts<PersonalInfoFormValues>();
-
-const require = ({ value }: { value: string }) => {
-  return value?.trim() ? null : "Required";
-};
 
 export const useFormOptions: UseFormOptions<PersonalInfoFormValues> = {
   defaultValues: {
@@ -38,7 +35,7 @@ export const useFormOptions: UseFormOptions<PersonalInfoFormValues> = {
     "address.city": require,
   },
   blurAsyncValidators: {
-    citizenId: async ({ value, form }) => {
+    citizenId: async (value, form) => {
       const address = await getAddressByCitizenId(value);
 
       if (address !== null) {

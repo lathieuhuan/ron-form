@@ -1,5 +1,6 @@
 import { delay } from "@lib/core/utils/delay";
 import { createContexts, UseFormOptions } from "@lib/react";
+import { require } from "@src/utils/validation";
 
 export type PastJob = {
   id: string;
@@ -14,20 +15,12 @@ export interface PastJobsFormValues {
 export const { FormContext, Form, FormMeta, Field, useForm, useFormInstance } =
   createContexts<PastJobsFormValues>();
 
-const require = ({ value }: { value?: string | number | null }) => {
-  if (value == null || (typeof value === "string" && value.trim() === "")) {
-    return "Required";
-  }
-
-  return null;
-};
-
 export const useFormOptions: UseFormOptions<PastJobsFormValues> = {
   defaultValues: {
     pastJobs: [],
   },
   changeValidators: {
-    pastJobs: ({ value }) => {
+    pastJobs: (value) => {
       return value.length > 0 ? null : "At least one past job is required";
     },
     "pastJobs.[n].companyName": require,
@@ -36,7 +29,7 @@ export const useFormOptions: UseFormOptions<PastJobsFormValues> = {
     "pastJobs.[n].startYear": require,
   },
   blurAsyncValidators: {
-    "pastJobs.[n].startYear": async ({ value }) => {
+    "pastJobs.[n].startYear": async (value) => {
       await delay(500);
       return value == null || value < 2021 ? null : "Start year must be before 2021";
     },

@@ -102,11 +102,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   ): FieldError<TField>[] => {
     if (spec.validator == null) return [];
 
-    return transformErrors(
-      spec.field,
-      spec.cause,
-      spec.validator({ value: spec.value, form: this }),
-    );
+    return transformErrors(spec.field, spec.cause, spec.validator(spec.value, this));
   };
 
   _runAsyncValidator = async <TField extends DeepKeys<TFormValues>>(
@@ -117,7 +113,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     let result: ValidationResult;
 
     try {
-      result = await spec.validator({ value: spec.value, form: this });
+      result = await spec.validator(spec.value, this);
     } catch (e) {
       result = parseRawError(e);
     }

@@ -26,10 +26,10 @@ export type FieldErrors<TKey> = {
 
 export type ValidationResult = RawError | RawError[] | null | undefined;
 
-export type Validator<TValues, TDeepKey extends WildcardDeepKeys<TValues>> = (args: {
-  value: DeepValue<TValues, TDeepKey>;
-  form: FormApi<TValues>;
-}) => ValidationResult;
+export type Validator<TValues, TDeepKey extends WildcardDeepKeys<TValues>> = (
+  value: DeepValue<TValues, TDeepKey>,
+  form: FormApi<TValues>,
+) => ValidationResult;
 
 export type ValidatorKey<TFormValues> = WildcardDeepKeys<TFormValues>;
 
@@ -37,10 +37,10 @@ export type FormValidators<TFormValues> = {
   [AK in ValidatorKey<TFormValues>]?: Validator<TFormValues, AK>;
 };
 
-export type AsyncValidator<TValues, TDeepKey> = (args: {
-  value: DeepValue<TValues, TDeepKey>;
-  form: FormApi<TValues>;
-}) => Promise<ValidationResult>;
+export type AsyncValidator<TValues, TDeepKey> = (
+  value: DeepValue<TValues, TDeepKey>,
+  form: FormApi<TValues>,
+) => Promise<ValidationResult>;
 
 export type FormAsyncValidators<TFormValues> = {
   [K in ValidatorKey<TFormValues>]?: AsyncValidator<TFormValues, K>;

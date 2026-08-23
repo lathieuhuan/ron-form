@@ -37,7 +37,7 @@ describe("FormControl validation", () => {
       const validationSpec = form.asyncValidationSpec("change", "name");
       await form._validateAsync(validationSpec, new AbortController());
 
-      expect(validator).toHaveBeenCalledWith({ value: "John", form });
+      expect(validator).toHaveBeenCalledWith("John", form);
       expect(form.getFieldErrorMap("name").changeAsync).toEqual([
         {
           path: "name",
@@ -196,7 +196,7 @@ describe("FormControl validation", () => {
       const validationSpec = form.asyncValidationSpec("blur", "email");
       const errors = await form._validateAsync(validationSpec, new AbortController());
 
-      expect(validator).toHaveBeenCalledWith({ value: "john@example.com", form });
+      expect(validator).toHaveBeenCalledWith("john@example.com", form);
       expect(errors).toEqual([
         {
           path: "email",
@@ -397,7 +397,7 @@ describe("FormControl validation", () => {
         },
       ];
 
-      expect(validator).toHaveBeenCalledWith({ value: "John", form });
+      expect(validator).toHaveBeenCalledWith("John", form);
       expect(errors).toEqual(expectedErrors);
       expect(errorMap.change).toEqual(expectedErrors);
       expect(form.getFieldErrorMap("name").change).toEqual([]);
@@ -427,7 +427,7 @@ describe("FormControl validation", () => {
         },
       ];
 
-      expect(validator).toHaveBeenCalledWith({ value: "john@example.com", form });
+      expect(validator).toHaveBeenCalledWith("john@example.com", form);
       expect(errors).toEqual(expectedErrors);
       expect(errorMap.blur).toEqual(expectedErrors);
     });
@@ -605,7 +605,7 @@ describe("FormControl validation", () => {
       const validationSpec = form.validationSpec("change", "name");
       form._runSyncValidator(validationSpec);
 
-      expect(validator).toHaveBeenCalledWith({ value: "John", form });
+      expect(validator).toHaveBeenCalledWith("John", form);
     });
 
     it("validates with the provided value when passed explicitly", () => {
@@ -618,7 +618,7 @@ describe("FormControl validation", () => {
       const validationSpec = form.validationSpec("change", "name", "");
       form._runSyncValidator(validationSpec);
 
-      expect(validator).toHaveBeenCalledWith({ value: "", form });
+      expect(validator).toHaveBeenCalledWith("", form);
     });
 
     it("validates with blur validators when cause is blur", () => {
@@ -631,7 +631,7 @@ describe("FormControl validation", () => {
       const validationSpec = form.validationSpec("blur", "email");
       const errors = form._runSyncValidator(validationSpec);
 
-      expect(validator).toHaveBeenCalledWith({ value: "john@example.com", form });
+      expect(validator).toHaveBeenCalledWith("john@example.com", form);
       expect(errors).toEqual([
         {
           path: "email",
@@ -669,7 +669,7 @@ describe("FormControl validation", () => {
       const validationSpec = form.validationSpec("change", "contacts.0.name");
       const errors = form._runSyncValidator(validationSpec);
 
-      expect(validator).toHaveBeenCalledWith({ value: "Alice", form });
+      expect(validator).toHaveBeenCalledWith("Alice", form);
       expect(errors).toEqual([
         {
           path: "contacts.0.name",
@@ -752,7 +752,7 @@ describe("FormControl validation", () => {
 
       const errors = await form.validateAsync("name", "change");
 
-      expect(validator).toHaveBeenCalledWith({ value: "John", form });
+      expect(validator).toHaveBeenCalledWith("John", form);
       expect(errors).toEqual([
         {
           path: "name",
@@ -828,7 +828,7 @@ describe("FormControl validation", () => {
 
       const errors = await form.validateAsync("email", "blur");
 
-      expect(validator).toHaveBeenCalledWith({ value: "john@example.com", form });
+      expect(validator).toHaveBeenCalledWith("john@example.com", form);
       expect(errors).toEqual([
         {
           path: "email",
@@ -1044,7 +1044,7 @@ describe("FormControl validation", () => {
 
       await vi.advanceTimersByTimeAsync(100);
 
-      expect(asyncValidator).toHaveBeenCalledWith({ value: "Jane", form });
+      expect(asyncValidator).toHaveBeenCalledWith("Jane", form);
       expect(form.getFieldErrorMap("name").changeAsync).toEqual([
         {
           path: "name",
@@ -1157,7 +1157,7 @@ describe("FormControl validation", () => {
       await vi.advanceTimersByTimeAsync(100);
 
       expect(asyncValidator).toHaveBeenCalledOnce();
-      expect(asyncValidator).toHaveBeenCalledWith({ value: "John", form });
+      expect(asyncValidator).toHaveBeenCalledWith("John", form);
     });
   });
 });
