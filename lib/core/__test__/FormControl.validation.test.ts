@@ -361,7 +361,6 @@ describe("FormControl validation", () => {
 
       expect(errors).toEqual([]);
       expect(form.getFieldErrorMap("name").change).toEqual([]);
-      expect(fieldSubscriber).toHaveBeenCalledOnce();
     });
 
     it("validates with the current field value and stores sync errors", () => {
@@ -552,6 +551,24 @@ describe("FormControl validation", () => {
         isValidating: false,
       });
     });
+
+    // PERFORMANCE TESTS
+
+    it("should not notify field subscribers when meta and error map are unchanged", () => {
+      const form = new FormControl({ defaultValues });
+      const fieldSubscriber = vi.fn();
+
+      form.subscribeField("name", fieldSubscriber);
+
+      const validationSpec = form.validationSpec("change", "name");
+      form._validateSync(validationSpec, {
+        shouldBlur: false,
+        shouldTouch: false,
+        shouldDirty: false,
+      });
+
+      expect(fieldSubscriber).not.toHaveBeenCalled();
+    });
   });
 
   describe("_runSyncValidator", () => {
@@ -584,7 +601,7 @@ describe("FormControl validation", () => {
         changeValidators: { name: validator },
       });
 
-      const validationSpec = form.validationSpec("change", "name");
+      const validationSpec = form.validationSpec("change", "name", "");
       form._runSyncValidator(validationSpec);
 
       expect(validator).toHaveBeenCalledWith({ value: "", form });

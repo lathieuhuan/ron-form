@@ -1,33 +1,36 @@
+import { update } from "./object";
+
 /**
  * Only use with plain objects.
  */
 export class Patcher<T extends object> {
-  private latest: T;
+  private current: T;
 
   constructor(private obj: T) {
-    this.latest = obj;
+    this.current = obj;
   }
 
   get value() {
-    return this.latest;
+    return this.current;
   }
 
   get updated() {
-    return this.latest !== this.obj;
+    return this.current !== this.obj;
   }
 
-  set(key: keyof T, value: T[keyof T]) {
-    const oldValue = this.latest[key];
+  set(key: keyof T, value: T[keyof T]): boolean {
+    const { success, result } = update(this.current, key, value);
 
-    if (oldValue === value) {
-      return this.latest;
-    }
+    this.current = result;
 
-    this.latest = {
-      ...this.latest,
-      [key]: value,
-    };
+    return success;
+  }
 
-    return this.latest;
+  patch(data: Partial<T>): boolean {
+    const { success, result } = update(this.current, data);
+
+    this.current = result;
+
+    return success;
   }
 }

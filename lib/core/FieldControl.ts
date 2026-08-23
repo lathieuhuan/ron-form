@@ -23,29 +23,27 @@ export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
   handleBlur = () => {
     const { name, form } = this;
 
-    // ===== VALIDATE SYNC =====
-
     const errors = form.validateSync(name, "blur", {
       shouldBlur: true,
       shouldTouch: true,
-      shouldDirty: false,
     });
 
-    // ===== VALIDATE ASYNC =====
-    // TODO recheck logic
-
-    form.abortCtrlMaps.blur.get(name)?.abort();
-
+    // Clean up running async validation even if:
+    // - there is no running async validation
+    // - there is no upcoming async validation
     let timeoutId = form.timeoutIdMaps.blur.get(name);
 
-    if (timeoutId !== undefined) {
-      clearTimeout(timeoutId);
+    form.abortCtrlMaps.blur.get(name)?.abort();
+    clearTimeout(timeoutId);
+
+    // TODO add an option to validate async even if there are sync errors
+    if (errors.length > 0) {
+      return;
     }
 
     const validationSpec = form.asyncValidationSpec("blur", name);
 
-    // TODO add an option to validate async even if there are sync errors
-    if (errors.length === 0 && validationSpec.validator != null) {
+    if (validationSpec.validator != null) {
       const abortCtrl = new AbortController();
 
       form.abortCtrlMaps.blur.set(name, abortCtrl);

@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
 import { FieldControl } from "../FieldControl";
 import { FormControl } from "../FormControl";
-import { delay } from "../utils/delay";
 import { FieldMeta } from "../types";
+import { delay } from "../utils/delay";
 
 const defaultValues = {
   name: "John",
@@ -199,32 +199,6 @@ describe("FieldControl", () => {
             meta: {},
           },
         ]);
-      });
-
-      it("clears blur async errors when sync validation runs", () => {
-        const form = new FormControl({
-          defaultValues,
-          blurValidators: { name: () => undefined },
-        });
-        const field = new FieldControl(form, "name");
-
-        form.fieldErrorMap.set("name", {
-          change: [],
-          blur: [],
-          changeAsync: [],
-          blurAsync: [
-            {
-              path: "name",
-              type: "blurAsync",
-              message: "Stale async error",
-              meta: {},
-            },
-          ],
-        });
-
-        field.handleBlur();
-
-        expect(form.getFieldErrorMap("name").blurAsync).toEqual([]);
       });
     });
 

@@ -27,7 +27,7 @@ type FieldSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
   Subject<FieldState<TFormValues, TKey>>
 >;
 
-type TimeoutIDMapByCause<TFormValues> = {
+type TimeoutIdMapByCause<TFormValues> = {
   [key in ValidationCause]: Map<DeepKeys<TFormValues>, NodeJS.Timeout>;
 };
 
@@ -71,7 +71,7 @@ export class FormCore<TFormValues> {
   validators: ValidatorMap<TFormValues>;
   asyncValidators: AsyncValidatorMap<TFormValues>;
 
-  timeoutIdMaps: TimeoutIDMapByCause<TFormValues> = {
+  timeoutIdMaps: TimeoutIdMapByCause<TFormValues> = {
     change: new Map(),
     blur: new Map(),
   };
@@ -154,14 +154,28 @@ export class FormCore<TFormValues> {
    * @public
    */
   getFieldMeta = <TField extends DeepKeys<TFormValues>>(field: TField): FieldMeta => {
-    return this.fieldMetaMap.get(field) || { ...DEFAULT_META };
+    let meta = this.fieldMetaMap.get(field);
+
+    if (!meta) {
+      meta = { ...DEFAULT_META };
+      this.fieldMetaMap.set(field, meta);
+    }
+
+    return meta;
   };
 
   /**
    * @public
    */
   getFieldErrorMap = <TField extends DeepKeys<TFormValues>>(field: TField): FieldErrors<TField> => {
-    return this.fieldErrorMap.get(field) || { ...DEFAULT_ERROR_MAP };
+    let errorMap: FieldErrors<any> | undefined = this.fieldErrorMap.get(field);
+
+    if (!errorMap) {
+      errorMap = { ...DEFAULT_ERROR_MAP };
+      this.fieldErrorMap.set(field, errorMap);
+    }
+
+    return errorMap;
   };
 
   /**

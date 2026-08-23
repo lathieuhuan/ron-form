@@ -85,6 +85,48 @@ export function set(obj: Record<string, unknown>, path: string, value: unknown) 
   }
 }
 
+type UpdateReturn<T extends object> = {
+  success: boolean;
+  result: T;
+};
+
+export function update<T extends object>(obj: T, key: keyof T, value: T[keyof T]): UpdateReturn<T>;
+export function update<T extends object>(obj: T, data: Partial<T>): UpdateReturn<T>;
+export function update<T extends object>(
+  obj: T,
+  keyOrData: keyof T | Partial<T>,
+  value?: T[keyof T],
+): UpdateReturn<T> {
+  let success = false;
+
+  if (isObject(keyOrData)) {
+    for (const key in keyOrData) {
+      if (keyOrData[key] !== obj[key]) {
+        obj = {
+          ...obj,
+          ...keyOrData,
+        };
+
+        success = true;
+        break;
+      }
+    }
+
+    return { success, result: obj };
+  }
+
+  if (value !== obj[keyOrData]) {
+    obj = {
+      ...obj,
+      [keyOrData]: value,
+    };
+
+    success = true;
+  }
+
+  return { success, result: obj };
+}
+
 export function keys<T extends object>(obj: T) {
   return Object.keys(obj) as (keyof T)[];
 }

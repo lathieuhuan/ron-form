@@ -22,9 +22,10 @@ import { cache } from "./utils/cache";
 import { clone } from "./utils/clone";
 import { collectFieldPaths } from "./utils/collectFieldPaths";
 import { createSubject, Observer, Subject } from "./utils/createSubject";
-import { entries, get, isPlainObject, keys, set } from "./utils/object";
+import { entries, get, isPlainObject, keys, set, update } from "./utils/object";
 import { parseRawError } from "./utils/parseRawError";
 import { parseWildcardDeepKeys } from "./utils/parseWildcardDeepKeys";
+import { Patcher } from "./utils/Patcher";
 import { transformErrors } from "./utils/transformErrors";
 
 type ValueSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
@@ -128,32 +129,32 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     spec: ValidationSpec<TFormValues, TField>,
     options: ValidateSyncOptions,
   ): FieldError<TField>[] => {
-    // TODO recheck performance: if before and after validation no errors, then should not notify
     const { cause, field } = spec;
-    const fieldMeta = {
-      ...this.getFieldMeta(field),
-    };
 
-    if (options.shouldBlur && !fieldMeta.isBlurred) {
-      fieldMeta.isBlurred = true;
+    const metaPatcher = new Patcher(this.getFieldMeta(field));
+
+    if (options.shouldBlur) {
+      metaPatcher.set("isBlurred", true);
     }
-    if (options.shouldTouch && !fieldMeta.isTouched) {
-      fieldMeta.isTouched = true;
+    if (options.shouldTouch) {
+      metaPatcher.set("isTouched", true);
     }
-    if (options.shouldDirty && !fieldMeta.isDirty) {
-      fieldMeta.isDirty = true;
+    if (options.shouldDirty) {
+      metaPatcher.set("isDirty", true);
     }
 
-    const value = this.getFieldValue(field);
     const errors = this._runSyncValidator(spec);
-    const errorMap = {
-      ...this.getFieldErrorMap(field),
-      [cause]: errors,
-    };
+    let errorMap = this.getFieldErrorMap(field);
+
+    if (errors.length || errorMap[cause].length) {
+      errorMap = {
+        ...errorMap,
+        [cause]: errors,
+      };
+    }
 
     this.updateAndNotifyField(field, {
-      value,
-      meta: fieldMeta,
+      meta: metaPatcher.value,
       errorMap,
     });
 
@@ -194,16 +195,13 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
     this.runningValidatorMap.add(field, cause);
 
-    // Update field meta
-    let newMeta = this.getFieldMeta(field);
+    {
+      // Turn on isValidating
+      const { success, result } = update(this.getFieldMeta(field), "isValidating", true);
 
-    if (!newMeta.isValidating) {
-      newMeta = {
-        ...newMeta,
-        isValidating: true,
-      };
-
-      this.updateAndNotifyField(field, { meta: newMeta });
+      if (success) {
+        this.updateAndNotifyField(field, { meta: result });
+      }
     }
 
     const errors = await this._runAsyncValidator(spec);
@@ -215,10 +213,12 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     this.runningValidatorMap.remove(field, cause);
 
     // Update field state
-    newMeta = {
-      ...this.getFieldMeta(field),
-      isValidating: this.runningValidatorMap.isAnyRunning(field),
-    };
+
+    const metaUpdate = update(
+      this.getFieldMeta(field),
+      "isValidating",
+      this.runningValidatorMap.isAnyRunning(field),
+    );
 
     const newErrorMap: FieldErrors<TField> = {
       ...this.getFieldErrorMap(field),
@@ -226,7 +226,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     };
 
     this.updateAndNotifyField(field, {
-      meta: newMeta,
+      meta: metaUpdate.result,
       errorMap: newErrorMap,
     });
 
@@ -240,17 +240,16 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     field: TField,
     cause: ValidationCause,
   ): Promise<FieldError<TField>[]> => {
-    const timeoutId = this.timeoutIdMaps[cause].get(field);
+    const timeoutIds = this.timeoutIdMaps[cause];
 
-    if (timeoutId !== undefined) {
-      clearTimeout(timeoutId);
-      this.timeoutIdMaps[cause].delete(field);
-    }
+    clearTimeout(timeoutIds.get(field));
+    timeoutIds.delete(field);
 
+    const abortCtrls = this.abortCtrlMaps[cause];
     const abortCtrl = new AbortController();
 
-    this.abortCtrlMaps[cause].get(field)?.abort();
-    this.abortCtrlMaps[cause].set(field, abortCtrl);
+    abortCtrls.get(field)?.abort();
+    abortCtrls.set(field, abortCtrl);
 
     this.meta.set({ isValidating: true });
 
