@@ -128,9 +128,8 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   _validateSync = <TField extends DeepKeys<TFormValues>>(
     spec: ValidationSpec<TFormValues, TField>,
     options: ValidateSyncOptions,
-  ): FieldError<TField>[] => {
+  ) => {
     const { cause, field } = spec;
-
     const metaPatcher = new Patcher(this.getFieldMeta(field));
 
     if (options.shouldBlur) {
@@ -153,12 +152,11 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       };
     }
 
-    this.updateAndNotifyField(field, {
+    return {
       meta: metaPatcher.value,
+      errors,
       errorMap,
-    });
-
-    return errors;
+    };
   };
 
   /**
@@ -168,17 +166,24 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   validateSync = <TField extends DeepKeys<TFormValues>>(
     field: TField,
     cause: ValidationCause,
-    options: ValidateSyncOptions = {},
+    options: Partial<ValidateSyncOptions> = {},
   ) => {
     const { shouldBlur = false, shouldTouch = true, shouldDirty = false } = options;
     const validationSpec = this.validationSpec(cause, field);
-    const errors = this._validateSync(validationSpec, {
+    const { meta, errors, errorMap } = this._validateSync(validationSpec, {
       shouldBlur,
       shouldTouch,
       shouldDirty,
     });
 
-    this.syncMeta();
+    const updated = this.updateAndNotifyField(field, {
+      meta,
+      errorMap,
+    });
+
+    if (updated) {
+      this.syncMeta();
+    }
 
     return errors;
   };
@@ -362,13 +367,20 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     const asyncValidateSpecs: AsyncValidationSpec<TFormValues, DeepKeys<TFormValues>>[] = [];
 
     for (const subField of subFields) {
-      const validationSpec = this.validationSpec("change", subField);
-      const errors = this._validateSync(validationSpec, {
+      const subFieldValue = this.getFieldValue(subField);
+
+      const validationSpec = this.validationSpec("change", subField, subFieldValue);
+      const { meta, errors, errorMap } = this._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: !dontTouch,
         shouldDirty: !dontDirty,
       });
-      const subFieldValue = this.getFieldValue(subField);
+
+      this.updateAndNotifyField(subField, {
+        value: subFieldValue,
+        meta,
+        errorMap,
+      });
 
       this.valueSubjects.get(subField)?.next({
         value: subFieldValue,
@@ -412,8 +424,12 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     this.syncMeta();
   };
 
+  /**
+   * TODO public
+   */
   isFieldError = <TField extends DeepKeys<TFormValues>>(field: TField) => {
     const errorMap = this.getFieldErrorMap(field);
+
     return ERROR_CAUSES.some((cause) => {
       const errors = errorMap[cause] || [];
       return errors.length > 0;

@@ -35,6 +35,10 @@ export function ApiTryout({ form }: ApiTryoutProps) {
       fn: () => form.validateAsync("citizenId", "blur"),
     },
     {
+      label: "Validate sync (change) 'District' but no validator",
+      fn: () => form.validateSync("address.district", "change"),
+    },
+    {
       label: "Reset form",
       fn: () => form.reset(),
     },

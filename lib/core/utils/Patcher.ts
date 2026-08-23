@@ -1,4 +1,9 @@
+import { Updater } from "../types";
 import { update } from "./object";
+
+const isUpdateFn = <T, K = T>(updater: Updater<T, K>): updater is (prev: T) => K => {
+  return typeof updater === "function";
+};
 
 /**
  * Only use with plain objects.
@@ -18,7 +23,8 @@ export class Patcher<T extends object> {
     return this.current !== this.obj;
   }
 
-  set(key: keyof T, value: T[keyof T]): boolean {
+  set(key: keyof T, updater: Updater<T[keyof T]>): boolean {
+    const value = isUpdateFn(updater) ? updater(this.current[key]) : updater;
     const { success, result } = update(this.current, key, value);
 
     this.current = result;

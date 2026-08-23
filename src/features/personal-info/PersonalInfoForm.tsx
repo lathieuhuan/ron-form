@@ -5,6 +5,7 @@ import { Field, useForm, useFormOptions } from "./context";
 
 import { Button } from "@src/components/Button";
 import { Input } from "@src/components/Input";
+import { RenderIndicator } from "@src/components/RenderIndicator";
 import { Select } from "@src/components/Select";
 import { FormField } from "@src/components/form";
 import { Layout } from "./Layout";
@@ -14,6 +15,11 @@ export function PersonalInfoForm() {
 
   const cityValue = useFieldValue({
     name: "address.city",
+    form,
+  });
+
+  const address = useFieldValue({
+    name: "address",
     form,
   });
 
@@ -58,17 +64,19 @@ export function PersonalInfoForm() {
 
         <Field name="address.district">
           {renderSelectField(({ fieldProps, selectProps }) => (
-            <FormField label="District" {...fieldProps}>
-              <Select
-                options={DISTRICT_OPTIONS}
-                disabled={!cityValue}
-                {...selectProps}
-                onChange={(value) => {
-                  form.setFieldValue("address.ward", "");
-                  selectProps.onChange(value);
-                }}
-              />
-            </FormField>
+            <RenderIndicator>
+              <FormField label="District" {...fieldProps}>
+                <Select
+                  options={DISTRICT_OPTIONS}
+                  disabled={!cityValue}
+                  {...selectProps}
+                  onChange={(value) => {
+                    form.setFieldValue("address.ward", "");
+                    selectProps.onChange(value);
+                  }}
+                />
+              </FormField>
+            </RenderIndicator>
           ))}
         </Field>
 
@@ -91,6 +99,15 @@ export function PersonalInfoForm() {
             </FormField>
           ))}
         </Field>
+
+        <div className="col-span-2">
+          <span className="font-medium">Address: </span>
+          <span>
+            {[address.street, address.ward, address.district, address.city]
+              .filter(Boolean)
+              .join(", ")}
+          </span>
+        </div>
       </div>
 
       <div className="flex justify-end gap-2">

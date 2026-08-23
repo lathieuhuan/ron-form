@@ -181,13 +181,21 @@ describe("FormCore", () => {
       const subscriber = vi.fn();
       form.subscribeField("name", subscriber);
 
-      form.updateAndNotifyField("name", {});
+      expect(form.updateAndNotifyField("name", {})).toBe(false);
       expect(subscriber).not.toHaveBeenCalled();
 
-      form.updateAndNotifyField("name", {
-        meta: undefined,
-        errorMap: undefined,
-      });
+      expect(
+        form.updateAndNotifyField("name", {
+          meta: undefined,
+          errorMap: undefined,
+        }),
+      ).toBe(false);
+      expect(subscriber).not.toHaveBeenCalled();
+
+      const meta = form.getFieldMeta("name");
+      const errorMap = form.getFieldErrorMap("name");
+
+      expect(form.updateAndNotifyField("name", { meta, errorMap })).toBe(false);
       expect(subscriber).not.toHaveBeenCalled();
     });
 
@@ -196,14 +204,16 @@ describe("FormCore", () => {
       const subscriber = vi.fn();
 
       form.subscribeField("name", subscriber);
-      form.updateAndNotifyField("name", {
-        meta: {
-          isBlurred: false,
-          isTouched: true,
-          isDirty: false,
-          isValidating: false,
-        },
-      });
+      expect(
+        form.updateAndNotifyField("name", {
+          meta: {
+            isBlurred: false,
+            isTouched: true,
+            isDirty: false,
+            isValidating: false,
+          },
+        }),
+      ).toBe(true);
 
       expect(subscriber).toHaveBeenCalledOnce();
       expect(subscriber).toHaveBeenCalledWith({
@@ -245,7 +255,7 @@ describe("FormCore", () => {
         blurAsync: [],
       };
 
-      form.updateAndNotifyField("name", { errorMap });
+      expect(form.updateAndNotifyField("name", { errorMap })).toBe(true);
 
       expect(form.getFieldErrorMap("name")).toEqual(errorMap);
     });
@@ -255,14 +265,16 @@ describe("FormCore", () => {
       const metaSubscriber = vi.fn();
 
       form.meta.subscribe(metaSubscriber);
-      form.updateAndNotifyField("name", {
-        meta: {
-          isBlurred: false,
-          isTouched: true,
-          isDirty: true,
-          isValidating: false,
-        },
-      });
+      expect(
+        form.updateAndNotifyField("name", {
+          meta: {
+            isBlurred: false,
+            isTouched: true,
+            isDirty: true,
+            isValidating: false,
+          },
+        }),
+      ).toBe(true);
 
       expect(metaSubscriber).not.toHaveBeenCalledOnce();
     });

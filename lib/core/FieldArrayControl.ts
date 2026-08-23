@@ -86,9 +86,16 @@ export class FieldArrayControl<
     }
 
     const validationSpec = form.validationSpec("change", name);
-    const errors = form._validateSync(validationSpec, {
+    const { meta, errors, errorMap } = form._validateSync(validationSpec, {
+      shouldBlur: false,
       shouldTouch: true,
       shouldDirty: true,
+    });
+
+    form.updateAndNotifyField(name, {
+      value: newValue as DeepValue<TFormValues, TField>,
+      meta,
+      errorMap,
     });
 
     form.valueSubjects.get(name)?.next({

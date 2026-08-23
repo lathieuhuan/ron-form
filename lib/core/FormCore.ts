@@ -209,12 +209,13 @@ export class FormCore<TFormValues> {
    * If `value` is not passed AND
    * (`meta` & `errorMap` are not passed/undefined OR
    * `meta` & `errorMap` are the same as the current ones),
-   * this method will short circuit.
+   * this method will short circuit and return `false`.
+   * Otherwise, return `true`.
    */
   updateAndNotifyField = <TField extends DeepKeys<TFormValues>>(
     field: TField,
     changes: Partial<FieldState<TFormValues, TField>>,
-  ) => {
+  ): boolean => {
     let { meta, errorMap } = changes;
     const valueChanged = "value" in changes;
 
@@ -226,7 +227,7 @@ export class FormCore<TFormValues> {
     errorMap = errorMap === undefined ? currentErrorMap : errorMap;
 
     if (!valueChanged && meta === currentMeta && errorMap === currentErrorMap) {
-      return;
+      return false;
     }
 
     // TODO write test for value === undefined/null (e.g. clear value)
@@ -242,6 +243,8 @@ export class FormCore<TFormValues> {
       meta,
       errorMap,
     });
+
+    return true;
   };
 
   syncMeta = () => {

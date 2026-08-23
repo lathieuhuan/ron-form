@@ -35,7 +35,6 @@ export const useFormOptions: UseFormOptions<PersonalInfoFormValues> = {
     citizenId: require,
     "address.street": require,
     "address.ward": require,
-    "address.district": require,
     "address.city": require,
   },
   blurAsyncValidators: {

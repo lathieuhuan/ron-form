@@ -368,9 +368,6 @@ describe("FormControl", () => {
     it("notifies field subscribers", () => {
       const form = new FormControl({
         defaultValues,
-        changeValidators: {
-          name: () => "Name is invalid",
-        },
       });
       const subscriber = vi.fn();
 

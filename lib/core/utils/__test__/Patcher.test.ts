@@ -54,6 +54,51 @@ describe("Patcher", () => {
     expect(patcher.updated).toBe(true);
   });
 
+  it("returns false when updater function yields unchanged value", () => {
+    const patcher = new Patcher({ count: 0 });
+    const before = patcher.value;
+
+    const success = patcher.set("count", (prev) => prev);
+
+    expect(success).toBe(false);
+    expect(patcher.value).toBe(before);
+    expect(patcher.updated).toBe(false);
+  });
+
+  it("applies updater function to change property value", () => {
+    const obj = { a: 1, b: 2 };
+    const patcher = new Patcher(obj);
+
+    const success = patcher.set("a", (prev) => prev + 9);
+
+    expect(success).toBe(true);
+    expect(patcher.value).toEqual({ a: 10, b: 2 });
+    expect(obj).toEqual({ a: 1, b: 2 });
+    expect(patcher.updated).toBe(true);
+  });
+
+  it("passes current value to updater function on successive sets", () => {
+    const patcher = new Patcher({ count: 0 });
+
+    patcher.set("count", (prev) => prev + 1);
+    patcher.set("count", (prev) => prev + 2);
+
+    expect(patcher.value).toEqual({ count: 3 });
+    expect(patcher.updated).toBe(true);
+  });
+
+  it("treats distinct object references as a change when using updater function", () => {
+    const inner = { id: 1 };
+    const patcher = new Patcher({ nested: inner });
+
+    const replacement = { id: 1 };
+    patcher.set("nested", () => replacement);
+
+    expect(patcher.value.nested).toBe(replacement);
+    expect(patcher.value.nested).not.toBe(inner);
+    expect(patcher.updated).toBe(true);
+  });
+
   it("returns false when patch values are unchanged", () => {
     const patcher = new Patcher({ count: 0, label: "x" });
     const before = patcher.value;
