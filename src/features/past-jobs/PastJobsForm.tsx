@@ -29,10 +29,14 @@ export function PastJobsForm() {
   }, [form]);
 
   const handleAddPastJob = () => {
-    pastJobsApi.insert({
+    const newPastJobs = pastJobsApi.insert({
       id: `${nextId.current++}`,
       ...DEFAULT_PAST_JOB_PROPS,
     });
+
+    if (newPastJobs === null) {
+      console.error("Failed to add past job");
+    }
   };
 
   const handleClear = () => {
@@ -59,32 +63,11 @@ export function PastJobsForm() {
 
       <RenderIndicator>
         <div className="max-h-[70vh] overflow-y-auto space-y-2 peer">
+          {/* <PastJob index={0} onRemove={() => pastJobsApi.remove(0)} />
+          <PastJob index={1} onRemove={() => pastJobsApi.remove(1)} /> */}
+
           {pastJobs.map((pastJob, index) => (
-            <div key={pastJob.id} className="p-4 rounded-md bg-black/10 grid grid-cols-2 gap-4">
-              <p className="text-lg font-medium">Job {index + 1}</p>
-
-              <div className="flex justify-end items-center">
-                <Button variant="destructive" size="sm" onClick={() => pastJobsApi.remove(index)}>
-                  Remove
-                </Button>
-              </div>
-
-              <Field name={`pastJobs.${index}.companyName`}>
-                {renderInputField(({ fieldProps, inputProps }) => (
-                  <FormField label="Company Name" {...fieldProps}>
-                    <Input {...inputProps} />
-                  </FormField>
-                ))}
-              </Field>
-
-              <Field name={`pastJobs.${index}.startYear`}>
-                {renderInputField(({ fieldProps, inputProps }) => (
-                  <FormField label="Start Year" {...fieldProps}>
-                    <InputNumber {...inputProps} />
-                  </FormField>
-                ))}
-              </Field>
-            </div>
+            <PastJob key={pastJob.id} index={index} onRemove={() => pastJobsApi.remove(index)} />
           ))}
         </div>
 
@@ -98,5 +81,35 @@ export function PastJobsForm() {
         </div>
       </RenderIndicator>
     </Layout>
+  );
+}
+
+function PastJob({ index, onRemove }: { index: number; onRemove: () => void }) {
+  return (
+    <div className="p-4 rounded-md bg-black/10 grid grid-cols-2 gap-4">
+      <p className="text-lg font-medium">Job {index + 1}</p>
+
+      <div className="flex justify-end items-center">
+        <Button variant="destructive" size="sm" onClick={onRemove}>
+          Remove
+        </Button>
+      </div>
+
+      <Field name={`pastJobs.${index}.companyName`}>
+        {renderInputField(({ fieldProps, inputProps }) => (
+          <FormField label="Company Name" {...fieldProps}>
+            <Input {...inputProps} />
+          </FormField>
+        ))}
+      </Field>
+
+      <Field name={`pastJobs.${index}.startYear`}>
+        {renderInputField(({ fieldProps, inputProps }) => (
+          <FormField label="Start Year" {...fieldProps}>
+            <InputNumber {...inputProps} />
+          </FormField>
+        ))}
+      </Field>
+    </div>
   );
 }

@@ -55,10 +55,15 @@ export function selectInputFieldProps<TValues, TKey extends DeepKeys<TValues>>(
 ): InputFieldBindings<TValues, TKey> {
   //
   const fieldProps = selectFieldProps(field);
+  let { value } = field;
+
+  if (value == null) {
+    value = "" as DeepValue<TValues, TKey>;
+  }
 
   const inputProps: InputBindingProps<DeepValue<TValues, TKey>> = {
     id: field.id,
-    value: field.value,
+    value,
     "aria-invalid": fieldProps.error != null,
     onBlur: () => {
       field.handleBlur();

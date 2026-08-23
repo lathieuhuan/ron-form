@@ -38,8 +38,9 @@ export const useFormOptions: UseFormOptions<PastJobsFormValues> = {
     console.log("onSubmit");
     console.log(values);
   },
-  onSubmitFailed: ({ errors }) => {
+  onSubmitFailed: ({ errors, form }) => {
     console.log("onSubmitFailed");
     console.log(errors);
+    console.log(form.values);
   },
 };

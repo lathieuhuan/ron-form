@@ -44,24 +44,26 @@ export class FieldArrayControl<
   update = (
     newValue: TItemValue[],
     oldValue: TItemValue[],
-    affectedItemPath: string,
-    affectedItemValue: unknown,
+    notifiedFields: string[],
     options: ArrayUpdateOptions,
   ): TItemValue[] | null => {
     const { form, name } = this;
+    const oldValues = clone(form._values);
     const success = set(form._values as AnyObject, name, newValue);
+
+    // console.log("====", success);
+    // console.log(newValue);
+    // console.log(oldValue);
+    // console.log(oldValues);
+    // console.log(notifiedFields);
 
     if (!success) {
       return null;
     }
 
     const { dontValidate = false, cause = DEFAULT_CHANGE_CAUSE } = options;
-    const oldValues = clone(form._values);
-    const notifiedFields = collectFieldPaths(
-      affectedItemValue,
-      affectedItemPath,
-      dontValidate ? [name] : [],
-    );
+
+    notifiedFields = dontValidate ? notifiedFields.concat(name) : notifiedFields;
 
     for (const field of notifiedFields) {
       const value = form.getFieldValue(field);
@@ -142,7 +144,9 @@ export class FieldArrayControl<
       ...currentValue.slice(insertIndex),
     ];
 
-    return this.update(arrayValue, currentValue, `${name}.${insertIndex}`, value, options);
+    const notifiedFields = collectFieldPaths(value, `${name}.${insertIndex}`);
+
+    return this.update(arrayValue, currentValue, notifiedFields, options);
   };
 
   /**
@@ -163,6 +167,92 @@ export class FieldArrayControl<
     const removedItem = currentValue[index];
     const newValue = [...currentValue.slice(0, index), ...currentValue.slice(index + 1)];
 
-    return this.update(newValue, currentValue, `${name}.${index}`, removedItem, options);
+    const notifiedFields = collectFieldPaths(removedItem, `${name}.${index}`);
+
+    return this.update(newValue, currentValue, notifiedFields, options);
+  };
+
+  /**
+   * @public
+   */
+  swap = (
+    indexA: number,
+    indexB: number,
+    options: ArrayUpdateOptions = {},
+  ): TItemValue[] | null => {
+    const { name } = this;
+    const currentValue = this.resolvedValue;
+
+    if (currentValue == null) {
+      return null;
+    }
+
+    if (
+      indexA < 0 ||
+      indexA >= currentValue.length ||
+      indexB < 0 ||
+      indexB >= currentValue.length
+    ) {
+      return null;
+    }
+
+    if (indexA === indexB) {
+      return currentValue;
+    }
+
+    const newValue = [...currentValue];
+    const temp = newValue[indexA];
+    newValue[indexA] = newValue[indexB];
+    newValue[indexB] = temp;
+
+    const notifiedFields: string[] = [];
+
+    collectFieldPaths(newValue[indexA], `${name}.${indexA}`, notifiedFields);
+    collectFieldPaths(newValue[indexB], `${name}.${indexB}`, notifiedFields);
+
+    return this.update(newValue, currentValue, notifiedFields, options);
+  };
+
+  /**
+   * @public
+   */
+  move = (
+    fromIndex: number,
+    toIndex: number,
+    options: ArrayUpdateOptions = {},
+  ): TItemValue[] | null => {
+    const { name } = this;
+    const currentValue = this.resolvedValue;
+
+    if (currentValue == null) {
+      return null;
+    }
+
+    if (
+      fromIndex < 0 ||
+      fromIndex >= currentValue.length ||
+      toIndex < 0 ||
+      toIndex >= currentValue.length
+    ) {
+      return null;
+    }
+
+    if (fromIndex === toIndex) {
+      return currentValue;
+    }
+
+    const newValue = [...currentValue];
+    const [item] = newValue.splice(fromIndex, 1);
+    newValue.splice(toIndex, 0, item);
+
+    const minIndex = Math.min(fromIndex, toIndex);
+    const maxIndex = Math.max(fromIndex, toIndex);
+    const notifiedFields: string[] = [];
+
+    for (let i = minIndex; i <= maxIndex; i++) {
+      collectFieldPaths(newValue[i], `${name}.${i}`, notifiedFields);
+    }
+
+    return this.update(newValue, currentValue, notifiedFields, options);
   };
 }
