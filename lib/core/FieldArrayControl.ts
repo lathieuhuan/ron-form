@@ -175,47 +175,6 @@ export class FieldArrayControl<
   /**
    * @public
    */
-  swap = (
-    indexA: number,
-    indexB: number,
-    options: ArrayUpdateOptions = {},
-  ): TItemValue[] | null => {
-    const { name } = this;
-    const currentValue = this.resolvedValue;
-
-    if (currentValue == null) {
-      return null;
-    }
-
-    if (
-      indexA < 0 ||
-      indexA >= currentValue.length ||
-      indexB < 0 ||
-      indexB >= currentValue.length
-    ) {
-      return null;
-    }
-
-    if (indexA === indexB) {
-      return currentValue;
-    }
-
-    const newValue = [...currentValue];
-    const temp = newValue[indexA];
-    newValue[indexA] = newValue[indexB];
-    newValue[indexB] = temp;
-
-    const notifiedFields: string[] = [];
-
-    collectFieldPaths(newValue[indexA], `${name}.${indexA}`, notifiedFields);
-    collectFieldPaths(newValue[indexB], `${name}.${indexB}`, notifiedFields);
-
-    return this.update(newValue, currentValue, notifiedFields, options);
-  };
-
-  /**
-   * @public
-   */
   move = (
     fromIndex: number,
     toIndex: number,
@@ -252,6 +211,47 @@ export class FieldArrayControl<
     for (let i = minIndex; i <= maxIndex; i++) {
       collectFieldPaths(newValue[i], `${name}.${i}`, notifiedFields);
     }
+
+    return this.update(newValue, currentValue, notifiedFields, options);
+  };
+
+  /**
+   * @public
+   */
+  swap = (
+    indexA: number,
+    indexB: number,
+    options: ArrayUpdateOptions = {},
+  ): TItemValue[] | null => {
+    const { name } = this;
+    const currentValue = this.resolvedValue;
+
+    if (currentValue == null) {
+      return null;
+    }
+
+    if (
+      indexA < 0 ||
+      indexA >= currentValue.length ||
+      indexB < 0 ||
+      indexB >= currentValue.length
+    ) {
+      return null;
+    }
+
+    if (indexA === indexB) {
+      return currentValue;
+    }
+
+    const newValue = [...currentValue];
+    const temp = newValue[indexA];
+    newValue[indexA] = newValue[indexB];
+    newValue[indexB] = temp;
+
+    const notifiedFields: string[] = [];
+
+    collectFieldPaths(newValue[indexA], `${name}.${indexA}`, notifiedFields);
+    collectFieldPaths(newValue[indexB], `${name}.${indexB}`, notifiedFields);
 
     return this.update(newValue, currentValue, notifiedFields, options);
   };

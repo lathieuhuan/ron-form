@@ -1,9 +1,10 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: true
 ---
-This is a repository for ron-form development. Read [README.md](mdc:lib/README.md) for information about this library.
+
+This is a repository for ron-form development. Read [README.md](../../lib/README.md) for information about this library.
 
 # Repository structure
 
@@ -19,4 +20,3 @@ This repository contains 2 parts: the ron-form library and the web app for ron-f
 ## Demonstrating web app
 
 The demonstrating web app for ron-form locates in src/ directory. It uses custom UI components built with TailwindCSS.
-

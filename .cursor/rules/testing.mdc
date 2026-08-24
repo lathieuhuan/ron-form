@@ -3,6 +3,7 @@ description:
 globs: *.test.ts
 alwaysApply: false
 ---
+
 - Use vitest to write unit tests.
 
 - Test directory name should be \_\_test\_\_ and test files should end with .test.ts
@@ -10,5 +11,3 @@ alwaysApply: false
 - Declare variables for repeated values like string, number, object.
 
 - Do not test private methods or access private properties/methods when testing. Test them through other public/protected methods.
-
-

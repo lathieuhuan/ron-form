@@ -1,25 +1,18 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useState } from "react";
 
-import { fieldArray, useFieldArrayValue } from "@lib/react";
-import { renderInputField, selectFieldProps } from "@src/utils/form.utils";
-import { DEFAULT_PAST_JOB_PROPS } from "./constants";
+import { fieldArray } from "@lib/react";
+import { selectFieldProps } from "@src/utils/form.utils";
 import { Field, useForm, useFormOptions } from "./context";
 
-import { Button } from "@src/components/Button";
-import { FormField } from "@src/components/form";
-import { Input } from "@src/components/Input";
-import { InputNumber } from "@src/components/InputNumber";
 import { RenderIndicator } from "@src/components/RenderIndicator";
 import { Layout } from "./Layout";
+import { PastJobs } from "./PastJobs";
+import { ReorderMenu } from "./ReorderMenu";
+import { ToolBar } from "./ToolBar";
 
 export function PastJobsForm() {
   const form = useForm(useFormOptions);
-  const nextId = useRef(1);
-
-  const pastJobs = useFieldArrayValue({
-    form,
-    name: "pastJobs",
-  });
+  const [reordering, setReordering] = useState(false);
 
   const pastJobsApi = useMemo(() => {
     return fieldArray({
@@ -28,48 +21,16 @@ export function PastJobsForm() {
     });
   }, [form]);
 
-  const handleAddPastJob = () => {
-    const newPastJobs = pastJobsApi.insert({
-      id: `${nextId.current++}`,
-      ...DEFAULT_PAST_JOB_PROPS,
-    });
-
-    if (newPastJobs === null) {
-      console.error("Failed to add past job");
-    }
-  };
-
-  const handleClear = () => {
-    form.setFieldValue("pastJobs", []);
+  const handleMoveJob = (fromIndex: number, toIndex: number) => {
+    pastJobsApi.move(fromIndex, toIndex);
   };
 
   return (
     <Layout form={form}>
-      <div className="flex gap-2">
-        <Button variant="outline" onClick={handleAddPastJob}>
-          Add
-        </Button>
-        <Button variant="outline" onClick={handleClear}>
-          Clear
-        </Button>
-
-        <Button variant="outline" className="ml-auto" onClick={form.reset}>
-          Reset
-        </Button>
-        <Button type="submit" onClick={form.handleSubmit}>
-          Submit
-        </Button>
-      </div>
+      <ToolBar onRequestReorder={() => setReordering(!reordering)} />
 
       <RenderIndicator>
-        <div className="max-h-[70vh] overflow-y-auto space-y-2 peer">
-          {/* <PastJob index={0} onRemove={() => pastJobsApi.remove(0)} />
-          <PastJob index={1} onRemove={() => pastJobsApi.remove(1)} /> */}
-
-          {pastJobs.map((pastJob, index) => (
-            <PastJob key={pastJob.id} index={index} onRemove={() => pastJobsApi.remove(index)} />
-          ))}
-        </div>
+        {reordering ? <ReorderMenu onMove={handleMoveJob} /> : <PastJobs />}
 
         <div className="py-4 text-center text-sm text-gray-500 hidden peer-empty:block">
           <div>No past jobs</div>
@@ -81,35 +42,5 @@ export function PastJobsForm() {
         </div>
       </RenderIndicator>
     </Layout>
-  );
-}
-
-function PastJob({ index, onRemove }: { index: number; onRemove: () => void }) {
-  return (
-    <div className="p-4 rounded-md bg-black/10 grid grid-cols-2 gap-4">
-      <p className="text-lg font-medium">Job {index + 1}</p>
-
-      <div className="flex justify-end items-center">
-        <Button variant="destructive" size="sm" onClick={onRemove}>
-          Remove
-        </Button>
-      </div>
-
-      <Field name={`pastJobs.${index}.companyName`}>
-        {renderInputField(({ fieldProps, inputProps }) => (
-          <FormField label="Company Name" {...fieldProps}>
-            <Input {...inputProps} />
-          </FormField>
-        ))}
-      </Field>
-
-      <Field name={`pastJobs.${index}.startYear`}>
-        {renderInputField(({ fieldProps, inputProps }) => (
-          <FormField label="Start Year" {...fieldProps}>
-            <InputNumber {...inputProps} />
-          </FormField>
-        ))}
-      </Field>
-    </div>
   );
 }

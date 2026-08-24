@@ -6,25 +6,18 @@ A TypeScript-first form state library with a framework-agnostic core and framewo
 
 ```
 lib/
-├── core/          # Framework-agnostic form engine (TypeScript only)
-│   ├── FormCore       — values, field state, subscriptions
-│   ├── FormControl    — validation, submit, reset, value change events
-│   ├── FieldControl   — per-field change/blur handlers
-│   ├── FormMetaControl — form-level meta with subscriptions
-│   └── types/         — typed APIs, deep keys, validation types
-└── react/         # React bindings
-    ├── createContexts() — typed Form, Field, FormMeta, hooks
-    └── hooks/           — useForm, useField, useFieldValue
+├── core/                   # Framework-agnostic form engine (TypeScript only)
+│   ├── FormCore            — values, field state, subscriptions
+│   ├── FormControl         — validation, submit, reset, value change subscriptions; extends FormCore
+│   ├── FieldControl        — per-field APIs (change/blur handlers...)
+│   ├── FieldArrayControl   — per-field APIs for array fields (insert, remove...)
+│   ├── FormMetaControl     — form-level meta with subscriptions; acts as a support for FormCore
+│   ├── RunningValidatorMap — tracks running async validation; acts as a support for FormCore
+│   └── types/              — interfaces for APIs, states, deep keys, validation...
+└── react/                # React bindings
+    ├── createContexts()  — typed Form, Field, FormMeta, hooks
+    └── hooks/            — useForm, useField, useFieldValue
 ```
-
-**Layering**
-
-| Layer          | Responsibility                                                                   |
-| -------------- | -------------------------------------------------------------------------------- |
-| `FormCore`     | Holds values, per-field state (value / meta / errors), field subscriptions       |
-| `FormControl`  | Extends core with sync/async validation, submit, reset, value-change subscribers |
-| `FieldControl` | Bridges user interaction (`handleChange`, `handleBlur`) to form logic for fields |
-| React          | Subscribes to core state and exposes render-prop / hook APIs                     |
 
 ## Validation
 
@@ -37,7 +30,7 @@ type RawError = string | { message: string };
 
 type ValidationResult = RawError | RawError[] | null | undefined;
 
-type Validator = ({ value, form }) => ValidationResult;
+type Validator = (value, form) => ValidationResult;
 ```
 
 **Error model:**
@@ -45,6 +38,15 @@ type Validator = ({ value, form }) => ValidationResult;
 - Errors stored per cause: `change`, `blur`, `changeAsync`, `blurAsync`.
 - Normalized to `FieldError<TKey>[]` with `path`, `type`, `message`, `meta`.
 - Thrown async errors are caught and parsed via `parseRawError`.
+
+```ts
+interface FieldError<TKey> {
+  path: TKey;
+  type: ErrorCauseType;
+  message: string;
+  meta: ErrorMeta;
+}
+```
 
 **Async behavior:**
 
@@ -55,5 +57,5 @@ type Validator = ({ value, form }) => ValidationResult;
 
 **Manual validation:**
 
-- **`validateSync(field, cause, options?)`** — options: `shouldBlur`, `shouldTouch`, `shouldDirty`.
-- **`validateAsync(field, cause)`** — immediate async run (cancels pending debounce).
+- `validateSync(field, cause, options?)` — options: `shouldBlur`, `shouldTouch`, `shouldDirty`.
+- `validateAsync(field, cause)` — immediate async run (cancels pending debounce).

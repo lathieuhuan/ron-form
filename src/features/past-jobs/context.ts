@@ -5,6 +5,7 @@ import { require } from "@src/utils/validation";
 export type PastJob = {
   id: string;
   companyName: string;
+  level: string;
   startYear: number | null;
 };
 
@@ -24,6 +25,7 @@ export const useFormOptions: UseFormOptions<PastJobsFormValues> = {
       return value.length > 0 ? null : "At least one past job is required";
     },
     "pastJobs.[n].companyName": require,
+    "pastJobs.[n].level": require,
   },
   blurValidators: {
     "pastJobs.[n].startYear": require,

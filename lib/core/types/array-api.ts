@@ -1,5 +1,5 @@
-import type { DeepKeys, DeepValue } from "./key-value";
 import type { ChangeCause } from "./form-api";
+import type { DeepKeys, DeepValue } from "./key-value";
 
 export type ArrayChangeData<TFormValues, TField extends DeepKeys<TFormValues>> = {
   value: DeepValue<TFormValues, TField>;
@@ -21,4 +21,8 @@ export interface FieldArrayApi<
   insert(value: TItemValue, index?: number, options?: ArrayUpdateOptions): TItemValue[] | null;
 
   remove(index: number, options?: ArrayUpdateOptions): TItemValue[] | null;
+
+  move(fromIndex: number, toIndex: number, options?: ArrayUpdateOptions): TItemValue[] | null;
+
+  swap(indexA: number, indexB: number, options?: ArrayUpdateOptions): TItemValue[] | null;
 }
