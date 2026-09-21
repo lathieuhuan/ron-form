@@ -139,19 +139,18 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     }
 
     const errors = this._runSyncValidator(spec);
-    let errorMap = this.getFieldErrorMap(field);
+    const currentErrors = metaPatcher.value.errors;
 
-    if (errors.length || errorMap[cause].length) {
-      errorMap = {
-        ...errorMap,
+    if (errors.length || currentErrors[cause].length) {
+      metaPatcher.set("errors", {
+        ...currentErrors,
         [cause]: errors,
-      };
+      });
     }
 
     return {
       meta: metaPatcher.value,
       errors,
-      errorMap,
     };
   };
 
@@ -166,7 +165,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   ) => {
     const { shouldBlur = false, shouldTouch = true, shouldDirty = false } = options;
     const validationSpec = this.validationSpec(cause, field);
-    const { meta, errors, errorMap } = this._validateSync(validationSpec, {
+    const { meta, errors } = this._validateSync(validationSpec, {
       shouldBlur,
       shouldTouch,
       shouldDirty,
@@ -174,7 +173,6 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
     const updated = this.updateAndNotifyField(field, {
       meta,
-      errorMap,
     });
 
     if (updated) {
@@ -215,20 +213,19 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
     // Update field state
 
-    const metaUpdate = update(
-      this.getFieldMeta(field),
-      "isValidating",
-      this.runningValidatorMap.isAnyRunning(field),
-    );
+    const meta = this.getFieldMeta(field);
 
-    const newErrorMap: FieldErrors<TField> = {
-      ...this.getFieldErrorMap(field),
+    const newErrors: FieldErrors<DeepKeys<TFormValues>> = {
+      ...meta.errors,
       [`${cause}Async`]: errors,
     };
 
     this.updateAndNotifyField(field, {
-      meta: metaUpdate.result,
-      errorMap: newErrorMap,
+      meta: {
+        ...meta,
+        isValidating: this.runningValidatorMap.isAnyRunning(field),
+        errors: newErrors,
+      },
     });
 
     return errors;
@@ -334,7 +331,8 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     if (dontValidate) {
       for (const subField of subFields) {
         const meta = this.getFieldMeta(subField);
-        const newMeta: FieldMeta = {
+        const newMeta: FieldMeta<TFormValues> = {
+          ...meta,
           isBlurred: meta.isBlurred,
           isTouched: dontTouch ? meta.isTouched : true,
           isDirty: dontDirty ? meta.isDirty : true,
@@ -366,7 +364,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       const subFieldValue = this.getFieldValue(subField);
 
       const validationSpec = this.validationSpec("change", subField, subFieldValue);
-      const { meta, errors, errorMap } = this._validateSync(validationSpec, {
+      const { meta, errors } = this._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: !dontTouch,
         shouldDirty: !dontDirty,
@@ -375,7 +373,6 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       this.updateAndNotifyField(subField, {
         value: subFieldValue,
         meta,
-        errorMap,
       });
 
       this.valueSubjects.get(subField)?.next({
@@ -409,7 +406,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
    */
   setFieldMeta = <TField extends DeepKeys<TFormValues>>(
     field: TField,
-    updater: Updater<FieldMeta>,
+    updater: Updater<FieldMeta<TFormValues>>,
   ) => {
     const newMeta = typeof updater === "function" ? updater(this.getFieldMeta(field)) : updater;
 
@@ -424,11 +421,10 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
    * TODO public
    */
   isFieldError = <TField extends DeepKeys<TFormValues>>(field: TField) => {
-    const errorMap = this.getFieldErrorMap(field);
+    const { errors } = this.getFieldMeta(field);
 
     return ERROR_CAUSES.some((cause) => {
-      const errors = errorMap[cause] || [];
-      return errors.length > 0;
+      return errors[cause].length > 0;
     });
   };
 
@@ -465,9 +461,12 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       if (errors.length > 0) {
         isValid = false;
 
-        update.errorMap = {
-          ...update.errorMap,
-          [cause]: errors,
+        update.meta = {
+          ...update.meta,
+          errors: {
+            ...update.meta.errors,
+            [cause]: errors,
+          },
         };
       }
 
@@ -500,9 +499,9 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     } else if (this.onSubmitFailed) {
       const errors: AllFieldErrors<TFormValues> = {};
 
-      for (const [field, errorMap] of this.fieldErrorMap.entries()) {
+      for (const [field, meta] of this.fieldMetaMap.entries()) {
         if (this.isFieldError(field)) {
-          errors[field] = errorMap;
+          errors[field] = meta.errors;
         }
       }
 
@@ -533,7 +532,6 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     this.runningValidatorMap = new RunningValidatorMap<TFormValues>();
 
     this.fieldMetaMap.clear();
-    this.fieldErrorMap.clear();
 
     const values = cache((field: DeepKeys<TFormValues>) => this.getFieldValue(field));
 
@@ -541,7 +539,6 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       subject.next({
         value: values.get(field),
         meta: this.getFieldMeta(field),
-        errorMap: this.getFieldErrorMap(field),
       });
     }
 

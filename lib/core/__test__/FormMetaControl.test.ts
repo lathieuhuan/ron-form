@@ -1,16 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { FormMetaControl } from "../FormMetaControl";
-import { DEFAULT_META } from "../constants";
+import { DEFAULT_FORM_META } from "../constants";
 
 describe("FormMetaControl", () => {
   describe("constructor", () => {
     it("initializes meta as untouched, clean, and not validating by default", () => {
       const metaControl = new FormMetaControl();
 
-      expect(metaControl.get()).toEqual({
-        ...DEFAULT_META,
-        submitCount: 0,
-      });
+      expect(metaControl.get()).toEqual(DEFAULT_FORM_META);
     });
 
     it("accepts partial initial meta values", () => {
@@ -20,10 +17,9 @@ describe("FormMetaControl", () => {
       });
 
       expect(metaControl.get()).toEqual({
-        ...DEFAULT_META,
+        ...DEFAULT_FORM_META,
         isTouched: true,
         isValidating: true,
-        submitCount: 0,
       });
     });
   });

@@ -1,7 +1,7 @@
 import type { FieldErrors } from "./validation";
 import type { DeepKeys, DeepValue } from "./key-value";
 
-export interface FieldMeta {
+interface BaseMeta {
   /** user has blurred the field */
   isBlurred: boolean;
   /** user has blurred the field or changed the value */
@@ -11,12 +11,15 @@ export interface FieldMeta {
   isValidating: boolean;
 }
 
-export interface FieldState<TFormValues, TKey extends DeepKeys<TFormValues>> {
-  value: DeepValue<TFormValues, TKey>;
-  meta: FieldMeta;
-  errorMap: FieldErrors<TKey>;
+export interface FieldMeta<TFormValues> extends BaseMeta {
+  errors: FieldErrors<DeepKeys<TFormValues>>;
 }
 
-export interface FormMeta extends FieldMeta {
+export interface FieldState<TFormValues, TKey extends DeepKeys<TFormValues>> {
+  value: DeepValue<TFormValues, TKey>;
+  meta: FieldMeta<TFormValues>;
+}
+
+export interface FormMeta extends BaseMeta {
   submitCount: number;
 }

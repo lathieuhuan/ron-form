@@ -26,10 +26,6 @@ export function FieldSupervisor() {
         <Divider direction="horizontal" />
 
         <WatchSection title="Meta" value={field.meta} />
-
-        <Divider direction="horizontal" />
-
-        <WatchSection title="Errors" value={field.errorMap} />
       </div>
     </div>
   );

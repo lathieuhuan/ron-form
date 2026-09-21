@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FormControl } from "../FormControl";
+import { DEFAULT_META } from "../constants";
 import { FieldError } from "../types";
 
 const defaultValues = {
@@ -49,15 +50,17 @@ describe("FormControl validation", () => {
       expect(form.getFieldMeta("name").isValidating).toBe(false);
       expect(fieldSubscriber).toHaveBeenLastCalledWith(
         expect.objectContaining({
-          errorMap: expect.objectContaining({
-            changeAsync: [
-              {
-                path: "name",
-                type: "changeAsync",
-                message: "Async error",
-                meta: {},
-              },
-            ],
+          meta: expect.objectContaining({
+            errors: expect.objectContaining({
+              changeAsync: [
+                {
+                  path: "name",
+                  type: "changeAsync",
+                  message: "Async error",
+                  meta: {},
+                },
+              ],
+            }),
           }),
         }),
       );
@@ -71,6 +74,7 @@ describe("FormControl validation", () => {
       });
 
       form.fieldMetaMap.set("name", {
+        ...form.getFieldMeta("name"),
         isBlurred: false,
         isTouched: false,
         isDirty: false,
@@ -84,9 +88,7 @@ describe("FormControl validation", () => {
 
       const validatingOnlyUpdates = updateAndNotifyField.mock.calls.filter(
         ([, changes]) =>
-          changes.meta?.isValidating === true &&
-          changes.value === undefined &&
-          changes.errorMap === undefined,
+          changes.meta?.isValidating === true && changes.value === undefined,
       );
 
       expect(validatingOnlyUpdates).toHaveLength(0);
@@ -100,18 +102,21 @@ describe("FormControl validation", () => {
       });
       const abortCtrl = new AbortController();
 
-      form.fieldErrorMap.set("name", {
-        change: [],
-        blur: [],
-        changeAsync: [
-          {
-            path: "name",
-            type: "changeAsync",
-            message: "Existing error",
-            meta: {},
-          },
-        ],
-        blurAsync: [],
+      form.fieldMetaMap.set("name", {
+        ...form.getFieldMeta("name"),
+        errors: {
+          change: [],
+          blur: [],
+          changeAsync: [
+            {
+              path: "name",
+              type: "changeAsync",
+              message: "Existing error",
+              meta: {},
+            },
+          ],
+          blurAsync: [],
+        },
       });
 
       const validationSpec = form.asyncValidationSpec("change", "name");
@@ -215,18 +220,21 @@ describe("FormControl validation", () => {
         changeAsyncValidators: { name: validator },
       });
 
-      form.fieldErrorMap.set("name", {
-        change: [],
-        blur: [],
-        changeAsync: [
-          {
-            path: "name",
-            type: "changeAsync",
-            message: "Existing error",
-            meta: {},
-          },
-        ],
-        blurAsync: [],
+      form.fieldMetaMap.set("name", {
+        ...form.getFieldMeta("name"),
+        errors: {
+          change: [],
+          blur: [],
+          changeAsync: [
+            {
+              path: "name",
+              type: "changeAsync",
+              message: "Existing error",
+              meta: {},
+            },
+          ],
+          blurAsync: [],
+        },
       });
 
       const validationSpec = form.asyncValidationSpec("change", "name");
@@ -243,18 +251,21 @@ describe("FormControl validation", () => {
         changeAsyncValidators: { name: validator },
       });
 
-      form.fieldErrorMap.set("name", {
-        change: [],
-        blur: [],
-        changeAsync: [],
-        blurAsync: [
-          {
-            path: "name",
-            type: "blurAsync",
-            message: "Blur async error",
-            meta: {},
-          },
-        ],
+      form.fieldMetaMap.set("name", {
+        ...form.getFieldMeta("name"),
+        errors: {
+          change: [],
+          blur: [],
+          changeAsync: [],
+          blurAsync: [
+            {
+              path: "name",
+              type: "blurAsync",
+              message: "Blur async error",
+              meta: {},
+            },
+          ],
+        },
       });
 
       const validationSpec = form.asyncValidationSpec("change", "name");
@@ -354,15 +365,16 @@ describe("FormControl validation", () => {
       form.subscribeField("name", fieldSubscriber);
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta, errors, errorMap } = form._validateSync(validationSpec, {
+      const { meta, errors } = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
       });
 
       expect(errors).toEqual([]);
-      expect(errorMap.change).toEqual([]);
+      expect(meta.errors.change).toEqual([]);
       expect(meta).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: false,
         isDirty: false,
@@ -382,7 +394,7 @@ describe("FormControl validation", () => {
       form.subscribeField("name", fieldSubscriber);
 
       const validationSpec = form.validationSpec("change", "name");
-      const { errors, errorMap } = form._validateSync(validationSpec, {
+      const { meta, errors } = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -399,7 +411,7 @@ describe("FormControl validation", () => {
 
       expect(validator).toHaveBeenCalledWith("John", form);
       expect(errors).toEqual(expectedErrors);
-      expect(errorMap.change).toEqual(expectedErrors);
+      expect(meta.errors.change).toEqual(expectedErrors);
       expect(form.getFieldErrorMap("name").change).toEqual([]);
       expect(fieldSubscriber).not.toHaveBeenCalled();
     });
@@ -412,7 +424,7 @@ describe("FormControl validation", () => {
       });
 
       const validationSpec = form.validationSpec("blur", "email");
-      const { errors, errorMap } = form._validateSync(validationSpec, {
+      const { meta, errors } = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -429,7 +441,7 @@ describe("FormControl validation", () => {
 
       expect(validator).toHaveBeenCalledWith("john@example.com", form);
       expect(errors).toEqual(expectedErrors);
-      expect(errorMap.blur).toEqual(expectedErrors);
+      expect(meta.errors.blur).toEqual(expectedErrors);
     });
 
     it("clears existing errors for the cause when validation passes", () => {
@@ -438,29 +450,32 @@ describe("FormControl validation", () => {
         changeValidators: { name: () => undefined },
       });
 
-      form.fieldErrorMap.set("name", {
-        change: [
-          {
-            path: "name",
-            type: "change",
-            message: "Existing error",
-            meta: {},
-          },
-        ],
-        blur: [],
-        changeAsync: [],
-        blurAsync: [],
+      form.fieldMetaMap.set("name", {
+        ...form.getFieldMeta("name"),
+        errors: {
+          change: [
+            {
+              path: "name",
+              type: "change",
+              message: "Existing error",
+              meta: {},
+            },
+          ],
+          blur: [],
+          changeAsync: [],
+          blurAsync: [],
+        },
       });
 
       const validationSpec = form.validationSpec("change", "name");
-      const { errors, errorMap } = form._validateSync(validationSpec, {
+      const { meta, errors } = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
       });
 
       expect(errors).toEqual([]);
-      expect(errorMap.change).toEqual([]);
+      expect(meta.errors.change).toEqual([]);
       expect(form.getFieldErrorMap("name").change).toEqual([
         {
           path: "name",
@@ -486,21 +501,24 @@ describe("FormControl validation", () => {
         },
       ];
 
-      form.fieldErrorMap.set("name", {
-        change: [],
-        blur: blurErrors,
-        changeAsync: [],
-        blurAsync: [],
+      form.fieldMetaMap.set("name", {
+        ...form.getFieldMeta("name"),
+        errors: {
+          change: [],
+          blur: blurErrors,
+          changeAsync: [],
+          blurAsync: [],
+        },
       });
 
       const validationSpec = form.validationSpec("change", "name");
-      const { errorMap } = form._validateSync(validationSpec, {
+      const { meta } = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
       });
 
-      expect(errorMap.change).toEqual([
+      expect(meta.errors.change).toEqual([
         {
           path: "name",
           type: "change",
@@ -508,7 +526,7 @@ describe("FormControl validation", () => {
           meta: {},
         },
       ]);
-      expect(errorMap.blur).toEqual(blurErrors);
+      expect(meta.errors.blur).toEqual(blurErrors);
     });
 
     it("returns isTouched in meta when shouldTouch is true", () => {
@@ -543,6 +561,7 @@ describe("FormControl validation", () => {
       const form = new FormControl({ defaultValues });
 
       form.fieldMetaMap.set("name", {
+        ...form.getFieldMeta("name"),
         isBlurred: true,
         isTouched: true,
         isDirty: true,
@@ -557,6 +576,7 @@ describe("FormControl validation", () => {
       });
 
       expect(meta).toEqual({
+        ...DEFAULT_META,
         isBlurred: true,
         isTouched: true,
         isDirty: true,
@@ -566,21 +586,20 @@ describe("FormControl validation", () => {
 
     // PERFORMANCE TESTS
 
-    it("should return current meta and errorMap when no changes", () => {
+    it("should return current meta when no changes", () => {
       const form = new FormControl({ defaultValues });
       const fieldSubscriber = vi.fn();
 
       form.subscribeField("name", fieldSubscriber);
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta, errorMap } = form._validateSync(validationSpec, {
+      const { meta } = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
       });
 
       expect(meta).toEqual(form.getFieldMeta("name"));
-      expect(errorMap).toEqual(form.getFieldErrorMap("name"));
       expect(fieldSubscriber).not.toHaveBeenCalled();
     });
   });
@@ -766,8 +785,10 @@ describe("FormControl validation", () => {
       expect(form.meta.get().isValidating).toBe(false);
       expect(fieldSubscriber).toHaveBeenLastCalledWith(
         expect.objectContaining({
-          errorMap: expect.objectContaining({
-            changeAsync: errors,
+          meta: expect.objectContaining({
+            errors: expect.objectContaining({
+              changeAsync: errors,
+            }),
           }),
         }),
       );
@@ -847,18 +868,21 @@ describe("FormControl validation", () => {
         changeAsyncValidators: { name: validator },
       });
 
-      form.fieldErrorMap.set("name", {
-        change: [],
-        blur: [],
-        changeAsync: [
-          {
-            path: "name",
-            type: "changeAsync",
-            message: "Existing error",
-            meta: {},
-          },
-        ],
-        blurAsync: [],
+      form.fieldMetaMap.set("name", {
+        ...form.getFieldMeta("name"),
+        errors: {
+          change: [],
+          blur: [],
+          changeAsync: [
+            {
+              path: "name",
+              type: "changeAsync",
+              message: "Existing error",
+              meta: {},
+            },
+          ],
+          blurAsync: [],
+        },
       });
 
       const errors = await form.validateAsync("name", "change");
@@ -874,18 +898,21 @@ describe("FormControl validation", () => {
         changeAsyncValidators: { name: validator },
       });
 
-      form.fieldErrorMap.set("name", {
-        change: [],
-        blur: [],
-        changeAsync: [],
-        blurAsync: [
-          {
-            path: "name",
-            type: "blurAsync",
-            message: "Blur async error",
-            meta: {},
-          },
-        ],
+      form.fieldMetaMap.set("name", {
+        ...form.getFieldMeta("name"),
+        errors: {
+          change: [],
+          blur: [],
+          changeAsync: [],
+          blurAsync: [
+            {
+              path: "name",
+              type: "blurAsync",
+              message: "Blur async error",
+              meta: {},
+            },
+          ],
+        },
       });
 
       await form.validateAsync("name", "change");
@@ -1057,15 +1084,17 @@ describe("FormControl validation", () => {
       expect(fieldSubscriber).toHaveBeenLastCalledWith(
         expect.objectContaining({
           value: "Jane",
-          errorMap: expect.objectContaining({
-            changeAsync: [
-              {
-                path: "name",
-                type: "changeAsync",
-                message: "Async error",
-                meta: {},
-              },
-            ],
+          meta: expect.objectContaining({
+            errors: expect.objectContaining({
+              changeAsync: [
+                {
+                  path: "name",
+                  type: "changeAsync",
+                  message: "Async error",
+                  meta: {},
+                },
+              ],
+            }),
           }),
         }),
       );

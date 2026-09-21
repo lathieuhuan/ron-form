@@ -35,7 +35,7 @@ type Validator = (value, form) => ValidationResult;
 
 **Error model:**
 
-- Errors stored per cause: `change`, `blur`, `changeAsync`, `blurAsync`.
+- Errors are stored in `FieldMeta.errors` per cause: `change`, `blur`, `changeAsync`, `blurAsync`.
 - Normalized to `FieldError<TKey>[]` with `path`, `type`, `message`, `meta`.
 - Thrown async errors are caught and parsed via `parseRawError`.
 

@@ -27,10 +27,9 @@ export function useField<TFormValues, TKey extends DeepKeys<TFormValues>>({
 
     const value = form.getFieldValue(name);
     const meta = form.getFieldMeta(name);
-    const errorMap = form.getFieldErrorMap(name);
 
-    if (value !== state.value || meta !== state.meta || errorMap !== state.errorMap) {
-      setState({ value, meta, errorMap });
+    if (value !== state.value || meta !== state.meta) {
+      setState({ value, meta });
     }
 
     return form.subscribeField(name, setState);
@@ -42,12 +41,11 @@ export function useField<TFormValues, TKey extends DeepKeys<TFormValues>>({
     name,
     value: state.value,
     meta: state.meta,
-    errorMap: state.errorMap,
     form,
     get errors() {
       return ERROR_CAUSES.reduce<FieldError<TKey>[]>((acc, cause) => {
-        const errors = state.errorMap[cause] || [];
-        acc.push(...errors);
+        const errors = state.meta.errors[cause] || [];
+        acc.push(...(errors as FieldError<TKey>[]));
         return acc;
       }, []);
     },

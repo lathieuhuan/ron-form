@@ -3,6 +3,7 @@ import { Field, useForm, useFormOptions } from "./context";
 
 import { Button } from "@src/components/Button";
 import { Input } from "@src/components/Input";
+import { RenderIndicator } from "@src/components/RenderIndicator";
 import { FormField } from "@src/components/form";
 import { Layout } from "./Layout";
 
@@ -18,17 +19,21 @@ export function RegisterForm() {
       <div className="grid grid-cols-2 gap-4">
         <Field name="email">
           {renderInputField(({ fieldProps, inputProps }) => (
-            <FormField label="Email" {...fieldProps}>
-              <Input {...inputProps} />
-            </FormField>
+            <RenderIndicator>
+              <FormField label="Email" {...fieldProps}>
+                <Input {...inputProps} />
+              </FormField>
+            </RenderIndicator>
           ))}
         </Field>
 
         <Field name="username">
           {renderInputField(({ fieldProps, inputProps }) => (
-            <FormField label="Username" {...fieldProps}>
-              <Input {...inputProps} />
-            </FormField>
+            <RenderIndicator>
+              <FormField label="Username" {...fieldProps}>
+                <Input {...inputProps} />
+              </FormField>
+            </RenderIndicator>
           ))}
         </Field>
 

@@ -4,7 +4,7 @@
 
 [✓] Typed form values & deep field paths
 [✓] Form & field meta: isBlurred, isTouched, isDirty, isValidating...
-[✓] Form meta & field state { value, meta, errorMap } subscriptions
+[✓] Form meta & field state { value, meta } subscriptions
 [✓] Sync & async field validation for different causes (change, blur)
 [✓] Submit & reset
 [✓] Field value subscriptions

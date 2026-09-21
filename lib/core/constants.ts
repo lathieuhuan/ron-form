@@ -11,19 +11,20 @@ const ERROR_CAUSE_MAP: Record<ErrorCauseType, true> = {
 
 export const ERROR_CAUSES = Object.keys(ERROR_CAUSE_MAP) as ErrorCauseType[];
 
-export const DEFAULT_ERROR_MAP: FieldErrors<any> = {
+export const DEFAULT_ERRORS: FieldErrors<any> = {
   change: [],
   blur: [],
   changeAsync: [],
   blurAsync: [],
 };
 
-export const DEFAULT_META: FieldMeta = {
+export const DEFAULT_META = {
   isBlurred: false,
   isTouched: false,
   isDirty: false,
   isValidating: false,
-};
+  errors: DEFAULT_ERRORS,
+} as const satisfies FieldMeta<any>;
 
 export const DEFAULT_FORM_META: FormMeta = {
   isBlurred: false,

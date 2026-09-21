@@ -40,7 +40,7 @@ export interface FormApi<TFormValues> {
     field: TField,
   ): DeepValue<TFormValues, TField>;
 
-  getFieldMeta<TField extends DeepKeys<TFormValues>>(field: TField): FieldMeta;
+  getFieldMeta<TField extends DeepKeys<TFormValues>>(field: TField): FieldMeta<TFormValues>;
 
   getFieldErrorMap<TField extends DeepKeys<TFormValues>>(field: TField): FieldErrors<TField>;
 
@@ -66,7 +66,7 @@ export interface FormApi<TFormValues> {
 
   setFieldMeta<TField extends DeepKeys<TFormValues>>(
     field: TField,
-    updater: Updater<FieldMeta>,
+    updater: Updater<FieldMeta<TFormValues>>,
   ): void;
 
   validateSync<TField extends DeepKeys<TFormValues>>(

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { FormCore } from "../FormCore";
-import { DEFAULT_ERROR_MAP, DEFAULT_META } from "../constants";
+import { DEFAULT_META } from "../constants";
 
 const defaultValues = {
   name: "John",
@@ -75,6 +75,7 @@ describe("FormCore", () => {
     it("returns stored meta after it has been set", () => {
       const form = new FormCore({ defaultValues });
       const meta = {
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: true,
@@ -87,13 +88,11 @@ describe("FormCore", () => {
 
       expect(form.getFieldMeta("email")).toEqual(meta);
     });
-  });
 
-  describe("getFieldErrorMap", () => {
-    it("returns an empty error map for fresh fields", () => {
+    it("returns empty errors for fresh fields", () => {
       const form = new FormCore({ defaultValues });
 
-      expect(form.getFieldErrorMap("name")).toEqual(DEFAULT_ERROR_MAP);
+      expect(form.getFieldMeta("name").errors).toEqual(DEFAULT_META.errors);
     });
 
     it("returns stored errors after validation", () => {
@@ -105,22 +104,23 @@ describe("FormCore", () => {
       });
 
       form.updateAndNotifyField("email", {
-        errorMap: {
-          ...DEFAULT_ERROR_MAP,
-          change: [
-            {
-              path: "email",
-              type: "change",
-              message: "Invalid email",
-              meta: {},
-            },
-          ],
+        meta: {
+          ...form.getFieldMeta("email"),
+          errors: {
+            ...DEFAULT_META.errors,
+            change: [
+              {
+                path: "email",
+                type: "change",
+                message: "Invalid email",
+                meta: {},
+              },
+            ],
+          },
         },
       });
 
-      // form.setFieldValue("email", "bad");
-
-      expect(form.getFieldErrorMap("email").change).toEqual([
+      expect(form.getFieldMeta("email").errors.change).toEqual([
         {
           path: "email",
           type: "change",
@@ -139,19 +139,16 @@ describe("FormCore", () => {
       form.subscribeField("name", subscriber);
 
       const meta = form.getFieldMeta("name");
-      const errorMap = form.getFieldErrorMap("name");
 
       form.fieldSubjects.get("name")?.next({
         value: "Jane",
         meta,
-        errorMap,
       });
 
       expect(subscriber).toHaveBeenCalledOnce();
       expect(subscriber).toHaveBeenCalledWith({
         value: "Jane",
         meta,
-        errorMap,
       });
     });
 
@@ -163,12 +160,10 @@ describe("FormCore", () => {
       unsubscribe();
 
       const meta = form.getFieldMeta("name");
-      const errorMap = form.getFieldErrorMap("name");
 
       form.fieldSubjects.get("name")?.next({
         value: "Jane",
         meta,
-        errorMap,
       });
 
       expect(subscriber).not.toHaveBeenCalled();
@@ -176,7 +171,7 @@ describe("FormCore", () => {
   });
 
   describe("updateAndNotifyField", () => {
-    it("short circuits if value, meta, and errorMap are not passed/undefined", () => {
+    it("short circuits if value and meta are not passed/undefined", () => {
       const form = new FormCore({ defaultValues });
       const subscriber = vi.fn();
       form.subscribeField("name", subscriber);
@@ -187,15 +182,13 @@ describe("FormCore", () => {
       expect(
         form.updateAndNotifyField("name", {
           meta: undefined,
-          errorMap: undefined,
         }),
       ).toBe(false);
       expect(subscriber).not.toHaveBeenCalled();
 
       const meta = form.getFieldMeta("name");
-      const errorMap = form.getFieldErrorMap("name");
 
-      expect(form.updateAndNotifyField("name", { meta, errorMap })).toBe(false);
+      expect(form.updateAndNotifyField("name", { meta })).toBe(false);
       expect(subscriber).not.toHaveBeenCalled();
     });
 
@@ -207,6 +200,7 @@ describe("FormCore", () => {
       expect(
         form.updateAndNotifyField("name", {
           meta: {
+            ...DEFAULT_META,
             isBlurred: false,
             isTouched: true,
             isDirty: false,
@@ -219,19 +213,15 @@ describe("FormCore", () => {
       expect(subscriber).toHaveBeenCalledWith({
         value: "John",
         meta: {
+          ...DEFAULT_META,
           isBlurred: false,
           isTouched: true,
           isDirty: false,
           isValidating: false,
         },
-        errorMap: {
-          change: [],
-          blur: [],
-          changeAsync: [],
-          blurAsync: [],
-        },
       });
       expect(form.getFieldMeta("name")).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: false,
@@ -239,9 +229,9 @@ describe("FormCore", () => {
       });
     });
 
-    it("persists error map changes to the field error map", () => {
+    it("persists error changes to field meta", () => {
       const form = new FormCore({ defaultValues });
-      const errorMap = {
+      const errors = {
         change: [
           {
             path: "name" as const,
@@ -255,9 +245,16 @@ describe("FormCore", () => {
         blurAsync: [],
       };
 
-      expect(form.updateAndNotifyField("name", { errorMap })).toBe(true);
+      expect(
+        form.updateAndNotifyField("name", {
+          meta: {
+            ...form.getFieldMeta("name"),
+            errors,
+          },
+        }),
+      ).toBe(true);
 
-      expect(form.getFieldErrorMap("name")).toEqual(errorMap);
+      expect(form.getFieldMeta("name").errors).toEqual(errors);
     });
 
     it("does not notify form meta", () => {
@@ -268,6 +265,7 @@ describe("FormCore", () => {
       expect(
         form.updateAndNotifyField("name", {
           meta: {
+            ...DEFAULT_META,
             isBlurred: false,
             isTouched: true,
             isDirty: true,
@@ -299,12 +297,14 @@ describe("FormCore", () => {
       const form = new FormCore({ defaultValues });
 
       form.fieldMetaMap.set("name", {
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: false,
         isValidating: false,
       });
       form.fieldMetaMap.set("email", {
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: false,
         isDirty: false,
@@ -326,12 +326,14 @@ describe("FormCore", () => {
       const form = new FormCore({ defaultValues });
 
       form.fieldMetaMap.set("name", {
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: false,
         isDirty: true,
         isValidating: false,
       });
       form.fieldMetaMap.set("email", {
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: false,
         isDirty: false,
@@ -353,12 +355,14 @@ describe("FormCore", () => {
       const form = new FormCore({ defaultValues });
 
       form.fieldMetaMap.set("name", {
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: true,
       });
       form.fieldMetaMap.set("email", {
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: false,
         isDirty: false,
@@ -380,18 +384,21 @@ describe("FormCore", () => {
       const form = new FormCore({ defaultValues });
 
       form.fieldMetaMap.set("name", {
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: false,
         isValidating: false,
       });
       form.fieldMetaMap.set("email", {
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: false,
         isDirty: true,
         isValidating: false,
       });
       form.fieldMetaMap.set("profile.age", {
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: false,
         isDirty: false,
@@ -413,6 +420,7 @@ describe("FormCore", () => {
       const form = new FormCore({ defaultValues });
 
       form.fieldMetaMap.set("name", {
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: true,
@@ -421,6 +429,7 @@ describe("FormCore", () => {
       form.syncMeta();
 
       form.fieldMetaMap.set("name", {
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: false,
         isDirty: false,
@@ -443,6 +452,7 @@ describe("FormCore", () => {
 
       form.meta.subscribe(subscriber);
       form.fieldMetaMap.set("name", {
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: true,

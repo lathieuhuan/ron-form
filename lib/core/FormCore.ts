@@ -14,7 +14,7 @@ import type {
   ValidatorMap,
 } from "./types";
 
-import { DEFAULT_ERROR_MAP, DEFAULT_META } from "./constants";
+import { DEFAULT_META } from "./constants";
 import { FormMetaControl } from "./FormMetaControl";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
@@ -63,8 +63,7 @@ export class FormCore<TFormValues> {
   _values: TFormValues;
   meta: FormMetaControl;
 
-  fieldMetaMap: Map<DeepKeys<TFormValues>, FieldMeta> = new Map();
-  fieldErrorMap: Map<DeepKeys<TFormValues>, FieldErrors<DeepKeys<TFormValues>>> = new Map();
+  fieldMetaMap: Map<DeepKeys<TFormValues>, FieldMeta<TFormValues>> = new Map();
 
   asyncDebounceMs: number;
 
@@ -153,11 +152,11 @@ export class FormCore<TFormValues> {
   /**
    * @public
    */
-  getFieldMeta = <TField extends DeepKeys<TFormValues>>(field: TField): FieldMeta => {
+  getFieldMeta = <TField extends DeepKeys<TFormValues>>(field: TField): FieldMeta<TFormValues> => {
     let meta = this.fieldMetaMap.get(field);
 
     if (!meta) {
-      meta = { ...DEFAULT_META };
+      meta = DEFAULT_META;
       this.fieldMetaMap.set(field, meta);
     }
 
@@ -168,14 +167,7 @@ export class FormCore<TFormValues> {
    * @public
    */
   getFieldErrorMap = <TField extends DeepKeys<TFormValues>>(field: TField): FieldErrors<TField> => {
-    let errorMap: FieldErrors<any> | undefined = this.fieldErrorMap.get(field);
-
-    if (!errorMap) {
-      errorMap = { ...DEFAULT_ERROR_MAP };
-      this.fieldErrorMap.set(field, errorMap);
-    }
-
-    return errorMap;
+    return this.getFieldMeta(field).errors as FieldErrors<TField>;
   };
 
   /**
@@ -187,7 +179,6 @@ export class FormCore<TFormValues> {
     return {
       value: this.getFieldValue(field),
       meta: this.getFieldMeta(field),
-      errorMap: this.getFieldErrorMap(field),
     };
   };
 
@@ -207,8 +198,7 @@ export class FormCore<TFormValues> {
 
   /**
    * If `value` is not passed AND
-   * (`meta` & `errorMap` are not passed/undefined OR
-   * `meta` & `errorMap` are the same as the current ones),
+   * (`meta` is not passed/undefined OR is the same as the current one),
    * this method will short circuit and return `false`.
    * Otherwise, return `true`.
    */
@@ -216,17 +206,15 @@ export class FormCore<TFormValues> {
     field: TField,
     changes: Partial<FieldState<TFormValues, TField>>,
   ): boolean => {
-    let { meta, errorMap } = changes;
+    let { meta } = changes;
     const valueChanged = "value" in changes;
 
     const currentMeta = this.getFieldMeta(field);
-    const currentErrorMap = this.getFieldErrorMap(field);
 
-    // Note: The meta & errorMap passed in changes can already be the current ones.
+    // Note: The meta passed in changes can already be the current one.
     meta = meta === undefined ? currentMeta : meta;
-    errorMap = errorMap === undefined ? currentErrorMap : errorMap;
 
-    if (!valueChanged && meta === currentMeta && errorMap === currentErrorMap) {
+    if (!valueChanged && meta === currentMeta) {
       return false;
     }
 
@@ -236,12 +224,10 @@ export class FormCore<TFormValues> {
       : this.getFieldValue(field);
 
     this.fieldMetaMap.set(field, meta);
-    this.fieldErrorMap.set(field, errorMap);
 
     this.fieldSubjects.get(field)?.next({
       value,
       meta,
-      errorMap,
     });
 
     return true;

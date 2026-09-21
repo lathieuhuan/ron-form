@@ -69,6 +69,7 @@ describe("FormControl", () => {
       form.setFieldValue("name", "Jane", { dontValidate: true });
 
       expect(form.getFieldMeta("name")).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: true,
@@ -82,12 +83,14 @@ describe("FormControl", () => {
       form.setFieldValue("profile", { age: 25 }, { dontValidate: true });
 
       expect(form.getFieldMeta("profile")).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: true,
         isValidating: false,
       });
       expect(form.getFieldMeta("profile.age")).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: true,
@@ -99,6 +102,7 @@ describe("FormControl", () => {
       const form = new FormControl({ defaultValues });
 
       form.setFieldMeta("name", {
+        ...form.getFieldMeta("name"),
         isBlurred: false,
         isTouched: false,
         isDirty: false,
@@ -112,6 +116,7 @@ describe("FormControl", () => {
       });
 
       expect(form.getFieldMeta("name")).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: false,
         isDirty: false,
@@ -123,12 +128,14 @@ describe("FormControl", () => {
       const form = new FormControl({ defaultValues });
 
       form.setFieldMeta("profile", {
+        ...form.getFieldMeta("profile"),
         isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: false,
       });
       form.setFieldMeta("profile.age", {
+        ...form.getFieldMeta("profile.age"),
         isBlurred: false,
         isTouched: false,
         isDirty: false,
@@ -146,12 +153,14 @@ describe("FormControl", () => {
       );
 
       expect(form.getFieldMeta("profile")).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: false,
         isDirty: false,
         isValidating: false,
       });
       expect(form.getFieldMeta("profile.age")).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: false,
         isDirty: false,
@@ -602,6 +611,7 @@ describe("FormControl", () => {
       const form = new FormControl({ defaultValues });
 
       form.setFieldMeta("name", {
+        ...form.getFieldMeta("name"),
         isBlurred: false,
         isTouched: true,
         isDirty: false,
@@ -609,6 +619,7 @@ describe("FormControl", () => {
       });
 
       expect(form.getFieldMeta("name")).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: false,
@@ -632,6 +643,7 @@ describe("FormControl", () => {
       const syncMeta = vi.spyOn(form, "syncMeta");
 
       form.setFieldMeta("name", {
+        ...form.getFieldMeta("name"),
         isBlurred: false,
         isTouched: true,
         isDirty: false,
@@ -988,16 +1000,11 @@ describe("FormControl", () => {
       expect(subscriber).toHaveBeenCalledWith({
         value: "",
         meta: {
+          ...DEFAULT_META,
           isBlurred: false,
           isTouched: false,
           isDirty: false,
           isValidating: false,
-        },
-        errorMap: {
-          change: [],
-          blur: [],
-          changeAsync: [],
-          blurAsync: [],
         },
       });
     });

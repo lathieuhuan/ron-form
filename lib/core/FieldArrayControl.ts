@@ -71,7 +71,6 @@ export class FieldArrayControl<
       form.fieldSubjects.get(field)?.next({
         value,
         meta: form.getFieldMeta(field),
-        errorMap: form.getFieldErrorMap(field),
       });
       form.valueSubjects.get(field)?.next({
         value,
@@ -88,7 +87,7 @@ export class FieldArrayControl<
     }
 
     const validationSpec = form.validationSpec("change", name);
-    const { meta, errors, errorMap } = form._validateSync(validationSpec, {
+    const { meta, errors } = form._validateSync(validationSpec, {
       shouldBlur: false,
       shouldTouch: true,
       shouldDirty: true,
@@ -97,7 +96,6 @@ export class FieldArrayControl<
     form.updateAndNotifyField(name, {
       value: newValue as DeepValue<TFormValues, TField>,
       meta,
-      errorMap,
     });
 
     form.valueSubjects.get(name)?.next({

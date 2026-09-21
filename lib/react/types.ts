@@ -2,7 +2,6 @@ import type {
   DeepKeys,
   DeepValue,
   FieldError,
-  FieldErrors,
   FieldMeta,
   FieldState,
   FormApi,
@@ -13,8 +12,7 @@ export interface ReactFieldLooseApi<TFormValues> {
   id: string;
   name: string;
   value: any;
-  meta: FieldMeta;
-  errorMap: FieldErrors<string>;
+  meta: FieldMeta<TFormValues>;
   errors: FieldError<string>[];
   form: FormApi<TFormValues>;
   handleChange(value: any, options?: HandleChangeOptions): void;
@@ -27,7 +25,7 @@ export interface ReactFieldStrictApi<
 > extends FieldState<TFormValues, TKey> {
   id: string;
   name: TKey;
-  errors: FieldError<TKey>[];
+  errors: FieldError<string>[];
   form: FormApi<TFormValues>;
   handleChange(value: DeepValue<TFormValues, TKey>, options?: HandleChangeOptions): void;
   handleBlur(): void;

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
 import { FieldControl } from "../FieldControl";
 import { FormControl } from "../FormControl";
-import { FieldMeta } from "../types";
+import { DEFAULT_META } from "../constants";
 import { delay } from "../utils/delay";
 
 const defaultValues = {
@@ -49,6 +49,7 @@ describe("FieldControl", () => {
       field.handleChange("Jane");
 
       expect(form.getFieldMeta("name")).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: true,
@@ -106,7 +107,8 @@ describe("FieldControl", () => {
 
         field.handleBlur();
 
-        const newMeta: FieldMeta = {
+        const newMeta = {
+          ...form.getFieldMeta("name"),
           isBlurred: true,
           isTouched: true,
           isDirty: false,
@@ -138,7 +140,8 @@ describe("FieldControl", () => {
 
         field.handleBlur();
 
-        const newMeta: FieldMeta = {
+        const newMeta = {
+          ...form.getFieldMeta("name"),
           isBlurred: true,
           isTouched: true,
           isDirty: false,
@@ -171,6 +174,7 @@ describe("FieldControl", () => {
         field.handleBlur();
 
         expect(form.getFieldMeta("name")).toEqual({
+          ...DEFAULT_META,
           isBlurred: true,
           isTouched: true,
           isDirty: true,

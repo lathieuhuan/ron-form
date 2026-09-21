@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FieldArrayControl } from "../FieldArrayControl";
 import { FormControl } from "../FormControl";
-import { DEFAULT_CHANGE_CAUSE } from "../constants";
+import { DEFAULT_CHANGE_CAUSE, DEFAULT_META } from "../constants";
 import * as objectUtils from "../utils/object";
 
 type FormValues = {
@@ -162,6 +162,7 @@ describe("FieldArrayControl", () => {
       fieldArray.insert("a");
 
       expect(form.getFieldMeta("tags")).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: true,
@@ -409,6 +410,7 @@ describe("FieldArrayControl", () => {
       fieldArray.remove(0);
 
       expect(form.getFieldMeta("tags")).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: true,
@@ -661,6 +663,7 @@ describe("FieldArrayControl", () => {
       fieldArray.swap(0, 1);
 
       expect(form.getFieldMeta("tags")).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: true,
@@ -929,6 +932,7 @@ describe("FieldArrayControl", () => {
       fieldArray.move(0, 2);
 
       expect(form.getFieldMeta("tags")).toEqual({
+        ...DEFAULT_META,
         isBlurred: false,
         isTouched: true,
         isDirty: true,

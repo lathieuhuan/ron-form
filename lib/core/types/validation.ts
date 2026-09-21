@@ -18,7 +18,7 @@ export interface FieldError<TKey> {
   meta: ErrorMeta;
 }
 
-export type FieldErrors<TKey> = {
+export type FieldErrors<TKey = string> = {
   [type in ErrorCauseType]: FieldError<TKey>[];
 };
 
