@@ -33,6 +33,20 @@ describe("collectFieldPaths", () => {
     expect(collectFieldPaths(obj)).toEqual(["user", "user.profile", "user.profile.name", "count"]);
   });
 
+  it("collects array indices and their nested paths", () => {
+    expect(
+      collectFieldPaths({
+        contacts: [{ name: "Jane" }, { name: "John" }],
+      }),
+    ).toEqual([
+      "contacts",
+      "contacts.0",
+      "contacts.0.name",
+      "contacts.1",
+      "contacts.1.name",
+    ]);
+  });
+
   it("prefixes paths when a prefix is provided", () => {
     const obj = {
       street: "Main St",

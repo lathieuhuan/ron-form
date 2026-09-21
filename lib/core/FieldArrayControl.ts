@@ -1,3 +1,4 @@
+import type { FieldId } from "./FieldIdentityRegistry";
 import type { FormControl } from "./FormControl";
 import type { AnyObject, ArrayUpdateOptions, DeepItemValue, DeepKeys, DeepValue } from "./types";
 
@@ -5,6 +6,14 @@ import { DEFAULT_CHANGE_CAUSE } from "./constants";
 import { clone } from "./utils/clone";
 import { collectFieldPaths } from "./utils/collectFieldPaths";
 import { get, set } from "./utils/object";
+
+// TOCHECK
+
+type ArrayIdentityMutation =
+  | { type: "insert"; index: number }
+  | { type: "remove"; index: number }
+  | { type: "move"; fromIndex: number; toIndex: number }
+  | { type: "swap"; indexA: number; indexB: number };
 
 export class FieldArrayControl<
   TFormValues,
@@ -44,26 +53,31 @@ export class FieldArrayControl<
   update = (
     newValue: TItemValue[],
     oldValue: TItemValue[],
-    notifiedFields: string[],
+    mutation: ArrayIdentityMutation,
     options: ArrayUpdateOptions,
   ): TItemValue[] | null => {
     const { form, name } = this;
     const oldValues = clone(form._values);
-    const success = set(form._values as AnyObject, name, newValue);
+    const arrayId = form.fieldIdRegistry.prepareArray(name, form._values, oldValue.length);
 
-    // console.log("====", success);
-    // console.log(newValue);
-    // console.log(oldValue);
-    // console.log(oldValues);
-    // console.log(notifiedFields);
+    if (arrayId == null) {
+      return null;
+    }
+
+    const success = set(form._values as AnyObject, name, newValue);
 
     if (!success) {
       return null;
     }
 
-    const { dontValidate = false, cause = DEFAULT_CHANGE_CAUSE } = options;
+    this.updateIdentity(arrayId, mutation);
 
-    notifiedFields = dontValidate ? notifiedFields.concat(name) : notifiedFields;
+    const { dontValidate = false, cause = DEFAULT_CHANGE_CAUSE } = options;
+    const notifiedFields = this.collectAffectedFields(oldValue, newValue, mutation);
+
+    if (dontValidate) {
+      notifiedFields.add(name);
+    }
 
     for (const field of notifiedFields) {
       const value = form.getFieldValue(field);
@@ -87,7 +101,7 @@ export class FieldArrayControl<
     }
 
     const validationSpec = form.validationSpec("change", name);
-    const { meta, errors } = form._validateSync(validationSpec, {
+    const meta = form._validateSync(validationSpec, {
       shouldBlur: false,
       shouldTouch: true,
       shouldDirty: true,
@@ -108,11 +122,81 @@ export class FieldArrayControl<
     form.syncMeta();
 
     // TODO add an option to validate async even if there are sync errors
-    if (errors.length === 0) {
+    if (meta.errors.change.length === 0) {
       form.scheduleAsyncValidation(form.asyncValidationSpec("change", name));
     }
 
     return newValue;
+  };
+
+  private updateIdentity = (arrayId: FieldId, mutation: ArrayIdentityMutation): void => {
+    const { fieldIdRegistry } = this.form;
+
+    switch (mutation.type) {
+      case "insert":
+        fieldIdRegistry.insert(arrayId, mutation.index);
+        return;
+      case "remove": {
+        const removedItemKey = fieldIdRegistry.remove(arrayId, mutation.index);
+
+        if (removedItemKey != null) {
+          this.form.removeFieldIdState(removedItemKey);
+        }
+        return;
+      }
+      case "move":
+        fieldIdRegistry.move(arrayId, mutation.fromIndex, mutation.toIndex);
+        return;
+      case "swap":
+        fieldIdRegistry.swap(arrayId, mutation.indexA, mutation.indexB);
+        return;
+      default:
+        mutation satisfies never;
+        return;
+    }
+  };
+
+  private collectAffectedFields = (
+    oldValue: TItemValue[],
+    newValue: TItemValue[],
+    mutation: ArrayIdentityMutation,
+  ): Set<string> => {
+    const indices: number[] = [];
+
+    if (mutation.type === "swap") {
+      indices.push(mutation.indexA, mutation.indexB);
+    } else {
+      const startIndex =
+        mutation.type === "move" ? Math.min(mutation.fromIndex, mutation.toIndex) : mutation.index;
+      const endIndex =
+        mutation.type === "move"
+          ? Math.max(mutation.fromIndex, mutation.toIndex)
+          : Math.max(oldValue.length, newValue.length) - 1;
+
+      for (let index = startIndex; index <= endIndex; index++) {
+        indices.push(index);
+      }
+    }
+
+    const fields = new Set<string>();
+
+    for (const index of indices) {
+      const prefix = `${this.name}.${index}`;
+
+      collectFieldPaths(oldValue[index], prefix, [prefix]).forEach((field) => fields.add(field));
+      collectFieldPaths(newValue[index], prefix, [prefix]).forEach((field) => fields.add(field));
+
+      for (const subscribedField of [
+        ...this.form.fieldSubjects.keys(),
+        ...this.form.valueSubjects.keys(),
+      ]) {
+        if (subscribedField === prefix || String(subscribedField).startsWith(`${prefix}.`)) {
+          fields.add(subscribedField);
+        }
+      }
+    }
+
+    return fields;
   };
 
   /**
@@ -123,7 +207,6 @@ export class FieldArrayControl<
     index?: number,
     options: ArrayUpdateOptions = {},
   ): TItemValue[] | null => {
-    const { name } = this;
     const currentValue = this.resolvedValue;
 
     if (currentValue == null) {
@@ -142,16 +225,13 @@ export class FieldArrayControl<
       ...currentValue.slice(insertIndex),
     ];
 
-    const notifiedFields = collectFieldPaths(value, `${name}.${insertIndex}`);
-
-    return this.update(arrayValue, currentValue, notifiedFields, options);
+    return this.update(arrayValue, currentValue, { type: "insert", index: insertIndex }, options);
   };
 
   /**
    * @public
    */
   remove = (index: number, options: ArrayUpdateOptions = {}): TItemValue[] | null => {
-    const { name } = this;
     const currentValue = this.resolvedValue;
 
     if (currentValue == null) {
@@ -162,12 +242,9 @@ export class FieldArrayControl<
       return null;
     }
 
-    const removedItem = currentValue[index];
     const newValue = [...currentValue.slice(0, index), ...currentValue.slice(index + 1)];
 
-    const notifiedFields = collectFieldPaths(removedItem, `${name}.${index}`);
-
-    return this.update(newValue, currentValue, notifiedFields, options);
+    return this.update(newValue, currentValue, { type: "remove", index }, options);
   };
 
   /**
@@ -178,7 +255,6 @@ export class FieldArrayControl<
     toIndex: number,
     options: ArrayUpdateOptions = {},
   ): TItemValue[] | null => {
-    const { name } = this;
     const currentValue = this.resolvedValue;
 
     if (currentValue == null) {
@@ -202,15 +278,7 @@ export class FieldArrayControl<
     const [item] = newValue.splice(fromIndex, 1);
     newValue.splice(toIndex, 0, item);
 
-    const minIndex = Math.min(fromIndex, toIndex);
-    const maxIndex = Math.max(fromIndex, toIndex);
-    const notifiedFields: string[] = [];
-
-    for (let i = minIndex; i <= maxIndex; i++) {
-      collectFieldPaths(newValue[i], `${name}.${i}`, notifiedFields);
-    }
-
-    return this.update(newValue, currentValue, notifiedFields, options);
+    return this.update(newValue, currentValue, { type: "move", fromIndex, toIndex }, options);
   };
 
   /**
@@ -221,7 +289,6 @@ export class FieldArrayControl<
     indexB: number,
     options: ArrayUpdateOptions = {},
   ): TItemValue[] | null => {
-    const { name } = this;
     const currentValue = this.resolvedValue;
 
     if (currentValue == null) {
@@ -246,11 +313,6 @@ export class FieldArrayControl<
     newValue[indexA] = newValue[indexB];
     newValue[indexB] = temp;
 
-    const notifiedFields: string[] = [];
-
-    collectFieldPaths(newValue[indexA], `${name}.${indexA}`, notifiedFields);
-    collectFieldPaths(newValue[indexB], `${name}.${indexB}`, notifiedFields);
-
-    return this.update(newValue, currentValue, notifiedFields, options);
+    return this.update(newValue, currentValue, { type: "swap", indexA, indexB }, options);
   };
 }

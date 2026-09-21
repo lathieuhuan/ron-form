@@ -394,6 +394,8 @@ describe("FieldArrayControl", () => {
       form.setFieldValue("contacts", [{ name: "Jane", email: "jane@example.com" }], {
         dontValidate: true,
       });
+      nameSubscriber.mockClear();
+      emailSubscriber.mockClear();
 
       fieldArray.remove(0, { dontValidate: true });
 
@@ -647,6 +649,8 @@ describe("FieldArrayControl", () => {
         ],
         { dontValidate: true },
       );
+      name0Subscriber.mockClear();
+      name1Subscriber.mockClear();
 
       fieldArray.swap(0, 1, { dontValidate: true });
 
@@ -915,6 +919,9 @@ describe("FieldArrayControl", () => {
         ],
         { dontValidate: true },
       );
+      name0Subscriber.mockClear();
+      name1Subscriber.mockClear();
+      name2Subscriber.mockClear();
 
       fieldArray.move(0, 2, { dontValidate: true });
 

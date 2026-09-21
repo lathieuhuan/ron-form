@@ -365,13 +365,12 @@ describe("FormControl validation", () => {
       form.subscribeField("name", fieldSubscriber);
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta, errors } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
       });
 
-      expect(errors).toEqual([]);
       expect(meta.errors.change).toEqual([]);
       expect(meta).toEqual({
         ...DEFAULT_META,
@@ -394,7 +393,7 @@ describe("FormControl validation", () => {
       form.subscribeField("name", fieldSubscriber);
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta, errors } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -410,7 +409,6 @@ describe("FormControl validation", () => {
       ];
 
       expect(validator).toHaveBeenCalledWith("John", form);
-      expect(errors).toEqual(expectedErrors);
       expect(meta.errors.change).toEqual(expectedErrors);
       expect(form.getFieldErrorMap("name").change).toEqual([]);
       expect(fieldSubscriber).not.toHaveBeenCalled();
@@ -424,7 +422,7 @@ describe("FormControl validation", () => {
       });
 
       const validationSpec = form.validationSpec("blur", "email");
-      const { meta, errors } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -440,7 +438,6 @@ describe("FormControl validation", () => {
       ];
 
       expect(validator).toHaveBeenCalledWith("john@example.com", form);
-      expect(errors).toEqual(expectedErrors);
       expect(meta.errors.blur).toEqual(expectedErrors);
     });
 
@@ -468,13 +465,12 @@ describe("FormControl validation", () => {
       });
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta, errors } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
       });
 
-      expect(errors).toEqual([]);
       expect(meta.errors.change).toEqual([]);
       expect(form.getFieldErrorMap("name").change).toEqual([
         {
@@ -512,7 +508,7 @@ describe("FormControl validation", () => {
       });
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -533,7 +529,7 @@ describe("FormControl validation", () => {
       const form = new FormControl({ defaultValues });
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: true,
         shouldDirty: false,
@@ -547,7 +543,7 @@ describe("FormControl validation", () => {
       const form = new FormControl({ defaultValues });
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: true,
         shouldTouch: false,
         shouldDirty: false,
@@ -569,7 +565,7 @@ describe("FormControl validation", () => {
       });
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldTouch: true,
         shouldBlur: true,
         shouldDirty: false,
@@ -593,7 +589,7 @@ describe("FormControl validation", () => {
       form.subscribeField("name", fieldSubscriber);
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,

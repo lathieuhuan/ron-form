@@ -14,7 +14,8 @@ import type {
   ValidatorMap,
 } from "./types";
 
-import { DEFAULT_META } from "./constants";
+import { DEFAULT_META, ERROR_CAUSES } from "./constants";
+import { FieldId, FieldIdentityRegistry } from "./FieldIdentityRegistry";
 import { FormMetaControl } from "./FormMetaControl";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
@@ -27,12 +28,12 @@ type FieldSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
   Subject<FieldState<TFormValues, TKey>>
 >;
 
-type TimeoutIdMapByCause<TFormValues> = {
-  [key in ValidationCause]: Map<DeepKeys<TFormValues>, NodeJS.Timeout>;
+type TimeoutIdMapByCause = {
+  [key in ValidationCause]: Map<FieldId, NodeJS.Timeout>;
 };
 
-type AbortControllerMapByCause<TFormValues> = {
-  [key in ValidationCause]: Map<DeepKeys<TFormValues>, AbortController>;
+type AbortControllerMapByCause = {
+  [key in ValidationCause]: Map<FieldId, AbortController>;
 };
 
 export type ValidationSpec<TFormValues, TField extends DeepKeys<TFormValues>> = {
@@ -44,7 +45,9 @@ export type ValidationSpec<TFormValues, TField extends DeepKeys<TFormValues>> = 
 
 export type AsyncValidationSpec<TFormValues, TField extends DeepKeys<TFormValues>> = {
   cause: ValidationCause;
+  // TOCHECK do we need field?
   field: TField;
+  fieldId: FieldId | null;
   value: DeepValue<TFormValues, TField>;
   validator: AsyncValidator<TFormValues, TField> | undefined;
 };
@@ -63,22 +66,23 @@ export class FormCore<TFormValues> {
   _values: TFormValues;
   meta: FormMetaControl;
 
-  fieldMetaMap: Map<DeepKeys<TFormValues>, FieldMeta<TFormValues>> = new Map();
+  fieldMetaMap: Map<FieldId, FieldMeta<TFormValues>> = new Map();
+  fieldIdRegistry = new FieldIdentityRegistry<TFormValues>();
 
   asyncDebounceMs: number;
 
   validators: ValidatorMap<TFormValues>;
   asyncValidators: AsyncValidatorMap<TFormValues>;
 
-  timeoutIdMaps: TimeoutIdMapByCause<TFormValues> = {
+  timeoutIdMaps: TimeoutIdMapByCause = {
     change: new Map(),
     blur: new Map(),
   };
-  abortCtrlMaps: AbortControllerMapByCause<TFormValues> = {
+  abortCtrlMaps: AbortControllerMapByCause = {
     change: new Map(),
     blur: new Map(),
   };
-  runningValidatorMap = new RunningValidatorMap<TFormValues>();
+  runningValidatorMap = new RunningValidatorMap();
 
   fieldSubjects: FieldSubjects<TFormValues, DeepKeys<TFormValues>> = new Map();
 
@@ -135,6 +139,7 @@ export class FormCore<TFormValues> {
     return {
       cause,
       field,
+      fieldId: this.fieldIdOf(field),
       value,
       validator: this.asyncValidators[cause][validatorKey],
     };
@@ -153,14 +158,83 @@ export class FormCore<TFormValues> {
    * @public
    */
   getFieldMeta = <TField extends DeepKeys<TFormValues>>(field: TField): FieldMeta<TFormValues> => {
-    let meta = this.fieldMetaMap.get(field);
+    const fieldId = this.fieldIdOf(field);
+
+    // TOCHECK when fieldId is null?
+    if (fieldId == null) {
+      return DEFAULT_META;
+    }
+
+    let meta = this.fieldMetaMap.get(fieldId);
 
     if (!meta) {
       meta = DEFAULT_META;
-      this.fieldMetaMap.set(field, meta);
+      this.fieldMetaMap.set(fieldId, meta);
+    }
+
+    // TOCHECK can we optimize this implementation?
+    let errorsChanged = false;
+    const errors = { ...meta.errors };
+
+    for (const cause of ERROR_CAUSES) {
+      const currentErrors = errors[cause];
+
+      if (currentErrors.some((error) => error.path !== field)) {
+        errors[cause] = currentErrors.map((error) => ({
+          ...error,
+          path: field,
+        }));
+        errorsChanged = true;
+      }
+    }
+
+    if (errorsChanged) {
+      meta = {
+        ...meta,
+        errors,
+      };
+      this.fieldMetaMap.set(fieldId, meta);
     }
 
     return meta;
+  };
+
+  fieldIdOf = (field: DeepKeys<TFormValues>): FieldId | null => {
+    return this.fieldIdRegistry.toFieldId(field, this._values);
+  };
+
+  fieldKeyFrom = (fieldId: FieldId): DeepKeys<TFormValues> | null => {
+    return this.fieldIdRegistry.toFieldKey(fieldId, this._values);
+  };
+
+  // TOCHECK rename
+  removeFieldIdState = (prefix: FieldId): void => {
+    const isRemoved = (fieldId: FieldId) =>
+      this.fieldIdRegistry.isSameOrDescendant(fieldId, prefix);
+
+    for (const fieldId of this.fieldMetaMap.keys()) {
+      if (isRemoved(fieldId)) {
+        this.fieldMetaMap.delete(fieldId);
+      }
+    }
+
+    for (const cause of <ValidationCause[]>["change", "blur"]) {
+      for (const [fieldKey, timeoutId] of this.timeoutIdMaps[cause]) {
+        if (isRemoved(fieldKey)) {
+          clearTimeout(timeoutId);
+          this.timeoutIdMaps[cause].delete(fieldKey);
+        }
+      }
+
+      for (const [fieldKey, abortCtrl] of this.abortCtrlMaps[cause]) {
+        if (isRemoved(fieldKey)) {
+          abortCtrl.abort();
+          this.abortCtrlMaps[cause].delete(fieldKey);
+        }
+      }
+    }
+
+    this.runningValidatorMap.removeWhere(isRemoved);
   };
 
   /**
@@ -202,6 +276,7 @@ export class FormCore<TFormValues> {
    * this method will short circuit and return `false`.
    * Otherwise, return `true`.
    */
+  // TOCHECK can we use FieldId instead of field?
   updateAndNotifyField = <TField extends DeepKeys<TFormValues>>(
     field: TField,
     changes: Partial<FieldState<TFormValues, TField>>,
@@ -223,7 +298,11 @@ export class FormCore<TFormValues> {
       ? (changes.value as DeepValue<TFormValues, TField>)
       : this.getFieldValue(field);
 
-    this.fieldMetaMap.set(field, meta);
+    const fieldId = this.fieldIdOf(field);
+
+    if (fieldId != null) {
+      this.fieldMetaMap.set(fieldId, meta);
+    }
 
     this.fieldSubjects.get(field)?.next({
       value,

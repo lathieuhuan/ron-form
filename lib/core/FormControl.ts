@@ -15,7 +15,7 @@ import type {
   ValueChangeData,
 } from "./types";
 
-import { DEFAULT_CHANGE_CAUSE, DEFAULT_FORM_META, ERROR_CAUSES } from "./constants";
+import { DEFAULT_CHANGE_CAUSE, DEFAULT_FORM_META, DEFAULT_META, ERROR_CAUSES } from "./constants";
 import { AsyncValidationSpec, FormCore, FormCoreOptions, ValidationSpec } from "./FormCore";
 import { RunningValidatorMap } from "./RunningValidatorMap";
 import { cache } from "./utils/cache";
@@ -148,10 +148,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       });
     }
 
-    return {
-      meta: metaPatcher.value,
-      errors,
-    };
+    return metaPatcher.value;
   };
 
   /**
@@ -162,10 +159,10 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     field: TField,
     cause: ValidationCause,
     options: Partial<ValidateSyncOptions> = {},
-  ) => {
+  ): FieldError<TField>[] => {
     const { shouldBlur = false, shouldTouch = true, shouldDirty = false } = options;
     const validationSpec = this.validationSpec(cause, field);
-    const { meta, errors } = this._validateSync(validationSpec, {
+    const meta = this._validateSync(validationSpec, {
       shouldBlur,
       shouldTouch,
       shouldDirty,
@@ -179,56 +176,105 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       this.syncMeta();
     }
 
-    return errors;
+    return meta.errors[cause] as FieldError<TField>[];
   };
 
   _validateAsync = async <TField extends DeepKeys<TFormValues>>(
     spec: AsyncValidationSpec<TFormValues, TField>,
     abortCtrl: AbortController,
   ): Promise<FieldError<TField>[]> => {
-    if (spec.validator == null) {
+    if (spec.validator == null || spec.fieldId == null) {
       return [];
     }
 
-    const { field, cause } = spec;
+    const { fieldId, cause } = spec;
+    const initialField = this.fieldKeyFrom(fieldId);
 
-    this.runningValidatorMap.add(field, cause);
+    if (initialField == null) {
+      return [];
+    }
+
+    const runId = this.runningValidatorMap.add(fieldId, cause);
+    let runRemoved = false;
+
+    // TOCHECK this logic
+    const removeRun = (notify: boolean) => {
+      if (runRemoved) {
+        return;
+      }
+
+      this.runningValidatorMap.remove(fieldId, cause, runId);
+      runRemoved = true;
+
+      if (!notify) {
+        return;
+      }
+
+      const currentField = this.fieldKeyFrom(fieldId);
+
+      if (currentField == null) {
+        return;
+      }
+
+      const metaPatcher = new Patcher(this.getFieldMeta(currentField));
+
+      metaPatcher.set("isValidating", this.runningValidatorMap.isAnyRunning(fieldId));
+
+      this.updateAndNotifyField(currentField, {
+        meta: metaPatcher.value,
+      });
+      this.syncMeta();
+    };
+
+    const handleAbort = () => removeRun(true);
+
+    abortCtrl.signal.addEventListener("abort", handleAbort, { once: true });
 
     {
       // Turn on isValidating
-      const { success, result } = update(this.getFieldMeta(field), "isValidating", true);
+      const { success, result } = update(this.getFieldMeta(initialField), "isValidating", true);
 
       if (success) {
-        this.updateAndNotifyField(field, { meta: result });
+        this.updateAndNotifyField(initialField, { meta: result });
       }
     }
 
-    const errors = await this._runAsyncValidator(spec);
+    // TOCHECK why we need try/finally?
+    try {
+      const resolvedErrors = await this._runAsyncValidator(spec);
+      const currentField = this.fieldKeyFrom(fieldId);
 
-    if (abortCtrl.signal.aborted) {
-      return [];
+      if (abortCtrl.signal.aborted || currentField == null) {
+        return [];
+      }
+
+      const errors = resolvedErrors.map((error) => ({
+        ...error,
+        path: currentField,
+      })) as FieldError<TField>[];
+
+      removeRun(false);
+
+      const meta = this.getFieldMeta(currentField);
+
+      const newErrors: FieldErrors<DeepKeys<TFormValues>> = {
+        ...meta.errors,
+        [`${cause}Async`]: errors,
+      };
+
+      this.updateAndNotifyField(currentField, {
+        meta: {
+          ...meta,
+          isValidating: this.runningValidatorMap.isAnyRunning(fieldId),
+          errors: newErrors,
+        },
+      });
+
+      return errors;
+    } finally {
+      abortCtrl.signal.removeEventListener("abort", handleAbort);
+      removeRun(true);
     }
-
-    this.runningValidatorMap.remove(field, cause);
-
-    // Update field state
-
-    const meta = this.getFieldMeta(field);
-
-    const newErrors: FieldErrors<DeepKeys<TFormValues>> = {
-      ...meta.errors,
-      [`${cause}Async`]: errors,
-    };
-
-    this.updateAndNotifyField(field, {
-      meta: {
-        ...meta,
-        isValidating: this.runningValidatorMap.isAnyRunning(field),
-        errors: newErrors,
-      },
-    });
-
-    return errors;
   };
 
   /**
@@ -238,24 +284,34 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     field: TField,
     cause: ValidationCause,
   ): Promise<FieldError<TField>[]> => {
+    const validationSpec = this.asyncValidationSpec(cause, field);
+    const { fieldId } = validationSpec;
+
+    if (fieldId == null) {
+      return [];
+    }
+
     const timeoutIds = this.timeoutIdMaps[cause];
 
-    clearTimeout(timeoutIds.get(field));
-    timeoutIds.delete(field);
+    clearTimeout(timeoutIds.get(fieldId));
+    timeoutIds.delete(fieldId);
 
     const abortCtrls = this.abortCtrlMaps[cause];
     const abortCtrl = new AbortController();
 
-    abortCtrls.get(field)?.abort();
-    abortCtrls.set(field, abortCtrl);
+    abortCtrls.get(fieldId)?.abort();
+    abortCtrls.set(fieldId, abortCtrl);
 
     this.meta.set({ isValidating: true });
 
-    const validationSpec = this.asyncValidationSpec(cause, field);
     const errors = await this._validateAsync(validationSpec, abortCtrl);
 
+    if (abortCtrls.get(fieldId) === abortCtrl) {
+      abortCtrls.delete(fieldId);
+    }
+
     this.meta.set({
-      isValidating: this.runningValidatorMap.isAnyRunning(field),
+      isValidating: this.runningValidatorMap.isAnyRunning(),
     });
 
     return errors;
@@ -264,12 +320,15 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   scheduleAsyncValidation = <TField extends DeepKeys<TFormValues>>(
     spec: AsyncValidationSpec<TFormValues, TField>,
   ) => {
-    if (spec.validator == null) {
+    if (spec.validator == null || spec.fieldId == null) {
       return null;
     }
 
-    const { field, cause } = spec;
-    let timeoutId = this.timeoutIdMaps[cause].get(field);
+    const { fieldId, cause } = spec;
+    const timeoutIds = this.timeoutIdMaps[cause];
+    const abortCtrls = this.abortCtrlMaps[cause];
+
+    let timeoutId = timeoutIds.get(fieldId);
 
     if (timeoutId !== undefined) {
       clearTimeout(timeoutId);
@@ -277,24 +336,30 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
     const abortCtrl = new AbortController();
 
-    this.abortCtrlMaps[cause].get(field)?.abort();
-    this.abortCtrlMaps[cause].set(field, abortCtrl);
+    abortCtrls.get(fieldId)?.abort();
+    abortCtrls.set(fieldId, abortCtrl);
 
     timeoutId = setTimeout(async () => {
       if (abortCtrl.signal.aborted) {
         return;
       }
 
+      timeoutIds.delete(fieldId);
+
       this.meta.set({ isValidating: true });
 
       await this._validateAsync(spec, abortCtrl);
+
+      if (abortCtrls.get(fieldId) === abortCtrl) {
+        abortCtrls.delete(fieldId);
+      }
 
       this.meta.set({
         isValidating: this.runningValidatorMap.isAnyRunning(),
       });
     }, this.asyncDebounceMs);
 
-    this.timeoutIdMaps[cause].set(field, timeoutId);
+    timeoutIds.set(fieldId, timeoutId);
 
     return {
       timeoutId,
@@ -316,8 +381,30 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     const success = set(this._values as AnyObject, field, clonedValue);
 
     if (!success) {
-      console.error(`Field ${field} not found in values`);
+      console.error(`Field ${field} not found in form values`);
       return false;
+    }
+
+    const oldFieldValue = get(oldValues as AnyObject, field);
+    const replacesArray = Array.isArray(oldFieldValue) || Array.isArray(value);
+    const arrayId = replacesArray
+      ? this.fieldIdRegistry.prepareArray(
+          field,
+          this._values,
+          Array.isArray(oldFieldValue) ? oldFieldValue.length : 0,
+        )
+      : null;
+
+    // Remove old array items
+    if (arrayId != null) {
+      const removedItemIds = this.fieldIdRegistry.replace(
+        arrayId,
+        Array.isArray(value) ? value.length : 0,
+      );
+
+      for (const removedItemId of removedItemIds) {
+        this.removeFieldIdState(removedItemId);
+      }
     }
 
     const {
@@ -326,25 +413,44 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       dontValidate = false,
       cause = DEFAULT_CHANGE_CAUSE,
     } = options;
-    const subFields = collectFieldPaths(value, field, [field]);
+
+    // TOCHECK
+    const presentFields = collectFieldPaths(value, field, [field]);
+    const notifiedFields = new Set<DeepKeys<TFormValues>>(presentFields);
+
+    if (replacesArray) {
+      collectFieldPaths(oldFieldValue, field, [field]).forEach((subField) =>
+        notifiedFields.add(subField as DeepKeys<TFormValues>),
+      );
+
+      for (const subscribedField of [...this.fieldSubjects.keys(), ...this.valueSubjects.keys()]) {
+        if (subscribedField === field || subscribedField.startsWith(`${field}.`)) {
+          notifiedFields.add(subscribedField);
+        }
+      }
+    }
 
     if (dontValidate) {
-      for (const subField of subFields) {
+      for (const subField of notifiedFields) {
+        const subFieldValue = this.getFieldValue(subField);
+        const isPresent = presentFields.includes(subField);
         const meta = this.getFieldMeta(subField);
-        const newMeta: FieldMeta<TFormValues> = {
-          ...meta,
-          isBlurred: meta.isBlurred,
-          isTouched: dontTouch ? meta.isTouched : true,
-          isDirty: dontDirty ? meta.isDirty : true,
-          isValidating: false,
-        };
+        const newMeta: FieldMeta<TFormValues> = isPresent
+          ? {
+              ...meta,
+              isTouched: dontTouch ? meta.isTouched : true,
+              isDirty: dontDirty ? meta.isDirty : true,
+              isValidating: false,
+            }
+          : DEFAULT_META;
+        // TOCHECK
 
         this.updateAndNotifyField(subField, {
-          value: clonedValue,
+          value: subFieldValue,
           meta: newMeta,
         });
         this.valueSubjects.get(subField)?.next({
-          value: this.getFieldValue(subField),
+          value: subFieldValue,
           oldValue: get(oldValues as AnyObject, subField),
           form: this,
           cause,
@@ -360,11 +466,13 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
     const asyncValidateSpecs: AsyncValidationSpec<TFormValues, DeepKeys<TFormValues>>[] = [];
 
-    for (const subField of subFields) {
+    // TOCHECK
+    for (const subField of presentFields) {
+      // TOCHECK
       const subFieldValue = this.getFieldValue(subField);
 
       const validationSpec = this.validationSpec("change", subField, subFieldValue);
-      const { meta, errors } = this._validateSync(validationSpec, {
+      const meta = this._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: !dontTouch,
         shouldDirty: !dontDirty,
@@ -383,12 +491,33 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       });
 
       // TODO add an option to validate async even if there are sync errors
-      if (errors.length > 0) {
+      if (meta.errors.change.length > 0) {
         continue;
       }
 
       asyncValidateSpecs.push(this.asyncValidationSpec("change", subField, subFieldValue));
     }
+
+    // TOCHECK
+    for (const subField of notifiedFields) {
+      if (presentFields.includes(subField)) {
+        continue;
+      }
+
+      const subFieldValue = this.getFieldValue(subField);
+
+      this.updateAndNotifyField(subField, {
+        value: subFieldValue,
+        meta: DEFAULT_META,
+      });
+      this.valueSubjects.get(subField)?.next({
+        value: subFieldValue,
+        oldValue: get(oldValues as AnyObject, subField),
+        form: this,
+        cause,
+      });
+    }
+    // TOCHECK
 
     this.syncMeta();
 
@@ -499,9 +628,17 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     } else if (this.onSubmitFailed) {
       const errors: AllFieldErrors<TFormValues> = {};
 
-      for (const [field, meta] of this.fieldMetaMap.entries()) {
+      for (const fieldId of this.fieldMetaMap.keys()) {
+        const field = this.fieldKeyFrom(fieldId);
+
+        if (field == null) {
+          continue;
+        }
+
         if (this.isFieldError(field)) {
-          errors[field] = meta.errors;
+          // TOCHECK why not fieldMetaMap.entries() to get meta then access errors?
+          // errors[field] = meta.errors;
+          errors[field] = this.getFieldMeta(field).errors;
         }
       }
 
@@ -521,17 +658,25 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     this._values = clone(this._defaultValues);
 
     for (const cause of <ValidationCause[]>["change", "blur"]) {
-      for (const timeoutId of this.timeoutIdMaps[cause].values()) {
+      const timeoutIds = this.timeoutIdMaps[cause];
+      const abortCtrls = this.abortCtrlMaps[cause];
+
+      for (const timeoutId of timeoutIds.values()) {
         clearTimeout(timeoutId);
       }
-      for (const abortCtrl of this.abortCtrlMaps[cause].values()) {
+
+      for (const abortCtrl of abortCtrls.values()) {
         abortCtrl.abort();
       }
+
+      timeoutIds.clear();
+      abortCtrls.clear();
     }
 
-    this.runningValidatorMap = new RunningValidatorMap<TFormValues>();
+    this.runningValidatorMap = new RunningValidatorMap();
 
     this.fieldMetaMap.clear();
+    this.fieldIdRegistry.clear();
 
     const values = cache((field: DeepKeys<TFormValues>) => this.getFieldValue(field));
 
