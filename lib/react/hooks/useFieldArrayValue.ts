@@ -24,15 +24,17 @@ export function useFieldArrayValue<TFormValues, TKey extends DeepKeys<TFormValue
   compare = defaultCompare,
   deps = [],
 }: UseFieldArrayValueProps<TFormValues, TKey>) {
-  const [value, setValue] = useState(
-    () => form.getFieldValue(name) as DeepItemValue<TFormValues, TKey>[],
-  );
+  const [value, setValue] = useState(() => form.getFieldValue(name));
 
   useEffect(
     () => {
       return form.subscribeFieldValue(name, (data) => {
-        const value = data.value as DeepItemValue<TFormValues, TKey>[];
-        const oldValue = data.oldValue as DeepItemValue<TFormValues, TKey>[];
+        const { value, oldValue } = data;
+
+        if (!Array.isArray(value) || !Array.isArray(oldValue)) {
+          setValue(value);
+          return;
+        }
 
         if (
           value.length !== oldValue.length ||

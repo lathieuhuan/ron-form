@@ -87,8 +87,7 @@ describe("FormControl validation", () => {
       await form._validateAsync(validationSpec, new AbortController());
 
       const validatingOnlyUpdates = updateAndNotifyField.mock.calls.filter(
-        ([, changes]) =>
-          changes.meta?.isValidating === true && changes.value === undefined,
+        ([, changes]) => changes.meta?.isValidating === true && changes.value === undefined,
       );
 
       expect(validatingOnlyUpdates).toHaveLength(0);
@@ -365,13 +364,12 @@ describe("FormControl validation", () => {
       form.subscribeField("name", fieldSubscriber);
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta, errors } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
       });
 
-      expect(errors).toEqual([]);
       expect(meta.errors.change).toEqual([]);
       expect(meta).toEqual({
         ...DEFAULT_META,
@@ -394,7 +392,7 @@ describe("FormControl validation", () => {
       form.subscribeField("name", fieldSubscriber);
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta, errors } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -410,7 +408,6 @@ describe("FormControl validation", () => {
       ];
 
       expect(validator).toHaveBeenCalledWith("John", form);
-      expect(errors).toEqual(expectedErrors);
       expect(meta.errors.change).toEqual(expectedErrors);
       expect(form.getFieldErrorMap("name").change).toEqual([]);
       expect(fieldSubscriber).not.toHaveBeenCalled();
@@ -424,7 +421,7 @@ describe("FormControl validation", () => {
       });
 
       const validationSpec = form.validationSpec("blur", "email");
-      const { meta, errors } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -440,7 +437,6 @@ describe("FormControl validation", () => {
       ];
 
       expect(validator).toHaveBeenCalledWith("john@example.com", form);
-      expect(errors).toEqual(expectedErrors);
       expect(meta.errors.blur).toEqual(expectedErrors);
     });
 
@@ -468,13 +464,12 @@ describe("FormControl validation", () => {
       });
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta, errors } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
       });
 
-      expect(errors).toEqual([]);
       expect(meta.errors.change).toEqual([]);
       expect(form.getFieldErrorMap("name").change).toEqual([
         {
@@ -512,7 +507,7 @@ describe("FormControl validation", () => {
       });
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -533,7 +528,7 @@ describe("FormControl validation", () => {
       const form = new FormControl({ defaultValues });
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: true,
         shouldDirty: false,
@@ -547,7 +542,7 @@ describe("FormControl validation", () => {
       const form = new FormControl({ defaultValues });
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: true,
         shouldTouch: false,
         shouldDirty: false,
@@ -569,7 +564,7 @@ describe("FormControl validation", () => {
       });
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldTouch: true,
         shouldBlur: true,
         shouldDirty: false,
@@ -593,7 +588,7 @@ describe("FormControl validation", () => {
       form.subscribeField("name", fieldSubscriber);
 
       const validationSpec = form.validationSpec("change", "name");
-      const { meta } = form._validateSync(validationSpec, {
+      const meta = form._validateSync(validationSpec, {
         shouldBlur: false,
         shouldTouch: false,
         shouldDirty: false,
@@ -962,6 +957,57 @@ describe("FormControl validation", () => {
 
       expect(firstValidator).toHaveBeenCalledOnce();
       expect(secondValidator).toHaveBeenCalledOnce();
+      expect(form.getFieldErrorMap("name").changeAsync).toEqual([
+        {
+          path: "name",
+          type: "changeAsync",
+          message: "Second error",
+          meta: {},
+        },
+      ]);
+    });
+
+    it("keeps the latest validation running when the aborted validation settles", async () => {
+      let resolveFirstValidator: (value: string | undefined) => void = () => {};
+      let resolveSecondValidator: (value: string | undefined) => void = () => {};
+      const firstValidator = vi.fn(
+        () =>
+          new Promise<string | undefined>((resolve) => {
+            resolveFirstValidator = resolve;
+          }),
+      );
+      const secondValidator = vi.fn(
+        () =>
+          new Promise<string | undefined>((resolve) => {
+            resolveSecondValidator = resolve;
+          }),
+      );
+      const form = new FormControl({
+        defaultValues,
+        changeAsyncValidators: { name: firstValidator },
+      });
+
+      const firstValidation = form.validateAsync("name", "change");
+
+      await Promise.resolve();
+
+      form.asyncValidators.change.name = secondValidator;
+      const secondValidation = form.validateAsync("name", "change");
+
+      resolveFirstValidator("First error");
+      await firstValidation;
+
+      expect(form.runningValidatorMap.isAnyRunning("name")).toBe(true);
+      expect(form.getFieldMeta("name").isValidating).toBe(true);
+      expect(form.meta.get().isValidating).toBe(true);
+      expect(form.getFieldErrorMap("name").changeAsync).toEqual([]);
+
+      resolveSecondValidator("Second error");
+      await secondValidation;
+
+      expect(form.runningValidatorMap.isAnyRunning("name")).toBe(false);
+      expect(form.getFieldMeta("name").isValidating).toBe(false);
+      expect(form.meta.get().isValidating).toBe(false);
       expect(form.getFieldErrorMap("name").changeAsync).toEqual([
         {
           path: "name",

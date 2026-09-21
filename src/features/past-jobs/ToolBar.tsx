@@ -31,28 +31,52 @@ export function ToolBar({ onRequestReorder }: ToolBarProps) {
     }
   };
 
+  const handleUpdatePastJobs = () => {
+    form.setFieldValue("pastJobs", [
+      {
+        id: "1",
+        companyName: "Company 1",
+        level: "Senior",
+        startYear: 2020,
+      },
+      {
+        id: "2",
+        companyName: "Company 2",
+        level: "Mid",
+        startYear: 2024,
+      },
+    ]);
+  };
+
   const handleClear = () => {
     form.setFieldValue("pastJobs", []);
   };
 
   return (
-    <div className="flex gap-2">
-      <Button variant="outline" onClick={handleAddPastJob}>
-        Add
-      </Button>
-      <Button variant="outline" onClick={onRequestReorder}>
-        Reorder
-      </Button>
-      <Button variant="outline" onClick={handleClear}>
-        Clear
-      </Button>
+    <div className="flex gap-4">
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={handleAddPastJob}>
+          Add
+        </Button>
+        <Button variant="outline" onClick={onRequestReorder}>
+          Reorder
+        </Button>
+        <Button variant="outline" onClick={handleUpdatePastJobs}>
+          Update Past Jobs
+        </Button>
+        <Button variant="outline" onClick={handleClear}>
+          Clear
+        </Button>
+      </div>
 
-      <Button variant="outline" className="ml-auto" onClick={form.reset}>
-        Reset
-      </Button>
-      <Button type="submit" onClick={form.handleSubmit}>
-        Submit
-      </Button>
+      <div className="flex gap-2">
+        <Button variant="outline" className="ml-auto" onClick={form.reset}>
+          Reset
+        </Button>
+        <Button type="submit" onClick={form.handleSubmit}>
+          Submit
+        </Button>
+      </div>
     </div>
   );
 }

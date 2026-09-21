@@ -6,7 +6,7 @@ export type ArrayChangeData<TFormValues, TField extends DeepKeys<TFormValues>> =
 };
 
 export type ArrayUpdateOptions = {
-  /** If true, validate the array, does not validate the items. Default false */
+  /** If true, skip array validation. Item validators are not run by array mutations. */
   dontValidate?: boolean;
   cause?: ChangeCause;
 };

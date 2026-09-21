@@ -27,6 +27,7 @@
   --color-primary-foreground: black;
   --color-secondary: #349cfe;
   --color-background: var(--background);
+  --color-accent: rgba(255, 255, 255, 0.1);
 
   --animate-spin: spin 0.5s linear infinite;
 }
