@@ -493,20 +493,20 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     }
 
     // TOCHECK
-    for (const subField of notifiedFields) {
-      if (presentFields.includes(subField)) {
+    for (const notifiedField of notifiedFields) {
+      if (presentFields.includes(notifiedField)) {
         continue;
       }
 
-      const subFieldValue = this.getFieldValue(subField);
+      const subFieldValue = this.getFieldValue(notifiedField);
 
-      this.updateAndNotifyField(subField, {
+      this.updateAndNotifyField(notifiedField, {
         value: subFieldValue,
         meta: DEFAULT_META,
       });
-      this.valueSubjects.get(subField)?.next({
+      this.valueSubjects.get(notifiedField)?.next({
         value: subFieldValue,
-        oldValue: get(oldValues as AnyObject, subField),
+        oldValue: get(oldValues as AnyObject, notifiedField),
         form: this,
         cause,
       });
