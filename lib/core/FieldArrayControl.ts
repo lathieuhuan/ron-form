@@ -1,6 +1,6 @@
 import type { FieldId } from "./FieldIdentityRegistry";
 import type { FormControl } from "./FormControl";
-import type { AnyObject, ArrayUpdateOptions, DeepItemValue, DeepKeys, DeepValue } from "./types";
+import type { AnyObject, ArrayUpdateOptions, DeepItemValue, DeepNames, DeepValue } from "./types";
 
 import { DEFAULT_CHANGE_CAUSE } from "./constants";
 import { clone } from "./utils/clone";
@@ -17,17 +17,17 @@ type ArrayIdentityMutation =
 
 export class FieldArrayControl<
   TFormValues,
-  TField extends DeepKeys<TFormValues>,
-  TItemValue = DeepItemValue<TFormValues, TField>,
+  TName extends DeepNames<TFormValues>,
+  TItemValue = DeepItemValue<TFormValues, TName>,
 > {
-  name: TField;
+  name: TName;
   form: FormControl<TFormValues>;
 
   get value() {
     return this.form.getFieldValue(this.name) as TItemValue[];
   }
 
-  constructor(field: TField, form: FormControl<TFormValues>) {
+  constructor(field: TName, form: FormControl<TFormValues>) {
     this.name = field;
     this.form = form;
   }
@@ -40,7 +40,7 @@ export class FieldArrayControl<
     let value = this.form.getFieldValue(this.name);
 
     if (value == null) {
-      value = [] as DeepValue<TFormValues, TField>;
+      value = [] as DeepValue<TFormValues, TName>;
     }
 
     if (!this.isArrayValue(value)) {
@@ -73,22 +73,22 @@ export class FieldArrayControl<
     this.updateIdentity(arrayId, mutation);
 
     const { dontValidate = false, cause = DEFAULT_CHANGE_CAUSE } = options;
-    const notifiedFields = this.collectAffectedFields(oldValue, newValue, mutation);
+    const notifiedNames = this.collectAffectedFields(oldValue, newValue, mutation);
 
     if (dontValidate) {
-      notifiedFields.add(name);
+      notifiedNames.add(name);
     }
 
-    for (const field of notifiedFields) {
-      const value = form.getFieldValue(field);
+    for (const name of notifiedNames) {
+      const value = form.getFieldValue(name);
 
-      form.fieldSubjects.get(field)?.next({
+      form.fieldSubjects.get(name)?.next({
         value,
-        meta: form.getFieldMeta(field),
+        meta: form.getFieldMeta(name),
       });
-      form.valueSubjects.get(field)?.next({
+      form.valueSubjects.get(name)?.next({
         value,
-        oldValue: get(oldValues as AnyObject, field),
+        oldValue: get(oldValues as AnyObject, name),
         form,
         cause,
       });
@@ -108,13 +108,13 @@ export class FieldArrayControl<
     });
 
     form.updateAndNotifyField(name, {
-      value: newValue as DeepValue<TFormValues, TField>,
+      value: newValue as DeepValue<TFormValues, TName>,
       meta,
     });
 
     form.valueSubjects.get(name)?.next({
-      value: newValue as DeepValue<TFormValues, TField>,
-      oldValue: oldValue as DeepValue<TFormValues, TField>,
+      value: newValue as DeepValue<TFormValues, TName>,
+      oldValue: oldValue as DeepValue<TFormValues, TName>,
       form,
       cause,
     });
@@ -183,8 +183,8 @@ export class FieldArrayControl<
     for (const index of indices) {
       const prefix = `${this.name}.${index}`;
 
-      collectFieldPaths(oldValue[index], prefix, [prefix]).forEach((field) => fields.add(field));
-      collectFieldPaths(newValue[index], prefix, [prefix]).forEach((field) => fields.add(field));
+      collectFieldPaths(oldValue[index], prefix, [prefix]).forEach((path) => fields.add(path));
+      collectFieldPaths(newValue[index], prefix, [prefix]).forEach((path) => fields.add(path));
 
       for (const subscribedField of [
         ...this.form.fieldSubjects.keys(),

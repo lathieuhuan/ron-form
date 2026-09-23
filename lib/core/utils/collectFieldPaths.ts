@@ -1,16 +1,16 @@
-import type { DeepKeys } from "../types";
+import type { DeepNames } from "../types";
 import { isPlainObject } from "./object";
 
 export function collectFieldPaths<T = unknown>(
   obj: T,
   prefix = "",
-  acc: DeepKeys<T>[] = [],
-): DeepKeys<T>[] {
+  acc: DeepNames<T>[] = [],
+): DeepNames<T>[] {
   if (Array.isArray(obj)) {
     for (let index = 0; index < obj.length; index++) {
       const path = prefix ? `${prefix}.${index}` : String(index);
 
-      acc.push(path as DeepKeys<T>);
+      acc.push(path as DeepNames<T>);
       collectFieldPaths(obj[index], path, acc);
     }
 

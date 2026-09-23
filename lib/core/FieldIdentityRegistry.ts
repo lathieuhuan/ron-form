@@ -1,4 +1,4 @@
-import type { AnyObject, DeepKeys } from "./types";
+import type { AnyObject, DeepNames } from "./types";
 
 import { get } from "./utils/object";
 
@@ -51,7 +51,7 @@ export class FieldIdentityRegistry<TFormValues> {
     return this.itemId++;
   }
 
-  toFieldId(path: DeepKeys<TFormValues>, values: TFormValues): FieldId | null {
+  toFieldId(path: DeepNames<TFormValues>, values: TFormValues): FieldId | null {
     const pathSegments = path.split(".");
     const idSegments: IdentitySegment[] = [];
     let current: unknown = values;
@@ -90,7 +90,7 @@ export class FieldIdentityRegistry<TFormValues> {
     return encode(idSegments);
   }
 
-  toFieldKey(fieldId: FieldId, values: TFormValues): DeepKeys<TFormValues> | null {
+  toFieldKey(fieldId: FieldId, values: TFormValues): DeepNames<TFormValues> | null {
     const idSegments = decode(fieldId);
     const publicSegments: string[] = [];
     const stableSegments: IdentitySegment[] = [];
@@ -130,7 +130,7 @@ export class FieldIdentityRegistry<TFormValues> {
   }
 
   prepareArray(
-    path: DeepKeys<TFormValues>,
+    path: DeepNames<TFormValues>,
     values: TFormValues,
     fallbackLength?: number,
   ): FieldId | null {

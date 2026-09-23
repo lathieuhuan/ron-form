@@ -1,5 +1,5 @@
 import type { FieldErrors } from "./validation";
-import type { DeepKeys, DeepValue } from "./key-value";
+import type { DeepNames, DeepValue } from "./name-value";
 
 interface BaseMeta {
   /** user has blurred the field */
@@ -12,10 +12,10 @@ interface BaseMeta {
 }
 
 export interface FieldMeta<TFormValues> extends BaseMeta {
-  errors: FieldErrors<DeepKeys<TFormValues>>;
+  errors: FieldErrors<DeepNames<TFormValues>>;
 }
 
-export interface FieldState<TFormValues, TKey extends DeepKeys<TFormValues>> {
+export interface FieldState<TFormValues, TKey extends DeepNames<TFormValues>> {
   value: DeepValue<TFormValues, TKey>;
   meta: FieldMeta<TFormValues>;
 }

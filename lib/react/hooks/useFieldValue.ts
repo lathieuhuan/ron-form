@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 
-import type { DeepKeys, DeepValue, FormApi } from "@lib/core";
+import type { DeepNames, DeepValue, FormApi } from "@lib/core";
 
-export interface UseFieldValueProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
+export interface UseFieldValueProps<TFormValues, TKey extends DeepNames<TFormValues>> {
   name: TKey;
   form: FormApi<TFormValues>;
 }
 
-export function useFieldValue<TFormValues, TKey extends DeepKeys<TFormValues>>({
+export function useFieldValue<TFormValues, TKey extends DeepNames<TFormValues>>({
   name,
   form,
 }: UseFieldValueProps<TFormValues, TKey>): DeepValue<TFormValues, TKey> {

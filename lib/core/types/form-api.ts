@@ -1,5 +1,5 @@
 import type { FormControl } from "../FormControl";
-import type { DeepKeys, DeepValue } from "./key-value";
+import type { DeepNames, DeepValue } from "./name-value";
 import type { FieldMeta, FieldState, FormMeta } from "./state";
 import type { Updater } from "./utils";
 import type { FieldError, FieldErrors, ValidationCause } from "./validation";
@@ -12,7 +12,7 @@ export type FormMetaApi = {
 
 export type ChangeCause = "user" | "programmatic";
 
-export type ValueChangeData<TFormValues, TKey extends DeepKeys<TFormValues>> = {
+export type ValueChangeData<TFormValues, TKey extends DeepNames<TFormValues>> = {
   value: DeepValue<TFormValues, TKey>;
   oldValue: DeepValue<TFormValues, TKey>;
   cause: ChangeCause;
@@ -36,46 +36,46 @@ export interface FormApi<TFormValues> {
   values: TFormValues;
   meta: FormMetaApi;
 
-  getFieldValue<TField extends DeepKeys<TFormValues>>(
+  getFieldValue<TField extends DeepNames<TFormValues>>(
     field: TField,
   ): DeepValue<TFormValues, TField>;
 
-  getFieldMeta<TField extends DeepKeys<TFormValues>>(field: TField): FieldMeta<TFormValues>;
+  getFieldMeta<TField extends DeepNames<TFormValues>>(field: TField): FieldMeta<TFormValues>;
 
-  getFieldErrorMap<TField extends DeepKeys<TFormValues>>(field: TField): FieldErrors<TField>;
+  getFieldErrorMap<TField extends DeepNames<TFormValues>>(field: TField): FieldErrors<TField>;
 
-  getFieldState<TField extends DeepKeys<TFormValues>>(
+  getFieldState<TField extends DeepNames<TFormValues>>(
     field: TField,
   ): FieldState<TFormValues, TField>;
 
-  subscribeField<TField extends DeepKeys<TFormValues>>(
+  subscribeField<TField extends DeepNames<TFormValues>>(
     key: TField,
     subscriber: (field: FieldState<TFormValues, TField>) => void,
   ): () => void;
 
-  subscribeFieldValue<TField extends DeepKeys<TFormValues>>(
+  subscribeFieldValue<TField extends DeepNames<TFormValues>>(
     field: TField,
     subscriber: (props: ValueChangeData<TFormValues, TField>) => void,
   ): () => void;
 
-  setFieldValue<TField extends DeepKeys<TFormValues>>(
+  setFieldValue<TField extends DeepNames<TFormValues>>(
     field: TField,
     value: DeepValue<TFormValues, TField>,
     options?: SetFieldValueOptions,
   ): boolean;
 
-  setFieldMeta<TField extends DeepKeys<TFormValues>>(
+  setFieldMeta<TField extends DeepNames<TFormValues>>(
     field: TField,
     updater: Updater<FieldMeta<TFormValues>>,
   ): void;
 
-  validateSync<TField extends DeepKeys<TFormValues>>(
+  validateSync<TField extends DeepNames<TFormValues>>(
     field: TField,
     cause: ValidationCause,
     options?: Partial<ValidateSyncOptions>,
   ): FieldError<TField>[];
 
-  validateAsync<TField extends DeepKeys<TFormValues>>(
+  validateAsync<TField extends DeepNames<TFormValues>>(
     field: TField,
     cause: ValidationCause,
   ): Promise<FieldError<TField>[]>;

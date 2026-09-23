@@ -1,7 +1,7 @@
 import type { ChangeCause } from "./form-api";
-import type { DeepKeys, DeepValue } from "./key-value";
+import type { DeepNames, DeepValue } from "./name-value";
 
-export type ArrayChangeData<TFormValues, TField extends DeepKeys<TFormValues>> = {
+export type ArrayChangeData<TFormValues, TField extends DeepNames<TFormValues>> = {
   value: DeepValue<TFormValues, TField>;
 };
 
@@ -13,7 +13,7 @@ export type ArrayUpdateOptions = {
 
 export interface FieldArrayApi<
   TFormValues,
-  TField extends DeepKeys<TFormValues>,
+  TField extends DeepNames<TFormValues>,
   TItemValue = DeepValue<TFormValues, TField> extends Array<infer TItem> ? TItem : never,
 > {
   value: TItemValue[];

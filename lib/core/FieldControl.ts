@@ -1,20 +1,20 @@
 import type { FormControl } from "./FormControl";
-import type { ChangeCause, DeepKeys, DeepValue } from "./types";
+import type { ChangeCause, DeepNames, DeepValue } from "./types";
 
 export type HandleChangeOptions = {
   cause?: ChangeCause;
 };
 
-export class FieldControl<TFormValues, TField extends DeepKeys<TFormValues>> {
+export class FieldControl<TFormValues, TName extends DeepNames<TFormValues>> {
   form: FormControl<TFormValues>;
-  name: TField;
+  name: TName;
 
-  constructor(form: FormControl<TFormValues>, field: TField) {
+  constructor(form: FormControl<TFormValues>, name: TName) {
     this.form = form;
-    this.name = field;
+    this.name = name;
   }
 
-  handleChange = (value: DeepValue<TFormValues, TField>, options?: HandleChangeOptions) => {
+  handleChange = (value: DeepValue<TFormValues, TName>, options?: HandleChangeOptions) => {
     this.form.setFieldValue(this.name, value, {
       cause: options?.cause,
     });

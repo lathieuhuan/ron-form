@@ -2,7 +2,7 @@ import type {
   AnyObject,
   AsyncValidator,
   AsyncValidatorMap,
-  DeepKeys,
+  DeepNames,
   DeepValue,
   FieldErrors,
   FieldMeta,
@@ -21,9 +21,9 @@ import { RunningValidatorMap } from "./RunningValidatorMap";
 import { clone } from "./utils/clone";
 import { createSubject, Observer, Subject } from "./utils/createSubject";
 import { get } from "./utils/object";
-import { toWildCardDeepKey } from "./utils/toWildCardDeepKey";
+import { toWildCardDeepName } from "./utils/toWildCardDeepName";
 
-type FieldSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
+type FieldSubjects<TFormValues, TKey extends DeepNames<TFormValues>> = Map<
   TKey,
   Subject<FieldState<TFormValues, TKey>>
 >;
@@ -36,20 +36,20 @@ type AbortControllerMapByCause = {
   [key in ValidationCause]: Map<FieldId, AbortController>;
 };
 
-export type ValidationSpec<TFormValues, TField extends DeepKeys<TFormValues>> = {
+export type ValidationSpec<TFormValues, TName extends DeepNames<TFormValues>> = {
   cause: ValidationCause;
-  field: TField;
-  value: DeepValue<TFormValues, TField>;
-  validator: Validator<TFormValues, TField> | undefined;
+  name: TName;
+  value: DeepValue<TFormValues, TName>;
+  validator: Validator<TFormValues, TName> | undefined;
 };
 
-export type AsyncValidationSpec<TFormValues, TField extends DeepKeys<TFormValues>> = {
+export type AsyncValidationSpec<TFormValues, TName extends DeepNames<TFormValues>> = {
   cause: ValidationCause;
-  // TOCHECK do we need field?
-  field: TField;
+  // TOCHECK do we need name?
+  name: TName;
   fieldId: FieldId | null;
-  value: DeepValue<TFormValues, TField>;
-  validator: AsyncValidator<TFormValues, TField> | undefined;
+  value: DeepValue<TFormValues, TName>;
+  validator: AsyncValidator<TFormValues, TName> | undefined;
 };
 
 export interface FormCoreOptions<TFormValues> {
@@ -84,7 +84,7 @@ export class FormCore<TFormValues> {
   };
   runningValidatorMap = new RunningValidatorMap();
 
-  fieldSubjects: FieldSubjects<TFormValues, DeepKeys<TFormValues>> = new Map();
+  fieldSubjects: FieldSubjects<TFormValues, DeepNames<TFormValues>> = new Map();
 
   constructor({
     defaultValues,
@@ -114,32 +114,32 @@ export class FormCore<TFormValues> {
     return this._values;
   }
 
-  validationSpec = <TField extends DeepKeys<TFormValues>>(
+  validationSpec = <TName extends DeepNames<TFormValues>>(
     cause: ValidationCause,
-    field: TField,
-    value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
-  ): ValidationSpec<TFormValues, TField> => {
-    const validatorKey = toWildCardDeepKey<TFormValues>(field);
+    name: TName,
+    value: DeepValue<TFormValues, TName> = this.getFieldValue(name),
+  ): ValidationSpec<TFormValues, TName> => {
+    const validatorKey = toWildCardDeepName<TFormValues>(name);
 
     return {
       cause,
-      field,
+      name,
       value,
       validator: this.validators[cause][validatorKey],
     };
   };
 
-  asyncValidationSpec = <TField extends DeepKeys<TFormValues>>(
+  asyncValidationSpec = <TName extends DeepNames<TFormValues>>(
     cause: ValidationCause,
-    field: TField,
-    value: DeepValue<TFormValues, TField> = this.getFieldValue(field),
-  ): AsyncValidationSpec<TFormValues, TField> => {
-    const validatorKey = toWildCardDeepKey<TFormValues>(field);
+    name: TName,
+    value: DeepValue<TFormValues, TName> = this.getFieldValue(name),
+  ): AsyncValidationSpec<TFormValues, TName> => {
+    const validatorKey = toWildCardDeepName<TFormValues>(name);
 
     return {
       cause,
-      field,
-      fieldId: this.fieldIdOf(field),
+      name,
+      fieldId: this.fieldIdOf(name),
       value,
       validator: this.asyncValidators[cause][validatorKey],
     };
@@ -148,17 +148,17 @@ export class FormCore<TFormValues> {
   /**
    * @public
    */
-  getFieldValue = <TField extends DeepKeys<TFormValues>>(
-    field: TField,
-  ): DeepValue<TFormValues, TField> => {
-    return get(this._values as AnyObject, field);
+  getFieldValue = <TName extends DeepNames<TFormValues>>(
+    name: TName,
+  ): DeepValue<TFormValues, TName> => {
+    return get(this._values as AnyObject, name);
   };
 
   /**
    * @public
    */
-  getFieldMeta = <TField extends DeepKeys<TFormValues>>(field: TField): FieldMeta<TFormValues> => {
-    const fieldId = this.fieldIdOf(field);
+  getFieldMeta = <TName extends DeepNames<TFormValues>>(name: TName): FieldMeta<TFormValues> => {
+    const fieldId = this.fieldIdOf(name);
 
     // TOCHECK when fieldId is null?
     if (fieldId == null) {
@@ -179,10 +179,10 @@ export class FormCore<TFormValues> {
     for (const cause of ERROR_CAUSES) {
       const currentErrors = errors[cause];
 
-      if (currentErrors.some((error) => error.path !== field)) {
+      if (currentErrors.some((error) => error.path !== name)) {
         errors[cause] = currentErrors.map((error) => ({
           ...error,
-          path: field,
+          path: name,
         }));
         errorsChanged = true;
       }
@@ -199,11 +199,11 @@ export class FormCore<TFormValues> {
     return meta;
   };
 
-  fieldIdOf = (field: DeepKeys<TFormValues>): FieldId | null => {
-    return this.fieldIdRegistry.toFieldId(field, this._values);
+  fieldIdOf = (name: DeepNames<TFormValues>): FieldId | null => {
+    return this.fieldIdRegistry.toFieldId(name, this._values);
   };
 
-  fieldKeyFrom = (fieldId: FieldId): DeepKeys<TFormValues> | null => {
+  fieldKeyFrom = (fieldId: FieldId): DeepNames<TFormValues> | null => {
     return this.fieldIdRegistry.toFieldKey(fieldId, this._values);
   };
 
@@ -240,34 +240,34 @@ export class FormCore<TFormValues> {
   /**
    * @public
    */
-  getFieldErrorMap = <TField extends DeepKeys<TFormValues>>(field: TField): FieldErrors<TField> => {
-    return this.getFieldMeta(field).errors as FieldErrors<TField>;
+  getFieldErrorMap = <TName extends DeepNames<TFormValues>>(name: TName): FieldErrors<TName> => {
+    return this.getFieldMeta(name).errors as FieldErrors<TName>;
   };
 
   /**
    * @public
    */
-  getFieldState = <TField extends DeepKeys<TFormValues>>(
-    field: TField,
-  ): FieldState<TFormValues, TField> => {
+  getFieldState = <TName extends DeepNames<TFormValues>>(
+    name: TName,
+  ): FieldState<TFormValues, TName> => {
     return {
-      value: this.getFieldValue(field),
-      meta: this.getFieldMeta(field),
+      value: this.getFieldValue(name),
+      meta: this.getFieldMeta(name),
     };
   };
 
   /**
    * @public
    */
-  subscribeField = <TField extends DeepKeys<TFormValues>>(
-    key: TField,
-    subscriber: Observer<FieldState<TFormValues, TField>>,
+  subscribeField = <TName extends DeepNames<TFormValues>>(
+    key: TName,
+    subscriber: Observer<FieldState<TFormValues, TName>>,
   ) => {
     const subject = this.fieldSubjects.get(key) || createSubject();
 
     this.fieldSubjects.set(key, subject);
 
-    return (subject as Subject<FieldState<TFormValues, TField>>).subscribe(subscriber);
+    return (subject as Subject<FieldState<TFormValues, TName>>).subscribe(subscriber);
   };
 
   /**
@@ -276,15 +276,15 @@ export class FormCore<TFormValues> {
    * this method will short circuit and return `false`.
    * Otherwise, return `true`.
    */
-  // TOCHECK can we use FieldId instead of field?
-  updateAndNotifyField = <TField extends DeepKeys<TFormValues>>(
-    field: TField,
-    changes: Partial<FieldState<TFormValues, TField>>,
+  // TOCHECK can we use FieldId instead of name?
+  updateAndNotifyField = <TName extends DeepNames<TFormValues>>(
+    name: TName,
+    changes: Partial<FieldState<TFormValues, TName>>,
   ): boolean => {
     let { meta } = changes;
     const valueChanged = "value" in changes;
 
-    const currentMeta = this.getFieldMeta(field);
+    const currentMeta = this.getFieldMeta(name);
 
     // Note: The meta passed in changes can already be the current one.
     meta = meta === undefined ? currentMeta : meta;
@@ -295,16 +295,16 @@ export class FormCore<TFormValues> {
 
     // TODO write test for value === undefined/null (e.g. clear value)
     const value = valueChanged
-      ? (changes.value as DeepValue<TFormValues, TField>)
-      : this.getFieldValue(field);
+      ? (changes.value as DeepValue<TFormValues, TName>)
+      : this.getFieldValue(name);
 
-    const fieldId = this.fieldIdOf(field);
+    const fieldId = this.fieldIdOf(name);
 
     if (fieldId != null) {
       this.fieldMetaMap.set(fieldId, meta);
     }
 
-    this.fieldSubjects.get(field)?.next({
+    this.fieldSubjects.get(name)?.next({
       value,
       meta,
     });

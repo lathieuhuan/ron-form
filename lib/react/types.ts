@@ -1,5 +1,5 @@
 import type {
-  DeepKeys,
+  DeepNames,
   DeepValue,
   FieldError,
   FieldMeta,
@@ -21,7 +21,7 @@ export interface ReactFieldLooseApi<TFormValues> {
 
 export interface ReactFieldStrictApi<
   TFormValues,
-  TKey extends DeepKeys<TFormValues> = DeepKeys<TFormValues>,
+  TKey extends DeepNames<TFormValues> = DeepNames<TFormValues>,
 > extends FieldState<TFormValues, TKey> {
   id: string;
   name: TKey;
@@ -32,6 +32,6 @@ export interface ReactFieldStrictApi<
 }
 
 export type ReactFieldApi<TFormValues, TKey extends string> =
-  TKey extends DeepKeys<TFormValues>
+  TKey extends DeepNames<TFormValues>
     ? ReactFieldStrictApi<TFormValues, TKey>
     : ReactFieldLooseApi<TFormValues>;

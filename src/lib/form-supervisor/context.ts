@@ -1,10 +1,10 @@
-import { DeepKeys, FormApi } from "@lib/core";
+import { DeepNames, FormApi } from "@lib/core";
 import { createContext, useContext } from "react";
 
 export interface FormSupervisorContextValue<TFormValues> {
   form: FormApi<TFormValues>;
-  watchedField: DeepKeys<TFormValues>;
-  setWatchedField: (field: DeepKeys<TFormValues>) => void;
+  watchedField: DeepNames<TFormValues>;
+  setWatchedField: (field: DeepNames<TFormValues>) => void;
 }
 
 export const FormSupervisorContext = createContext<FormSupervisorContextValue<any> | null>(null);

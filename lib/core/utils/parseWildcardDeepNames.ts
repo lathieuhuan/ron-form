@@ -1,4 +1,4 @@
-import type { AnyObject, DeepKeys, WildcardDeepKeys } from "../types";
+import type { AnyObject, DeepNames, WildcardDeepNames } from "../types";
 import { isObject } from "./object";
 
 function walk<T>(
@@ -6,9 +6,9 @@ function walk<T>(
   segmentIndex: number,
   current: unknown,
   prefix: string,
-): DeepKeys<T>[] {
+): DeepNames<T>[] {
   if (segmentIndex >= segments.length) {
-    return prefix ? [prefix as DeepKeys<T>] : [];
+    return prefix ? [prefix as DeepNames<T>] : [];
   }
 
   const segment = segments[segmentIndex];
@@ -18,7 +18,7 @@ function walk<T>(
       return [];
     }
 
-    const results: DeepKeys<T>[] = [];
+    const results: DeepNames<T>[] = [];
     for (let i = 0; i < current.length; i++) {
       const nextPrefix = prefix ? `${prefix}.${i}` : `${i}`;
       results.push(...walk(segments, segmentIndex + 1, current[i], nextPrefix));
@@ -35,9 +35,9 @@ function walk<T>(
   return walk(segments, segmentIndex + 1, current[segment], nextPrefix);
 }
 
-export function parseWildcardDeepKeys<T>(
-  field: WildcardDeepKeys<T>,
+export function parseWildcardDeepNames<T>(
+  field: WildcardDeepNames<T>,
   values: AnyObject,
-): DeepKeys<T>[] {
+): DeepNames<T>[] {
   return walk(field.split("."), 0, values, "");
 }

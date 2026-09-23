@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 
-import type { DeepKeys, FieldError, FieldState, FormControl } from "@lib/core";
+import type { DeepNames, FieldError, FieldState, FormControl } from "@lib/core";
 import type { UseFormFieldProps } from "../createContexts";
 import type { ReactFieldStrictApi } from "../types";
 
 import { ERROR_CAUSES, FieldControl } from "@lib/core";
 
-export function useField<TFormValues, TKey extends DeepKeys<TFormValues>>({
+export function useField<TFormValues, TKey extends DeepNames<TFormValues>>({
   name,
   form,
 }: UseFormFieldProps<TFormValues, TKey>): ReactFieldStrictApi<TFormValues, TKey> {

@@ -1,4 +1,4 @@
-import { DeepKeys, FormApi } from "@lib/core";
+import { DeepNames, FormApi } from "@lib/core";
 import { useMemo, useState } from "react";
 import { FormSupervisorContext } from "./context";
 
@@ -8,7 +8,7 @@ type FormSupervisorProps = {
 };
 
 export function FormSupervisor({ form, children }: FormSupervisorProps) {
-  const [watchedField, setWatchedField] = useState<DeepKeys<any>>("");
+  const [watchedField, setWatchedField] = useState<DeepNames<any>>("");
 
   const value = useMemo(() => {
     return {

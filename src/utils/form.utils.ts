@@ -1,4 +1,4 @@
-import type { DeepKeys, DeepValue } from "@lib/core";
+import type { DeepNames, DeepValue } from "@lib/core";
 import type { ReactFieldStrictApi } from "@lib/react";
 import type { FormFieldProps } from "@src/components/form";
 
@@ -19,7 +19,7 @@ function makeFieldRenderer<TField extends ReactFieldStrictApi<any, any>, TSelect
   };
 }
 
-export function selectFieldProps<TValues, TKey extends DeepKeys<TValues>>(
+export function selectFieldProps<TValues, TKey extends DeepNames<TValues>>(
   field: ReactFieldStrictApi<TValues, TKey>,
 ) {
   const error = field.errors.at(0);
@@ -45,12 +45,12 @@ type InputBindingProps<T> = {
   onBlur: () => void;
 };
 
-type InputFieldBindings<TValues, TKey extends DeepKeys<TValues>> = {
+type InputFieldBindings<TValues, TKey extends DeepNames<TValues>> = {
   fieldProps: FormFieldBindingProps;
   inputProps: InputBindingProps<DeepValue<TValues, TKey>>;
 };
 
-export function selectInputFieldProps<TValues, TKey extends DeepKeys<TValues>>(
+export function selectInputFieldProps<TValues, TKey extends DeepNames<TValues>>(
   field: ReactFieldStrictApi<TValues, TKey>,
 ): InputFieldBindings<TValues, TKey> {
   //
@@ -91,12 +91,12 @@ type SelectBindingProps<T> = {
   onOpenChange: (open: boolean) => void;
 };
 
-type SelectFieldBindings<TValues, TKey extends DeepKeys<TValues>> = {
+type SelectFieldBindings<TValues, TKey extends DeepNames<TValues>> = {
   fieldProps: FormFieldBindingProps;
   selectProps: SelectBindingProps<DeepValue<TValues, TKey>>;
 };
 
-export function selectSelectFieldProps<TValues, TKey extends DeepKeys<TValues>>(
+export function selectSelectFieldProps<TValues, TKey extends DeepNames<TValues>>(
   field: ReactFieldStrictApi<TValues, TKey>,
 ): SelectFieldBindings<TValues, TKey> {
   //

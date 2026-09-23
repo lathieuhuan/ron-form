@@ -1,6 +1,6 @@
 import type {
   AnyObject,
-  DeepKeys,
+  DeepNames,
   DeepValue,
   FieldError,
   FieldErrors,
@@ -24,17 +24,17 @@ import { collectFieldPaths } from "./utils/collectFieldPaths";
 import { createSubject, Observer, Subject } from "./utils/createSubject";
 import { entries, get, isPlainObject, keys, set, update } from "./utils/object";
 import { parseRawError } from "./utils/parseRawError";
-import { parseWildcardDeepKeys } from "./utils/parseWildcardDeepKeys";
+import { parseWildcardDeepNames } from "./utils/parseWildcardDeepNames";
 import { Patcher } from "./utils/Patcher";
 import { transformErrors } from "./utils/transformErrors";
 
-type ValueSubjects<TFormValues, TKey extends DeepKeys<TFormValues>> = Map<
+type ValueSubjects<TFormValues, TKey extends DeepNames<TFormValues>> = Map<
   TKey,
   Subject<ValueChangeData<TFormValues, TKey>>
 >;
 
 type ValueSubscribers<TFormValues> = {
-  [key in DeepKeys<TFormValues>]?: (props: ValueChangeData<TFormValues, key>) => void;
+  [key in DeepNames<TFormValues>]?: (props: ValueChangeData<TFormValues, key>) => void;
 };
 
 interface OnSubmitData<TFormValues> {
@@ -43,7 +43,7 @@ interface OnSubmitData<TFormValues> {
 }
 
 type AllFieldErrors<TFormValues> = Partial<
-  Record<DeepKeys<TFormValues>, FieldErrors<DeepKeys<TFormValues>>>
+  Record<DeepNames<TFormValues>, FieldErrors<DeepNames<TFormValues>>>
 >;
 
 interface OnSubmitFailedData<TFormValues> {
@@ -61,7 +61,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   onSubmit?: FormControlOptions<TFormValues>["onSubmit"];
   onSubmitFailed?: FormControlOptions<TFormValues>["onSubmitFailed"];
 
-  valueSubjects: ValueSubjects<TFormValues, DeepKeys<TFormValues>> = new Map();
+  valueSubjects: ValueSubjects<TFormValues, DeepNames<TFormValues>> = new Map();
   unsubscribers: Noop[] = [];
 
   constructor(options: FormControlOptions<TFormValues> = {}) {
@@ -73,10 +73,10 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     const { valueSubscribers } = options;
 
     if (valueSubscribers) {
-      for (const [field, subscriber] of entries(valueSubscribers)) {
+      for (const [name, subscriber] of entries(valueSubscribers)) {
         if (!subscriber) continue;
 
-        const unsubscribe = this.subscribeFieldValue(field, subscriber);
+        const unsubscribe = this.subscribeFieldValue(name, subscriber);
 
         this.unsubscribers.push(unsubscribe);
       }
@@ -86,26 +86,26 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   /**
    * @public
    */
-  subscribeFieldValue = <TField extends DeepKeys<TFormValues>>(
-    field: TField,
+  subscribeFieldValue = <TField extends DeepNames<TFormValues>>(
+    name: TField,
     subscriber: Observer<ValueChangeData<TFormValues, TField>>,
   ) => {
-    const subject = this.valueSubjects.get(field) || createSubject();
+    const subject = this.valueSubjects.get(name) || createSubject();
 
-    this.valueSubjects.set(field, subject);
+    this.valueSubjects.set(name, subject);
 
     return (subject as Subject<ValueChangeData<TFormValues, TField>>).subscribe(subscriber);
   };
 
-  _runSyncValidator = <TField extends DeepKeys<TFormValues>>(
+  _runSyncValidator = <TField extends DeepNames<TFormValues>>(
     spec: ValidationSpec<TFormValues, TField>,
   ): FieldError<TField>[] => {
     if (spec.validator == null) return [];
 
-    return transformErrors(spec.field, spec.cause, spec.validator(spec.value, this));
+    return transformErrors(spec.name, spec.cause, spec.validator(spec.value, this));
   };
 
-  _runAsyncValidator = async <TField extends DeepKeys<TFormValues>>(
+  _runAsyncValidator = async <TField extends DeepNames<TFormValues>>(
     spec: AsyncValidationSpec<TFormValues, TField>,
   ): Promise<FieldError<TField>[]> => {
     if (spec.validator == null) return [];
@@ -118,15 +118,15 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       result = parseRawError(e);
     }
 
-    return transformErrors(spec.field, `${spec.cause}Async`, result);
+    return transformErrors(spec.name, `${spec.cause}Async`, result);
   };
 
-  _validateSync = <TField extends DeepKeys<TFormValues>>(
+  _validateSync = <TField extends DeepNames<TFormValues>>(
     spec: ValidationSpec<TFormValues, TField>,
     options: ValidateSyncOptions,
   ) => {
-    const { cause, field } = spec;
-    const metaPatcher = new Patcher(this.getFieldMeta(field));
+    const { cause, name } = spec;
+    const metaPatcher = new Patcher(this.getFieldMeta(name));
 
     if (options.shouldBlur) {
       metaPatcher.set("isBlurred", true);
@@ -155,20 +155,20 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
    * @public
    * @options Default: { shouldBlur: false, shouldTouch: true, shouldDirty: false }
    */
-  validateSync = <TField extends DeepKeys<TFormValues>>(
-    field: TField,
+  validateSync = <TField extends DeepNames<TFormValues>>(
+    name: TField,
     cause: ValidationCause,
     options: Partial<ValidateSyncOptions> = {},
   ): FieldError<TField>[] => {
     const { shouldBlur = false, shouldTouch = true, shouldDirty = false } = options;
-    const validationSpec = this.validationSpec(cause, field);
+    const validationSpec = this.validationSpec(cause, name);
     const meta = this._validateSync(validationSpec, {
       shouldBlur,
       shouldTouch,
       shouldDirty,
     });
 
-    const updated = this.updateAndNotifyField(field, {
+    const updated = this.updateAndNotifyField(name, {
       meta,
     });
 
@@ -179,7 +179,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     return meta.errors[cause] as FieldError<TField>[];
   };
 
-  _validateAsync = async <TField extends DeepKeys<TFormValues>>(
+  _validateAsync = async <TField extends DeepNames<TFormValues>>(
     spec: AsyncValidationSpec<TFormValues, TField>,
     abortCtrl: AbortController,
   ): Promise<FieldError<TField>[]> => {
@@ -255,7 +255,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
     const meta = this.getFieldMeta(currentField);
 
-    const newErrors: FieldErrors<DeepKeys<TFormValues>> = {
+    const newErrors: FieldErrors<DeepNames<TFormValues>> = {
       ...meta.errors,
       [`${cause}Async`]: errors,
     };
@@ -274,11 +274,11 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   /**
    * @public
    */
-  validateAsync = async <TField extends DeepKeys<TFormValues>>(
-    field: TField,
+  validateAsync = async <TField extends DeepNames<TFormValues>>(
+    name: TField,
     cause: ValidationCause,
   ): Promise<FieldError<TField>[]> => {
-    const validationSpec = this.asyncValidationSpec(cause, field);
+    const validationSpec = this.asyncValidationSpec(cause, name);
     const { fieldId } = validationSpec;
 
     if (fieldId == null) {
@@ -311,7 +311,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     return errors;
   };
 
-  scheduleAsyncValidation = <TField extends DeepKeys<TFormValues>>(
+  scheduleAsyncValidation = <TField extends DeepNames<TFormValues>>(
     spec: AsyncValidationSpec<TFormValues, TField>,
   ) => {
     if (spec.validator == null || spec.fieldId == null) {
@@ -364,26 +364,26 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   /**
    * @public
    */
-  setFieldValue = <TField extends DeepKeys<TFormValues>>(
-    field: TField,
+  setFieldValue = <TField extends DeepNames<TFormValues>>(
+    name: TField,
     value: DeepValue<TFormValues, TField>,
     options: SetFieldValueOptions = {},
   ): boolean => {
     const clonedValue = isPlainObject(value) ? clone(value) : value;
     const oldValues = clone(this._values);
 
-    const success = set(this._values as AnyObject, field, clonedValue);
+    const success = set(this._values as AnyObject, name, clonedValue);
 
     if (!success) {
-      console.error(`Field ${field} not found in form values`);
+      console.error(`Field ${name} not found in form values`);
       return false;
     }
 
-    const oldFieldValue = get(oldValues as AnyObject, field);
+    const oldFieldValue = get(oldValues as AnyObject, name);
     const replacesArray = Array.isArray(oldFieldValue) || Array.isArray(value);
     const arrayId = replacesArray
       ? this.fieldIdRegistry.prepareArray(
-          field,
+          name,
           this._values,
           Array.isArray(oldFieldValue) ? oldFieldValue.length : 0,
         )
@@ -409,16 +409,16 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     } = options;
 
     // TOCHECK
-    const presentFields = collectFieldPaths(value, field, [field]);
-    const notifiedFields = new Set<DeepKeys<TFormValues>>(presentFields);
+    const presentFields = collectFieldPaths(value, name, [name]);
+    const notifiedFields = new Set<DeepNames<TFormValues>>(presentFields);
 
     if (replacesArray) {
-      collectFieldPaths(oldFieldValue, field, [field]).forEach((subField) =>
-        notifiedFields.add(subField as DeepKeys<TFormValues>),
+      collectFieldPaths(oldFieldValue, name, [name]).forEach((subField) =>
+        notifiedFields.add(subField as DeepNames<TFormValues>),
       );
 
       for (const subscribedField of [...this.fieldSubjects.keys(), ...this.valueSubjects.keys()]) {
-        if (subscribedField === field || subscribedField.startsWith(`${field}.`)) {
+        if (subscribedField === name || subscribedField.startsWith(`${name}.`)) {
           notifiedFields.add(subscribedField);
         }
       }
@@ -458,7 +458,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
 
     // ===== VALIDATE =====
 
-    const asyncValidateSpecs: AsyncValidationSpec<TFormValues, DeepKeys<TFormValues>>[] = [];
+    const asyncValidateSpecs: AsyncValidationSpec<TFormValues, DeepNames<TFormValues>>[] = [];
 
     // TOCHECK
     for (const subField of presentFields) {
@@ -527,13 +527,13 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   /**
    * @public
    */
-  setFieldMeta = <TField extends DeepKeys<TFormValues>>(
-    field: TField,
+  setFieldMeta = <TField extends DeepNames<TFormValues>>(
+    name: TField,
     updater: Updater<FieldMeta<TFormValues>>,
   ) => {
-    const newMeta = typeof updater === "function" ? updater(this.getFieldMeta(field)) : updater;
+    const newMeta = typeof updater === "function" ? updater(this.getFieldMeta(name)) : updater;
 
-    this.updateAndNotifyField(field, {
+    this.updateAndNotifyField(name, {
       meta: newMeta,
     });
 
@@ -543,8 +543,8 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
   /**
    * TODO public
    */
-  isFieldError = <TField extends DeepKeys<TFormValues>>(field: TField) => {
-    const { errors } = this.getFieldMeta(field);
+  isFieldError = <TField extends DeepNames<TFormValues>>(name: TField) => {
+    const { errors } = this.getFieldMeta(name);
 
     return ERROR_CAUSES.some((cause) => {
       return errors[cause].length > 0;
@@ -564,12 +564,12 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     let isValid = true;
 
     const updateMap = new Map<
-      DeepKeys<TFormValues>,
-      FieldState<TFormValues, DeepKeys<TFormValues>>
+      DeepNames<TFormValues>,
+      FieldState<TFormValues, DeepNames<TFormValues>>
     >();
 
-    const updateField = (field: DeepKeys<TFormValues>, cause: ValidationCause) => {
-      const update = updateMap.get(field) || this.getFieldState(field);
+    const updateField = (name: DeepNames<TFormValues>, cause: ValidationCause) => {
+      const update = updateMap.get(name) || this.getFieldState(name);
 
       if (!update.meta.isTouched) {
         update.meta = {
@@ -578,7 +578,7 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
         };
       }
 
-      const validationSpec = this.validationSpec(cause, field);
+      const validationSpec = this.validationSpec(cause, name);
       const errors = this._runSyncValidator(validationSpec);
 
       if (errors.length > 0) {
@@ -593,23 +593,23 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
         };
       }
 
-      updateMap.set(field, update);
+      updateMap.set(name, update);
     };
 
-    for (const field of keys(this.validators.change)) {
-      for (const subField of parseWildcardDeepKeys<TFormValues>(field, this._values as AnyObject)) {
+    for (const name of keys(this.validators.change)) {
+      for (const subField of parseWildcardDeepNames<TFormValues>(name, this._values as AnyObject)) {
         updateField(subField, "change");
       }
     }
 
-    for (const field of keys(this.validators.blur)) {
-      for (const subField of parseWildcardDeepKeys<TFormValues>(field, this._values as AnyObject)) {
+    for (const name of keys(this.validators.blur)) {
+      for (const subField of parseWildcardDeepNames<TFormValues>(name, this._values as AnyObject)) {
         updateField(subField, "blur");
       }
     }
 
-    for (const [field, update] of updateMap.entries()) {
-      this.updateAndNotifyField(field, update);
+    for (const [name, update] of updateMap.entries()) {
+      this.updateAndNotifyField(name, update);
     }
 
     this.syncMeta();
@@ -623,16 +623,16 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
       const errors: AllFieldErrors<TFormValues> = {};
 
       for (const fieldId of this.fieldMetaMap.keys()) {
-        const field = this.fieldKeyFrom(fieldId);
+        const name = this.fieldKeyFrom(fieldId);
 
-        if (field == null) {
+        if (name == null) {
           continue;
         }
 
-        if (this.isFieldError(field)) {
+        if (this.isFieldError(name)) {
           // TOCHECK why not fieldMetaMap.entries() to get meta then access errors?
-          // errors[field] = meta.errors;
-          errors[field] = this.getFieldMeta(field).errors;
+          // errors[name] = meta.errors;
+          errors[name] = this.getFieldMeta(name).errors;
         }
       }
 
@@ -672,19 +672,19 @@ export class FormControl<TFormValues> extends FormCore<TFormValues> {
     this.fieldMetaMap.clear();
     this.fieldIdRegistry.clear();
 
-    const values = cache((field: DeepKeys<TFormValues>) => this.getFieldValue(field));
+    const values = cache((name: DeepNames<TFormValues>) => this.getFieldValue(name));
 
-    for (const [field, subject] of this.fieldSubjects.entries()) {
+    for (const [name, subject] of this.fieldSubjects.entries()) {
       subject.next({
-        value: values.get(field),
-        meta: this.getFieldMeta(field),
+        value: values.get(name),
+        meta: this.getFieldMeta(name),
       });
     }
 
-    for (const [field, subject] of this.valueSubjects.entries()) {
+    for (const [name, subject] of this.valueSubjects.entries()) {
       subject.next({
-        value: values.get(field),
-        oldValue: get(oldValues as AnyObject, field),
+        value: values.get(name),
+        oldValue: get(oldValues as AnyObject, name),
         form: this,
         cause: DEFAULT_CHANGE_CAUSE,
       });

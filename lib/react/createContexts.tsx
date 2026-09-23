@@ -1,4 +1,4 @@
-import type { DeepKeys, FormApi, FormMeta } from "@lib/core";
+import type { DeepNames, FormApi, FormMeta } from "@lib/core";
 import type { ReactFieldStrictApi } from "./types";
 
 import { FormControl } from "@lib/core";
@@ -6,12 +6,12 @@ import { createContext, ReactElement, ReactNode, useContext, useSyncExternalStor
 import { useForm } from "./hooks";
 import { useField } from "./hooks/useField";
 
-export interface UseFormFieldProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
+export interface UseFormFieldProps<TFormValues, TKey extends DeepNames<TFormValues>> {
   name: TKey;
   form: FormApi<TFormValues>;
 }
 
-export interface FieldProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
+export interface FieldProps<TFormValues, TKey extends DeepNames<TFormValues>> {
   name: TKey;
   children?: (props: ReactFieldStrictApi<TFormValues, TKey>) => ReactElement;
 }
@@ -36,7 +36,7 @@ export function createContexts<TFormValues>() {
     return props.children(meta, form);
   }
 
-  function Field<TKey extends DeepKeys<TFormValues>>({
+  function Field<TKey extends DeepNames<TFormValues>>({
     name,
     children,
   }: FieldProps<TFormValues, TKey>) {

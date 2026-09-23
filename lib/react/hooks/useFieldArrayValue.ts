@@ -1,7 +1,7 @@
-import { DeepItemValue, DeepKeys, FormApi } from "@lib/core";
+import { DeepItemValue, DeepNames, FormApi } from "@lib/core";
 import { DependencyList, useEffect, useState } from "react";
 
-export type CompareFunction<TFormValues, TKey extends DeepKeys<TFormValues>> = (
+export type CompareFunction<TFormValues, TKey extends DeepNames<TFormValues>> = (
   newItem: DeepItemValue<TFormValues, TKey>,
   oldItem: DeepItemValue<TFormValues, TKey>,
   index: number,
@@ -11,14 +11,14 @@ export type CompareFunction<TFormValues, TKey extends DeepKeys<TFormValues>> = (
 
 const defaultCompare: CompareFunction<any, any> = (newItem, oldItem) => newItem === oldItem;
 
-export interface UseFieldArrayValueProps<TFormValues, TKey extends DeepKeys<TFormValues>> {
+export interface UseFieldArrayValueProps<TFormValues, TKey extends DeepNames<TFormValues>> {
   name: TKey;
   form: FormApi<TFormValues>;
   compare?: CompareFunction<TFormValues, TKey>;
   deps?: DependencyList;
 }
 
-export function useFieldArrayValue<TFormValues, TKey extends DeepKeys<TFormValues>>({
+export function useFieldArrayValue<TFormValues, TKey extends DeepNames<TFormValues>>({
   name,
   form,
   compare = defaultCompare,
